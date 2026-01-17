@@ -9,15 +9,16 @@ import traceback
 from google import genai
 from google.genai import types
 from supabase import create_client, Client 
+from dotenv import load_dotenv # Import cái này
+load_dotenv()
 
 # --- CẤU HÌNH ---
-# LƯU Ý: Bạn vẫn đang để lộ Key. Nhớ xóa hoặc dùng biến môi trường khi deploy thật nhé!
-GEMINI_API_KEY = "AIzaSyC_boBfvS6il6SY409znkbZJ6inHsTyOk4" 
-
-# Cấu hình Supabase
-SUPABASE_URL = "https://hebqchffemepcucahqgv.supabase.co" 
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlYnFjaGZmZW1lcGN1Y2FocWd2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODU3MDc0MywiZXhwIjoyMDg0MTQ2NzQzfQ.lM_xIcrWDbxPO5QgfUeuJUqFun_aFVilzBnAj0lwaqY" 
-
+# Lấy key từ biến môi trường (An toàn tuyệt đối)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+if not GEMINI_API_KEY or not SUPABASE_KEY:
+    raise ValueError("❌ CHƯA CẤU HÌNH API KEY TRONG FILE .env!")
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
