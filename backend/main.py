@@ -49,7 +49,17 @@ class EssayAssessment(BaseModel):
     general_feedback: str = Field(description="Short summary")
     core_errors: List[ErrorDetail]
     corrected_text: str = Field(description="Rewritten text")
+# --- MODELS CHO QUIZ ---
+class QuizRequest(BaseModel):
+    error_type: str
+    original_sentence: str # Câu văn chứa lỗi của user (Contextual Level 2)
+    language: str = "vi"
 
+class QuizQuestion(BaseModel):
+    question: str = Field(description="The question text asking user to fix the error")
+    options: List[str] = Field(description="List of 4 options (A, B, C, D)")
+    correct_answer_index: int = Field(description="Index of the correct option (0-3)")
+    explanation: str = Field(description="Explanation why the answer is correct")
 @app.post("/analyze")
 def analyze_essay(input: EssayInput):
     try:
@@ -76,7 +86,7 @@ def analyze_essay(input: EssayInput):
         """
 
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash', # [SỬA 3]: Dùng bản 1.5 cho ổn định (trừ khi bạn chắc chắn 2.5 chạy được)
+            model='gemini-2.5-flash-lite', # [SỬA 3]: Dùng bản 1.5 cho ổn định (trừ khi bạn chắc chắn 2.5 chạy được)
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
@@ -123,5 +133,131 @@ def analyze_essay(input: EssayInput):
 
     except Exception as e:
         print(f"========== LỖI SERVER: {str(e)} ==========") 
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+@app.post("/generate-quiz")
+def generate_quiz(input: QuizRequest):
+    try:
+        # Chỉ thị ngôn ngữ
+        lang_instruction = ""
+        if input.language == "vi":
+            lang_instruction = "IMPORTANT: The 'question', 'options', and 'explanation' must be in VIETNAMESE."
+        else:
+            lang_instruction = "Write everything in English."
+
+# [SỬA LẠI PROMPT]: Ép AI tập trung vào tiểu tiết (Micro-skills)
+        prompt_text = f"""
+        Act as an strict English Grammar Tutor. 
+        
+        Student's Sentence: "{input.original_sentence}"
+        Target Error to fix: "{input.error_type}" 
+        (IMPORTANT: The sentence may have multiple errors, but ONLY focus on the target error).
+        
+        Task: Create a "Fill-in-the-blank" or "Spot the error" multiple-choice question.
+        
+        STRICT RULES FOR GENERATION:
+        1. **Scope**: Do NOT use the full sentence as options. Isolate the specific phrase containing the error.
+        2. **Question Style**: Quote a small segment of the sentence, replace the error part with `_______`, and ask the student to choose the best fit.
+        3. **Options**: Must be short (words or short phrases). 
+           - 1 Correct option (Fixes the target error).
+           - 3 Distractor options (Common mistakes, or the original wrong word).
+        4. **Context**: If the error is about Capitalization or Punctuation, ask specifically about that rule (e.g., "Which punctuation is missing here?").
+        
+        {lang_instruction}
+
+        Example logic:
+        - If error is "Missing verb" in "she would mad", the question should focus on "would _______ mad". Options: ["be", "being", "is", "been"].
+        - If error is "Capitalization" in "i want", the question should focus on "How to write the subject?". Options: ["I", "i", "me", "my"].
+        """
+
+        response = genai_client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt_text,
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json',
+                response_schema=QuizQuestion
+            )
+        )
+        
+        return response.parsed
+
+    except Exception as e:
+        print(f"========== LỖI QUIZ: {str(e)} ==========") 
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+# 1. Thêm Model mới nhận danh sách
+class ErrorItem(BaseModel):
+    id: int # ID của lỗi trong DB (để sau này map lại)
+    error_type: str
+    original_text: str # Câu văn chứa lỗi
+
+class BatchQuizRequest(BaseModel):
+    errors: List[ErrorItem]
+    language: str = "vi"
+
+# Model trả về là danh sách câu hỏi
+class QuizQuestion(BaseModel):
+    id: int # ID của lỗi tương ứng
+    question: str
+    options: List[str]
+    correct_answer_index: int
+    explanation: str
+
+class BatchQuizResponse(BaseModel):
+    questions: List[QuizQuestion]
+
+# 2. Endpoint mới: Gen 1 lần nhiều câu
+@app.post("/generate-batch-quiz")
+def generate_batch_quiz(input: BatchQuizRequest):
+    try:
+        lang_instruction = "IMPORTANT: Write question, options, explanation in VIETNAMESE." if input.language == "vi" else "Write in English."
+        
+        # Chuẩn bị context cho AI (gửi danh sách lỗi lên)
+        error_list_text = ""
+        for err in input.errors:
+            error_list_text += f"- ID {err.id}: Error '{err.error_type}' in sentence: '{err.original_text}'\n"
+
+        # ... (Đoạn trên giữ nguyên)
+
+        prompt_text = f"""
+        Act as an strict English Tutor for a Vietnamese student.
+        
+        Input Errors (Context):
+        {error_list_text}
+        
+        Task: Generate a multiple-choice quiz (Cloze Test style) to fix these errors.
+        
+        STRICT LANGUAGE RULES (CRITICAL):
+        1. **The Question Content**: The target English sentence MUST remain in **ENGLISH**. Do NOT translate the English sentence.
+        2. **The Question Instruction**: The question itself (e.g., "Chọn từ còn thiếu...") MUST be in **VIETNAMESE**.
+        3. **The Options**: MUST be in **ENGLISH** (the words to fill in).
+        4. **The Explanation**: MUST be in **VIETNAMESE**.
+
+        FORMATTING RULES:
+        1. Quote the specific phrase containing the error from the input sentence.
+        2. Replace the error part with `_______`.
+        3. Example Output Format:
+           - Question: "Trong câu 'She _______ to school yesterday', từ nào còn thiếu?" (Mix VI/EN)
+           - Options: ["go", "went", "gone", "going"] (EN)
+           - Explanation: "Vì có 'yesterday' nên ta dùng thì quá khứ 'went'." (VI)
+        
+        Generte the JSON response now.
+        """
+        
+        # ... (Đoạn dưới giữ nguyên)
+
+        response = genai_client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt_text,
+            config=types.GenerateContentConfig(
+                response_mime_type='application/json',
+                response_schema=BatchQuizResponse
+            )
+        )
+        
+        return response.parsed
+
+    except Exception as e:
+        print(f"========== LỖI BATCH QUIZ: {str(e)} ==========") 
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

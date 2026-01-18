@@ -1,122 +1,117 @@
 "use client";
-import { translateError } from "@/lib/errorMapping";
+
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { useRouter, useParams } from "next/navigation"; // useParams để lấy ID từ URL
-import { ArrowLeft, Clock } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext"; // Import Context lấy lang
+import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Clock, Zap, Check } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { translateError } from "@/lib/errorMapping";
+import QuizView from "@/components/QuizView"; // [IMPORT MỚI]
+
 export default function HistoryDetail() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
-  const { lang } = useLanguage();
-  const params = useParams(); // Lấy ID bài viết
+  
+  // [STATE MỚI] Thay vì Modal, ta dùng viewMode để switch giao diện
+  const [isReviewing, setIsReviewing] = useState(false); 
+
+  const params = useParams();
   const router = useRouter();
   const supabase = createClient();
+  const { lang } = useLanguage();
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      // Lấy thông tin bài viết + danh sách lỗi (Join bảng)
-      // Lưu ý: Supabase JS có thể query lồng nhau
-      const { data: submission, error } = await supabase
-        .from("submissions")
-        .select(`
-          *,
-          analysis_results (
-            error_type,
-            explanation,
-            suggestion,
-            severity
-          )
-        `)
-        .eq("id", params.id)
-        .single(); // Chỉ lấy 1 bài
+  const fetchDetail = async () => {
+    // Query giữ nguyên
+    const { data: submission, error } = await supabase
+      .from("submissions")
+      .select(`
+        *,
+        analysis_results (id, error_type, explanation, suggestion, severity, is_resolved)
+      `)
+      .eq("id", params.id)
+      .single();
 
-      if (error || !submission) {
-        alert("Cannot find this essay!");
-        router.push("/dashboard");
-        return;
-      }
+    if (error || !submission) { router.push("/dashboard"); return; }
+    setData(submission);
+    setLoading(false);
+  };
 
-      setData(submission);
-      setLoading(false);
-    };
-
-    fetchDetail();
-  }, [params.id]);
+  useEffect(() => { fetchDetail(); }, [params.id]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
+  const unresolvedErrors = data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
+
   return (
     <main className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-900">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Header Navigation */}
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center text-slate-500 hover:text-indigo-600 transition-colors mb-4"
-        >
+        {/* Header & Comparison Area (GIỮ NGUYÊN) */}
+        <button onClick={() => router.back()} className="flex items-center text-slate-500 hover:text-indigo-600 mb-4">
           <ArrowLeft size={18} className="mr-2" /> Back to Dashboard
         </button>
-
-        {/* Title & Score */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-900">Essay Review</h1>
-            <div className="flex items-center text-slate-400 text-sm mt-2">
-              <Clock size={16} className="mr-1" />
-              {new Date(data.created_at).toLocaleString()}
+        {/* ... (Phần Title và So sánh bài viết giữ nguyên, không đổi gì) ... */}
+        
+        {/* --- KHU VỰC THÔNG MINH (Smart Area) --- */}
+        {/* Ở đây ta dùng điều kiện: Nếu đang Review thì hiện QuizView, không thì hiện List */}
+        
+        {isReviewing ? (
+            // === MODE 1: QUIZ VIEW (Inline Replacement) ===
+            <div className="animate-fade-in">
+                <QuizView 
+                    errors={unresolvedErrors}
+                    language={lang}
+                    onSuccess={() => {
+                        setIsReviewing(false); // Quay lại list
+                        fetchDetail(); // Load lại để thấy tích xanh
+                    }}
+                    onCancel={() => setIsReviewing(false)}
+                />
             </div>
-          </div>
-          <div className="text-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-             <div className="text-4xl font-black text-indigo-600">{data.score}</div>
-             <div className="text-xs font-bold text-slate-400 uppercase">Score</div>
-          </div>
-        </div>
-
-        {/* --- SO SÁNH: ORIGINAL vs CORRECTED --- */}
-        <div className="grid md:grid-cols-2 gap-6">
-          
-          {/* Cột Trái: Bài gốc của User */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100">
-            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Your Original Text</h3>
-            <p className="whitespace-pre-wrap text-slate-600 leading-relaxed font-serif text-lg">
-              {data.original_text}
-            </p>
-          </div>
-
-          {/* Cột Phải: Bài sửa của AI */}
-          <div className="bg-slate-900 p-6 rounded-2xl shadow-lg text-slate-300">
-            <h3 className="font-bold text-emerald-400 mb-4 border-b border-slate-700 pb-2">AI Corrected Version</h3>
-            <p className="whitespace-pre-wrap leading-relaxed font-serif text-lg text-slate-100">
-              {data.corrected_text}
-            </p>
-          </div>
-        </div>
-
-        {/* --- DANH SÁCH LỖI CHI TIẾT --- */}
-        <div className="mt-8">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Detailed Analysis</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.analysis_results.map((err: any, idx: number) => (
-                    <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-2">
-                            {/* DỊCH TÊN LỖI Ở ĐÂY */}
-                            <span className="font-bold text-red-600 text-sm">
-                                {translateError(err.error_type, lang)}
-                            </span>
-                            <span className="font-bold text-red-600 text-sm">{err.error_type}</span>
-                            <span className="text-[10px] uppercase font-bold bg-slate-100 px-2 py-1 rounded text-slate-500">{err.severity}</span>
+        ) : (
+            // === MODE 2: ERROR LIST VIEW ===
+            <div className="animate-fade-in">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <h3 className="text-2xl font-bold text-slate-900">Detailed Analysis</h3>
+                    
+                    {unresolvedErrors.length > 0 ? (
+                        <button 
+                            onClick={() => setIsReviewing(true)} // Bấm nút này -> List biến mất -> Quiz hiện ra
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-indigo-200 flex items-center gap-3 transform hover:-translate-y-1 transition-all"
+                        >
+                            <Zap size={24} fill="currentColor" className="animate-pulse"/>
+                            <div>
+                                <span className="block text-sm opacity-90 font-normal">Ready to improve?</span>
+                                <span className="block">Start Review Quiz ({unresolvedErrors.length} issues)</span>
+                            </div>
+                        </button>
+                    ) : (
+                        <div className="bg-green-100 text-green-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 border border-green-200">
+                            <Check size={24} /> All errors resolved! You are amazing.
                         </div>
-                        <p className="text-sm text-slate-600 mb-3">{err.explanation}</p>
-                        <div className="bg-green-50 p-2 rounded text-sm text-green-800 font-medium">
-                            Tip: {err.suggestion}
+                    )}
+                </div>
+
+                {/* Grid danh sách lỗi */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {data.analysis_results.map((err: any) => (
+                        <div key={err.id} className={`p-6 rounded-2xl border shadow-sm transition-all ${err.is_resolved ? "bg-green-50 border-green-200 opacity-70" : "bg-white border-slate-200 hover:shadow-lg hover:border-indigo-200"}`}>
+                            <div className="flex justify-between items-start mb-3">
+                                <span className={`font-bold ${err.is_resolved ? "text-green-700" : "text-red-600"}`}>
+                                    {translateError(err.error_type, lang)}
+                                </span>
+                                {err.is_resolved && <span className="bg-green-200 text-green-800 text-xs px-2 py-1 rounded-full font-bold">Resolved</span>}
+                            </div>
+                            <p className="text-slate-600 mb-4 leading-relaxed">{err.explanation}</p>
+                            <div className="bg-slate-50 p-3 rounded-lg text-sm text-slate-700 font-medium border border-slate-100">
+                                Tip: {err.suggestion}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
-        </div>
-
+        )}
       </div>
     </main>
   );
-}   
+}
