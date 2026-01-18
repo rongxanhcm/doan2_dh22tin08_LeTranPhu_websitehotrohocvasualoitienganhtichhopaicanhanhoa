@@ -49,6 +49,32 @@ export const translations = {
     no_data: "No essays submitted yet.",
     high: "High",
     medium: "Medium",
+    // --- [MỚI] THÊM PHẦN NÀY CHO HISTORY ---
+    back_dashboard: "Back to Dashboard",
+    history_title: "Essay Analysis Result",
+    submitted_on: "Submitted on",
+    
+    orig_draft: "Your Original Draft",
+    ai_version: "AI Polished Version",
+    
+    practice_mode: "Practice Mode Active",
+    focusing_on: "Focusing on",
+    issues: "issues",
+    
+    analysis_title: "Analysis & Improvements",
+    found_points: "We found",
+    points_improve: "points to improve.",
+    still_have: "You still have",
+    fixes_learn: "fixes to learn.",
+    
+    rec_label: "Recommended",
+    start_quiz: "Start Review Quiz",
+    
+    mission_complete: "Mission Complete",
+    all_resolved: "All errors resolved!",
+    
+    resolved_label: "Resolved",
+    suggestion_label: "Suggestion",
   },
   vi: {
     title: "CoreFix Tiếng Anh",
@@ -100,6 +126,32 @@ export const translations = {
     no_data: "Chưa có bài nộp nào.",
     high: "Cao",
     medium: "Trung bình",
+    // --- [MỚI] THÊM PHẦN NÀY CHO HISTORY ---
+    back_dashboard: "Quay về Dashboard",
+    history_title: "Kết quả Phân tích Bài viết",
+    submitted_on: "Nộp ngày",
+    
+    orig_draft: "Bản nháp gốc của bạn",
+    ai_version: "Phiên bản AI nâng cấp",
+    
+    practice_mode: "Đang trong Chế độ Luyện tập",
+    focusing_on: "Đang tập trung vào",
+    issues: "vấn đề",
+    
+    analysis_title: "Phân tích & Cải thiện",
+    found_points: "Chúng tôi tìm thấy",
+    points_improve: "điểm cần cải thiện.",
+    still_have: "Bạn vẫn còn",
+    fixes_learn: "lỗi cần học.",
+    
+    rec_label: "Đề xuất",
+    start_quiz: "Bắt đầu Luyện tập",
+    
+    mission_complete: "Nhiệm vụ hoàn thành",
+    all_resolved: "Đã sửa sạch mọi lỗi!",
+    
+    resolved_label: "Đã sửa",
+    suggestion_label: "Gợi ý",
   }
 };
 

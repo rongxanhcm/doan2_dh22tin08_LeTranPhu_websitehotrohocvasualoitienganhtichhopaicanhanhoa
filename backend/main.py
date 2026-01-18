@@ -39,10 +39,11 @@ class EssayInput(BaseModel):
     language: str = "vi" # [SỬA 1]: Đổi "vn" thành "vi" cho khớp với logic bên dưới
 
 class ErrorDetail(BaseModel):
-    error_type: str = Field(description="Name of the grammar error (Must be in English Standard Terminology)")
+    error_type: str = Field(description="Name of the error (e.g., Spelling, Grammar)")
+    quote: str = Field(description="The EXACT substring from the original text that contains the error.") # <--- [MỚI]
     severity: str = Field(description="High or Medium")
-    explanation: str = Field(description="Why is it wrong?")
-    suggestion: str = Field(description="How to fix it?")
+    explanation: str = Field(description="Why it is wrong (in Vietnamese)")
+    suggestion: str = Field(description="How to fix it")
 
 class EssayAssessment(BaseModel):
     score: float = Field(description="Estimated IELTS score")
@@ -61,21 +62,26 @@ class QuizQuestion(BaseModel):
     correct_answer_index: int = Field(description="Index of the correct option (0-3)")
     explanation: str = Field(description="Explanation why the answer is correct")
 @app.post("/analyze")
+@app.post("/analyze")
 def analyze_essay(input: EssayInput):
     try:
-        # Cấu hình chỉ thị ngôn ngữ
+        # 1. Cấu hình chỉ thị ngôn ngữ
         lang_instruction = ""
-        # [LOGIC]: Nếu frontend gửi 'vi' hoặc mặc định là 'vi' thì sẽ vào đây
         if input.language == "vi":
             lang_instruction = "IMPORTANT: The 'text' input is English, but you must write 'explanation', 'suggestion', and 'general_feedback' in VIETNAMESE. Keep 'error_type' in English terminology."
         else:
             lang_instruction = "Write explanation and suggestion in English."
 
-        # [SỬA 2]: Thêm đoạn STRICT REQUIREMENT để ép tên lỗi chuẩn
+        # 2. Prompt "Thần thánh" (Đã thêm yêu cầu về QUOTE)
         prompt_text = f"""
         Act as an IELTS Writing Examiner. Analyze the following text and identify root grammatical errors.
         
         {lang_instruction}
+
+        CRITICAL RULES FOR 'quote':
+        1. The 'quote' field MUST be the EXACT substring copied from the student's text that contains the error.
+        2. Do NOT change capitalization or punctuation in the 'quote'.
+        3. If the error is a missing word, quote the word before OR after the missing spot (context).
 
         STRICT REQUIREMENT for 'error_type': 
         You must map all errors to one of these standard categories ONLY: 
@@ -85,8 +91,9 @@ def analyze_essay(input: EssayInput):
         Input text: "{input.text}"
         """
 
+        # 3. Gọi AI (Dùng 1.5 Flash cho ổn định JSON)
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash-lite', # [SỬA 3]: Dùng bản 1.5 cho ổn định (trừ khi bạn chắc chắn 2.5 chạy được)
+            model='gemini-2.5-flash-lite', 
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
@@ -96,7 +103,7 @@ def analyze_essay(input: EssayInput):
         
         result = response.parsed
 
-        # 2. LƯU VÀO DATABASE
+        # 4. LƯU VÀO DATABASE
         if input.user_id:
             try:
                 # A. Lưu vào bảng submissions
@@ -109,25 +116,32 @@ def analyze_essay(input: EssayInput):
                 }
                 
                 sub_response = supabase.table("submissions").insert(submission_data).execute()
-                submission_id = sub_response.data[0]['id']
-
-                # B. Lưu danh sách lỗi vào bảng analysis_results
-                errors_data = []
-                for err in result.core_errors:
-                    errors_data.append({
-                        "submission_id": submission_id,
-                        "error_type": err.error_type, # Giờ đây cái này luôn là chuẩn tiếng Anh
-                        "severity": err.severity,
-                        "explanation": err.explanation, # Cái này sẽ là Tiếng Việt
-                        "suggestion": err.suggestion   # Cái này sẽ là Tiếng Việt
-                    })
                 
-                if errors_data:
-                    supabase.table("analysis_results").insert(errors_data).execute()
-                    print(f"✅ Đã lưu thành công cho User {input.user_id}")
+                # Lấy ID vừa tạo (Check kỹ cấu trúc trả về của Supabase python)
+                if sub_response.data:
+                    submission_id = sub_response.data[0]['id']
+
+                    # B. Lưu danh sách lỗi vào bảng analysis_results
+                    errors_data = []
+                    for err in result.core_errors:
+                        errors_data.append({
+                            "submission_id": submission_id,
+                            "error_type": err.error_type,
+                            "severity": err.severity,
+                            "explanation": err.explanation,
+                            "suggestion": err.suggestion,
+                            "quote": err.quote  # <--- [QUAN TRỌNG]: Lưu quote vào DB
+                        })
+                    
+                    if errors_data:
+                        supabase.table("analysis_results").insert(errors_data).execute()
+                        print(f"✅ Đã lưu thành công Submission ID: {submission_id}")
+                else:
+                    print("⚠️ Không lấy được Submission ID từ Supabase")
 
             except Exception as db_error:
                 print(f"⚠️ Lỗi lưu Database: {db_error}")
+                traceback.print_exc() # In chi tiết lỗi để debug
 
         return result
 
