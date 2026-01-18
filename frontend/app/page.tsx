@@ -1,228 +1,108 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
-import { useLanguage } from "@/context/LanguageContext"; 
-import { translateError } from "@/lib/errorMapping"; // <--- [MỚI] IMPORT HÀM DỊCH LỖI
+import Link from "next/link";
+import { ArrowRight, CheckCircle, Zap, Globe, Shield } from "lucide-react";
 
-// --- Types ---
-interface ErrorDetail {
-  error_type: string;
-  severity: "High" | "Medium";
-  explanation: string;
-  suggestion: string;
-}
-
-interface EssayAssessment {
-  score: number;
-  general_feedback: string;
-  core_errors: ErrorDetail[];
-  corrected_text: string;
-}
-
-export default function Home() {
-  const [inputText, setInputText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<EssayAssessment | null>(null);
-  
-  const [user, setUser] = useState<any>(null);
-  const router = useRouter();
-  const supabase = createClient();
-  
-  const { t, lang, setLang } = useLanguage(); 
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    checkUser();
-  }, []);
-
-  const toggleLanguage = () => {
-    setLang(lang === "en" ? "vi" : "en");
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.refresh();
-  };
-
-  const handleAnalyze = async () => {
-    if (!inputText.trim()) return;
-
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const currentUserId = user?.id || null; 
-
-      const response = await fetch("http://localhost:8000/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-            text: inputText, 
-            user_id: currentUserId,
-            language: lang 
-        }),
-      });
-
-      if (!response.ok) throw new Error("Server connection error");
-
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      alert("Error occurred. Please try again!");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-900">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      
+      {/* Navbar */}
+      <nav className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+        <div className="flex items-center gap-2 font-black text-2xl text-indigo-600 tracking-tighter">
+          <Zap fill="currentColor" /> CoreFix
+        </div>
+        <div className="flex gap-4">
+          <Link href="/login" className="hidden md:block px-5 py-2.5 font-bold text-slate-600 hover:text-indigo-600 transition-colors">
+            Log in
+          </Link>
+          {/* Nút này dẫn vào trang Essay cũ của bạn */}
+          <Link href="/analyze" className="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+            Start Writing
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <header className="max-w-5xl mx-auto px-6 py-20 md:py-32 text-center animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6 border border-indigo-100">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+          </span>
+          AI-Powered IELTS Writing Assistant
+        </div>
         
-        {/* --- HEADER --- */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
-          <div className="flex items-center gap-4">
-             <button 
-               onClick={toggleLanguage}
-               className="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold transition-colors border border-slate-200"
-             >
-               {lang === "en" ? "🇺🇸 EN" : "🇻🇳 VN"}
-             </button>
-             
-             <div className="font-bold text-slate-700 hidden sm:block">
-               {user ? `👋 ${user.email}` : t.guest_msg} 
+        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 mb-8 leading-tight tracking-tight">
+          Master Writing with <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-emerald-500">
+            Instant AI Feedback
+          </span>
+        </h1>
+        
+        <p className="text-lg md:text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+          Stop making the same grammatical mistakes. CoreFix analyzes your essays, detects root causes, and generates personalized quizzes to help you improve instantly.
+        </p>
+
+        <div className="flex flex-col md:flex-row justify-center gap-4">
+           {/* Dẫn vào trang Analyze */}
+           <Link href="/analyze" className="px-8 py-4 bg-slate-900 text-white text-lg font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl hover:-translate-y-1">
+             Try it Free <ArrowRight size={20}/>
+           </Link>
+           {/* Dẫn vào Dashboard demo (nếu chưa login thì sẽ bị đẩy về login - đúng quy trình) */}
+           <Link href="/dashboard" className="px-8 py-4 bg-white text-slate-700 text-lg font-bold rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all">
+             View Dashboard
+           </Link>
+        </div>
+
+        {/* Demo Image Mockup - Bạn có thể thay bằng ảnh chụp màn hình thật sau này */}
+        <div className="mt-16 p-2 bg-slate-200 rounded-3xl shadow-2xl overflow-hidden max-w-4xl mx-auto transform hover:scale-[1.01] transition-transform duration-500">
+           <div className="bg-white rounded-2xl overflow-hidden border border-slate-300 h-64 md:h-[400px] flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+             <div className="text-center">
+                <p className="text-slate-400 font-bold tracking-widest text-sm mb-2">PREVIEW</p>
+                <h3 className="text-slate-900 font-extrabold text-2xl">Your Analytics Dashboard</h3>
              </div>
-          </div>
-
-          <div className="flex gap-2">
-            {user ? (
-              <>
-                <button 
-                  onClick={() => router.push("/dashboard")}
-                  className="text-sm px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 font-bold transition-colors"
-                >
-                  {t.dashboard_btn}
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="text-sm text-red-500 hover:text-red-700 font-medium px-2"
-                >
-                  {t.logout}
-                </button>
-              </>
-            ) : (
-              <button 
-                onClick={() => router.push("/login")}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-              >
-                {t.login_msg}
-              </button>
-            )}
-          </div>
+           </div>
         </div>
+      </header>
 
-        {/* --- TITLE --- */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-            {t.title}
-          </h1>
-          <p className="text-slate-500">{t.subtitle}</p>
-        </div>
+      {/* Features Grid */}
+      <section className="bg-white py-20 border-t border-slate-100">
+         <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12">
+            <FeatureCard 
+              icon={<Zap className="text-yellow-500"/>}
+              title="Instant Analysis"
+              desc="Get detailed feedback on Grammar, Vocabulary, and Coherence in seconds."
+            />
+            <FeatureCard 
+              icon={<Shield className="text-indigo-500"/>}
+              title="Personalized Quizzes"
+              desc="AI generates quizzes based on YOUR specific mistakes. Fix it to learn it."
+            />
+            <FeatureCard 
+              icon={<Globe className="text-emerald-500"/>}
+              title="Bilingual Support"
+              desc="Understand complex grammatical concepts with explanations in Vietnamese."
+            />
+         </div>
+      </section>
 
-        {/* --- INPUT --- */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="w-full h-48 p-4 bg-slate-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 resize-none text-lg text-slate-700 placeholder:text-slate-400"
-            placeholder={t.placeholder}
-          />
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || !inputText}
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-lg transition-all 
-              ${loading 
-                ? "bg-slate-300 text-slate-500 cursor-not-allowed" 
-                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-              }`}
-          >
-            {loading ? t.button_analyzing : t.button_analyze}
-          </button>
-        </div>
-
-        {/* --- RESULT SECTION --- */}
-        {result && (
-          <div className="space-y-6 animate-fade-in-up">
-            
-            {/* SCORE & FEEDBACK */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center">
-                <span className="text-slate-400 text-sm font-semibold uppercase">{t.score_label}</span>
-                <div className="text-6xl font-black text-indigo-600 my-2">{result.score}</div>
-                <div className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
-                  Estimated
-                </div>
-              </div>
-              <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="font-bold text-lg mb-2 text-slate-800">{t.feedback_label}</h3>
-                {/* general_feedback đã được Backend trả về đúng ngôn ngữ */}
-                <p className="text-slate-600 leading-relaxed">{result.general_feedback}</p>
-              </div>
-            </div>
-
-            {/* CORE ERRORS - ĐÃ SỬA PHẦN DỊCH */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-xl text-slate-900">{t.errors_label}</h3>
-              {result.core_errors.map((err, index) => (
-                <div key={index} className="bg-white p-5 rounded-xl border-l-4 border-l-red-500 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-2">
-                    {/* [MỚI] Dùng hàm translateError */}
-                    <h4 className="font-bold text-red-600 text-lg">
-                        {translateError(err.error_type, lang)}
-                    </h4>
-                    
-                    {/* [MỚI] Dịch badge mức độ */}
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase 
-                      ${err.severity === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {t.priority}: {err.severity === 'High' ? t.high : t.medium}
-                    </span>
-                  </div>
-                  
-                  {/* explanation đã được Backend trả về đúng ngôn ngữ */}
-                  <p className="text-slate-600 mb-2">
-                    <span className="font-semibold text-slate-900">{t.why}:</span> {err.explanation}
-                  </p>
-                  
-                  {/* suggestion đã được Backend trả về đúng ngôn ngữ */}
-                  <div className="bg-green-50 p-3 rounded-lg text-sm text-green-800">
-                    <span className="font-bold">{t.fix}: </span> {err.suggestion}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* CORRECTED VERSION */}
-            <div className="bg-slate-900 text-slate-200 p-8 rounded-2xl shadow-xl">
-              <h3 className="text-emerald-400 font-bold text-lg mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                {t.fix_label}
-              </h3>
-              <p className="leading-loose text-lg font-light opacity-90 whitespace-pre-wrap">
-                {result.corrected_text}
-              </p>
-            </div>
-
-          </div>
-        )}
-      </div>
-    </main>
+      {/* Footer */}
+      <footer className="bg-slate-50 py-12 text-center text-slate-400 text-sm border-t border-slate-200">
+        <p>© 2024 CoreFix. Built for IELTS Learners.</p>
+      </footer>
+    </div>
   );
+}
+
+function FeatureCard({ icon, title, desc }: any) {
+  return (
+    <div className="text-left space-y-4 p-6 rounded-2xl hover:bg-slate-50 transition-colors">
+      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center border border-slate-100 shadow-sm">
+        {icon}
+      </div>
+      <h3 className="font-bold text-xl text-slate-900">{title}</h3>
+      <p className="text-slate-500 leading-relaxed">{desc}</p>
+    </div>
+  )
 }

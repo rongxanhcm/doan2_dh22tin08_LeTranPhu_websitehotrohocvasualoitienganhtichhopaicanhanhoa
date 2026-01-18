@@ -4,29 +4,30 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { TrendingUp, AlertTriangle, FileText, Activity } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext"; // <--- IMPORT MỚI
+import { TrendingUp, AlertTriangle, FileText, Activity, ArrowRight, CheckCircle, Target } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 import { translateError } from "@/lib/errorMapping";
+import { DashboardSkeleton } from "@/components/Skeleton";
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalEssays: 0,
     avgScore: 0,
     topErrors: [] as { name: string; count: number }[],
-    recentActivity: [] as any[]
+    recentActivity: [] as any[],
+    priorityError: null as any, 
+    resolutionRate: 0,
+    unresolvedCount: 0
   });
   
   const router = useRouter();
   const supabase = createClient();
-  const { t, lang, setLang } = useLanguage(); // <--- SỬ DỤNG CONTEXT
+  const { t, lang, setLang } = useLanguage();
 
   useEffect(() => {     
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
 
       const { data: submissions } = await supabase
         .from("submissions")
@@ -42,32 +43,67 @@ export default function Dashboard() {
       const submissionIds = submissions.map(s => s.id);
       const { data: errors } = await supabase
         .from("analysis_results")
-        .select("error_type")
+        .select("error_type, is_resolved, submission_id")
         .in("submission_id", submissionIds);
 
       const totalScore = submissions.reduce((acc, curr) => acc + (curr.score || 0), 0);
       const avgScore = (totalScore / submissions.length).toFixed(1);
 
-        const errorCounts: Record<string, number> = {};
-        errors?.forEach((err) => {
+      // Đếm lỗi cho biểu đồ
+      const errorCounts: Record<string, number> = {};
+      errors?.forEach((err) => {
         const type = err.error_type.trim(); 
         errorCounts[type] = (errorCounts[type] || 0) + 1;
       });
 
-        const topErrors = Object.entries(errorCounts)
+      const topErrors = Object.entries(errorCounts)
         .map(([name, count]) => ({ 
-            name: translateError(name, lang), // <--- DỊCH TẠI ĐÂY
-            originalName: name, // Giữ lại tên gốc nếu cần logic sau này
+            name: translateError(name, lang),
+            originalName: name,
             count 
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
+      // Tìm lỗi ưu tiên (Logic cũ giữ nguyên)
+      const errorStats: Record<string, { total: number, resolved: number, latestUnresolvedId: string | null }> = {};
+      errors?.forEach((err) => {
+        const type = err.error_type.trim();
+        if (!errorStats[type]) errorStats[type] = { total: 0, resolved: 0, latestUnresolvedId: null };
+        errorStats[type].total += 1;
+        if (err.is_resolved) {
+            errorStats[type].resolved += 1;
+        } else {
+            if (!errorStats[type].latestUnresolvedId) errorStats[type].latestUnresolvedId = err.submission_id;
+        }
+      });
+
+      let maxUnresolved = -1;
+      let priorityErrObj = null;
+
+      Object.entries(errorStats).forEach(([type, stat]) => {
+          const unresolvedCount = stat.total - stat.resolved;
+          if (unresolvedCount > maxUnresolved && unresolvedCount > 0) {
+              maxUnresolved = unresolvedCount;
+              priorityErrObj = {
+                  type: type,
+                  displayType: translateError(type, lang),
+                  total: stat.total,
+                  resolved: stat.resolved,
+                  unresolved: unresolvedCount,
+                  targetId: stat.latestUnresolvedId
+              };
+          }
+      });
+
       setStats({
         totalEssays: submissions.length,
         avgScore: Number(avgScore),
         topErrors,
-        recentActivity: submissions.slice(0, 3) 
+        recentActivity: submissions.slice(0, 3),
+        priorityError: priorityErrObj,
+        resolutionRate: priorityErrObj ? Math.round((priorityErrObj.resolved / priorityErrObj.total) * 100) : 0,
+        unresolvedCount: maxUnresolved
       });
       
       setLoading(false);
@@ -76,37 +112,24 @@ export default function Dashboard() {
     fetchData();
   }, [lang]);
 
-  // Hàm toggle ngôn ngữ
-  const toggleLanguage = () => {
-    setLang(lang === "en" ? "vi" : "en");
-  };
+  const toggleLanguage = () => setLang(lang === "en" ? "vi" : "en");
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading analytics...</div>;
-
+if (loading) return <DashboardSkeleton />;
   return (
     <main className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-900">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header Dashboard */}
+        {/* Header */}
         <div className="flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900">{t.dash_title}</h1>
             <p className="text-slate-500 mt-1">{t.dash_subtitle}</p>
           </div>
-          
           <div className="flex gap-3">
-             {/* Nút Đổi Ngôn Ngữ */}
-             <button 
-               onClick={toggleLanguage}
-               className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold transition-colors"
-             >
+             <button onClick={toggleLanguage} className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold transition-colors">
                {lang === "en" ? "🇻🇳 VN" : "🇺🇸 EN"}
              </button>
-
-             <button 
-              onClick={() => router.push("/")}
-              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition-colors"
-            >
+             <button onClick={() => router.push("/")} className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-semibold transition-colors">
               ← {t.back_home}
             </button>
           </div>
@@ -114,91 +137,44 @@ export default function Dashboard() {
 
         {/* 1. Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1 */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl"><FileText size={24} /></div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:-translate-y-1 transition-transform">
+            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0"><FileText size={24} /></div>
             <div>
               <p className="text-slate-500 text-sm font-medium">{t.total_essays}</p>
               <h3 className="text-3xl font-bold text-slate-900">{stats.totalEssays}</h3>
             </div>
           </div>
 
-          {/* Card 2 */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl"><TrendingUp size={24} /></div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:-translate-y-1 transition-transform">
+            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl flex-shrink-0"><TrendingUp size={24} /></div>
             <div>
               <p className="text-slate-500 text-sm font-medium">{t.avg_score}</p>
               <h3 className="text-3xl font-bold text-slate-900">{stats.avgScore}</h3>
             </div>
           </div>
 
-          {/* Card 3 */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-            <div className="p-3 bg-red-100 text-red-600 rounded-xl"><AlertTriangle size={24} /></div>
-            <div>
+          {/* [ĐÃ SỬA]: Ô Critical Issues - Bỏ truncate, cho phép xuống dòng */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:-translate-y-1 transition-transform">
+            <div className="p-3 bg-red-100 text-red-600 rounded-xl flex-shrink-0"><AlertTriangle size={24} /></div>
+            <div className="flex-1 min-w-0"> {/* Thêm min-w-0 để flex child co giãn đúng */}
               <p className="text-slate-500 text-sm font-medium">{t.critical_issues}</p>
-              <h3 className="text-3xl font-bold text-slate-900">
+              <h3 className="text-2xl font-bold text-slate-900 break-words leading-tight"> 
+                {/* Giảm xuống text-2xl, thêm break-words và leading-tight */}
                 {stats.topErrors.length > 0 ? stats.topErrors[0].name : t.none}
               </h3>
             </div>
           </div>
         </div>
 
-        {/* 4. RECENT HISTORY LIST */}
-        <div className="col-span-1 md:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mt-6">
-          <h3 className="font-bold text-lg text-slate-800 mb-4">{t.recent_subs}</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 text-sm">
-                  <th className="pb-3 font-medium">{t.table_date}</th>
-                  <th className="pb-3 font-medium">{t.table_score}</th>
-                  <th className="pb-3 font-medium">{t.table_feedback}</th>
-                  <th className="pb-3 font-medium text-right">{t.table_action}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {stats.recentActivity.map((item: any) => (
-                  <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
-                    <td className="py-4 text-slate-600">
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold 
-                        ${item.score >= 6.0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {item.score}
-                      </span>
-                    </td>
-                    <td className="py-4 text-slate-500 text-sm max-w-md truncate">
-                      {t.review_hint}
-                    </td>
-                    <td className="py-4 text-right">
-                      <button 
-                        onClick={() => router.push(`/history/${item.id}`)}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        {t.view_details} →
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {stats.recentActivity.length === 0 && (
-              <p className="text-center text-slate-400 py-8">{t.no_data}</p>
-            )}
-          </div>
-        </div>
-
+        {/* ... (Các phần còn lại giữ nguyên không đổi) ... */}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* 2. MAIN CHART */}
+          {/* Chart */}
           <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center gap-2">
               <Activity size={20} className="text-indigo-500"/> 
               {t.top_errors}
             </h3>
-            
             {stats.topErrors.length > 0 ? (
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -215,40 +191,89 @@ export default function Dashboard() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-slate-400">
-                {t.no_data}
-              </div>
+              <div className="h-64 flex items-center justify-center text-slate-400">{t.no_data}</div>
             )}
-            <p className="text-xs text-slate-400 mt-4 text-center">
-              {t.chart_note}
-            </p>
           </div>
 
-          {/* 3. Personalized Learning Plan */}
-          <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+          {/* AI Path */}
+          <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-[60px] opacity-20 group-hover:opacity-30 transition-opacity"></div>
             <div>
-              <h3 className="font-bold text-lg text-white mb-4">🎯 {t.ai_path}</h3>
-              {stats.topErrors.length > 0 ? (
-                <div className="space-y-4">
-                  <p className="text-slate-300 text-sm">{t.path_desc}</p>
-                  <div className="p-3 bg-white/10 rounded-lg border border-white/10">
-                    <span className="text-xs text-indigo-300 font-bold uppercase tracking-wider">{t.priority}</span>
-                    <p className="font-bold text-lg mt-1">{stats.topErrors[0].name}</p>
-                    <button className="mt-3 w-full py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-bold transition-colors">
-                      {t.start_lesson}
-                    </button>
+              <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2">
+                <Target className="text-indigo-400"/> {t.ai_path}
+              </h3>
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-6">Focus of the week</p>
+
+              {stats.priorityError ? (
+                <div className="space-y-5 relative z-10">
+                  <div>
+                    <span className="text-xs font-bold bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">High Priority</span>
+                    <p className="font-black text-2xl mt-2 leading-tight">{stats.priorityError.displayType}</p>
+                    <p className="text-slate-400 text-sm mt-1">
+                        Total occurrences: <span className="text-white font-bold">{stats.priorityError.total}</span>
+                    </p>
                   </div>
+                  <div>
+                      <div className="flex justify-between text-xs font-bold mb-1">
+                          <span className="text-emerald-400">Fixed: {stats.priorityError.resolved}</span>
+                          <span className="text-red-400">Remaining: {stats.priorityError.unresolved}</span>
+                      </div>
+                      <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-1000" style={{ width: `${stats.resolutionRate}%` }} />
+                      </div>
+                      <p className="text-right text-xs text-slate-400 mt-1">{stats.resolutionRate}% Resolved</p>
+                  </div>
+                  <button 
+                    onClick={() => router.push(`/history/${stats.priorityError.targetId}`)}
+                    className="w-full py-3 bg-white hover:bg-indigo-50 text-slate-900 rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center gap-2"
+                  >
+                    Fix {stats.priorityError.unresolved} issues now <ArrowRight size={16}/>
+                  </button>
                 </div>
               ) : (
-                <p className="text-slate-400 text-sm">{t.more_data_needed}</p>
+                <div className="flex flex-col items-center justify-center h-48 text-center relative z-10">
+                    <CheckCircle size={48} className="text-emerald-400 mb-3"/>
+                    <p className="font-bold text-lg">All caught up!</p>
+                    <p className="text-slate-400 text-sm">No critical errors found. Keep writing to analyze more.</p>
+                </div>
               )}
-            </div>
-            
-            <div className="mt-6 pt-6 border-t border-white/10">
-               <p className="text-xs text-slate-500">{t.next_milestone}</p>
             </div>
           </div>
         </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 className="font-bold text-lg text-slate-800 mb-4">{t.recent_subs}</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 text-sm">
+                  <th className="pb-3 font-medium pl-2">{t.table_date}</th>
+                  <th className="pb-3 font-medium">{t.table_score}</th>
+                  <th className="pb-3 font-medium">{t.table_feedback}</th>
+                  <th className="pb-3 font-medium text-right pr-2">{t.table_action}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {stats.recentActivity.map((item: any) => (
+                  <tr key={item.id} className="group hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => router.push(`/history/${item.id}`)}>
+                    <td className="py-4 text-slate-600 pl-2 font-medium">{new Date(item.created_at).toLocaleDateString()}</td>
+                    <td className="py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${item.score >= 6.0 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {item.score}
+                      </span>
+                    </td>
+                    <td className="py-4 text-slate-500 text-sm max-w-md truncate">{t.review_hint}</td>
+                    <td className="py-4 text-right pr-2">
+                      <ArrowRight size={18} className="ml-auto text-slate-300 group-hover:text-indigo-600 transition-colors"/>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </main>
   );
