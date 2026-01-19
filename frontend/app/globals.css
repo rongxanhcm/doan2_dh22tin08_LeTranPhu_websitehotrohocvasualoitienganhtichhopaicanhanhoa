@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* app/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- THÊM ĐOẠN NÀY --- */
+
+/* Chỉ áp dụng cho màn hình Laptop (dưới 1600px) */

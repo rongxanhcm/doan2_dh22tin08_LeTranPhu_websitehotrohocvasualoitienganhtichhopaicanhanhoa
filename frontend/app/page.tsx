@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image"; // [QUAN TRỌNG] Import Image của Next.js
+import Image from "next/image"; 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
 import { 
@@ -83,7 +83,8 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <header className="max-w-5xl mx-auto px-6 py-20 md:py-28 text-center animate-fade-in-up">
+      {/* FIX: Giảm padding mặc định (py-12) để gọn hơn trên laptop, màn to thì tăng lên (md:py-24) */}
+      <header className="max-w-5xl mx-auto px-6 py-12 md:py-24 text-center animate-fade-in-up">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6 border border-indigo-100">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -126,33 +127,35 @@ export default function LandingPage() {
            )}
         </div>
 
-        {/* --- DEMO IMAGE (THAY THẾ PLACEHOLDER) --- */}
+        {/* --- DEMO IMAGE (ĐÃ FIX LỖI CHE CHỮ) --- */}
+        {/* FIX: Bỏ aspect-video, để chiều cao tự động giãn theo ảnh */}
         <div className="mt-16 p-2 bg-slate-200 rounded-3xl shadow-2xl overflow-hidden max-w-5xl mx-auto transform hover:scale-[1.01] transition-transform duration-500">
-           <div className="bg-white rounded-2xl overflow-hidden border border-slate-300 relative aspect-video">
-             {/* [BẠN CẦN CÓ FILE dashboard-demo.png TRONG FOLDER PUBLIC] */}
+           <div className="bg-white rounded-2xl overflow-hidden border border-slate-300">
+             {/* FIX: Bỏ fill. Sử dụng width/height và w-full h-auto.
+                Cách này buộc ảnh phải chiếm không gian thật trong DOM, không thể đè lên chữ.
+             */}
              <Image 
                 src="/dashboard-demo.png" 
                 alt="CoreFix Dashboard Preview"
-                fill
-                className="object-cover object-top"
+                width={1280} 
+                height={720}
+                className="w-full h-auto object-cover"
                 priority
              />
-             {/* Fallback nếu chưa có ảnh (Xóa đoạn này khi đã có ảnh) */}
-             {/* <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-bold bg-slate-50">
-                [ Please add dashboard-demo.png to public folder ]
-             </div> */}
            </div>
         </div>
       </header>
 
-      {/* --- HOW IT WORKS (NEW SECTION) --- */}
+      {/* {/* --- HOW IT WORKS (FIXED LAYOUT) --- */}
       <section className="py-20 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6 text-center">
             <h2 className="text-3xl font-extrabold text-slate-900 mb-12">How to master IELTS Writing?</h2>
             
-            <div className="grid md:grid-cols-3 gap-8 relative">
-                {/* Đường nối */}
-                <div className="hidden md:block absolute top-8 left-[20%] right-[20%] h-0.5 bg-slate-100 -z-10"></div>
+            {/* FIX: Sử dụng md:grid-cols-3 để ép 3 cột ngay từ màn hình Tablet/Laptop */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                
+                {/* Đường nối (chỉ hiện khi màn hình đủ rộng để chia 3 cột) */}
+                <div className="hidden md:block absolute top-8 left-[15%] right-[15%] h-0.5 bg-slate-100 -z-10"></div>
 
                 {/* Step 1 */}
                 <div className="bg-white p-6 relative group">
@@ -183,7 +186,6 @@ export default function LandingPage() {
             </div>
         </div>
       </section>
-
       {/* --- FEATURES GRID --- */}
       <section className="bg-slate-50 py-20 border-t border-slate-200">
          <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8">
