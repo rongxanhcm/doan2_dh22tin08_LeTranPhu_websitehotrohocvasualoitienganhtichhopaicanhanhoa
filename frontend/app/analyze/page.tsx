@@ -4,7 +4,63 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext"; 
-import { translateError } from "@/lib/errorMapping"; // <--- [MỚI] IMPORT HÀM DỊCH LỖI
+import { translateError } from "@/lib/errorMapping";
+import { Zap, Shuffle, Lightbulb } from "lucide-react"; 
+
+// --- 1. SHORT TOPIC POOL (KHO ĐỀ NGẮN GỌN - DỄ VIẾT) ---
+const SHORT_TOPICS = [
+  "Should students be required to wear uniforms?",
+  "Is technology making us lazy?",
+  "Money cannot buy happiness. Do you agree?",
+  "City life vs Countryside life: Which is better?",
+  "Should public transport be free for everyone?",
+  "Is online learning better than traditional classrooms?",
+  "Should children be allowed to own smartphones?",
+  "Working from home vs Working at the office.",
+  "Should the government ban junk food?",
+  "Is tourism good or bad for a country?",
+  "Should zoos be banned?",
+  "Health is more important than wealth.",
+  "Do we rely too much on the internet?",
+  "Should university education be free?",
+  "Is it better to travel alone or with friends?",
+  "Should celebrities be role models for young people?",
+  "The benefits of reading books daily.",
+  "Should video games be considered a sport?",
+  "Environmental protection is everyone's responsibility.",
+  "Is social media bringing us closer or driving us apart?",
+  "Should homework be reduced for students?",
+  "Is fast food harmful to our health?",
+  "Should students have part-time jobs?",
+  "Is success defined by money?",
+  "Should exams be replaced by projects?",
+  "Is living abroad better than living in your home country?",
+  "Should plastic bags be banned?",
+  "Is watching TV a waste of time?",
+  "Should animals be used for scientific research?",
+  "Is failure necessary for success?",
+  "Should school start later in the morning?",
+  "Is online shopping better than shopping in stores?",
+  "Should smoking be banned in public places?",
+  "Is physical exercise essential for everyone?",
+  "Should students learn financial management at school?",
+  "Is technology replacing human interaction?",
+  "Should parents control children's screen time?",
+  "Is studying alone more effective than studying in groups?",
+  "Should public exams be made easier?",
+  "Is competition good or bad for students?",
+  "Should people care more about mental health?",
+  "Is it better to save money or spend money?",
+  "Should students wear casual clothes at school?",
+  "Is climate change the biggest threat to humanity?",
+  "Should art and music be compulsory subjects in school?",
+  "Is learning English necessary for everyone?",
+  "Should people limit their use of social media?",
+  "Is living in a big family better than living alone?",
+  "Should people work for passion or salary?",
+  "Is technology improving education?"
+
+];
 
 // --- Types ---
 interface ErrorDetail {
@@ -12,6 +68,7 @@ interface ErrorDetail {
   severity: "High" | "Medium";
   explanation: string;
   suggestion: string;
+  quote: string;
 }
 
 interface EssayAssessment {
@@ -21,10 +78,11 @@ interface EssayAssessment {
   corrected_text: string;
 }
 
-export default function Home() {
+export default function AnalyzePage() {
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EssayAssessment | null>(null);
+  const [currentTopic, setCurrentTopic] = useState(""); 
   
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
@@ -32,13 +90,24 @@ export default function Home() {
   
   const { t, lang, setLang } = useLanguage(); 
 
+  const MIN_WORDS = 20;
+  const wordCount = inputText.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+  // --- 2. EFFECT: LOAD USER & RANDOM TOPIC ---
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
     };
     checkUser();
+    randomizeTopic(); 
   }, []);
+
+  // --- 3. HÀM RANDOM TOPIC ---
+  const randomizeTopic = () => {
+    const randomIndex = Math.floor(Math.random() * SHORT_TOPICS.length);
+    setCurrentTopic(SHORT_TOPICS[randomIndex]);
+  };
 
   const toggleLanguage = () => {
     setLang(lang === "en" ? "vi" : "en");
@@ -71,7 +140,20 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok) throw new Error("Server connection error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 429) {
+            alert(`⚠️ ${errorData.detail}`); 
+            setLoading(false);
+            return;
+        }
+        if (response.status === 400) {
+            alert(`⚠️ ${errorData.detail}`);
+            setLoading(false);
+            return;
+        }
+        throw new Error("Server connection error");
+      }
 
       const data = await response.json();
       setResult(data);
@@ -137,24 +219,58 @@ export default function Home() {
           <p className="text-slate-500">{t.subtitle}</p>
         </div>
 
-        {/* --- INPUT --- */}
+        {/* --- TOPIC SUGGESTION CARD (Gọn gàng hơn) --- */}
+        <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl relative group hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2 text-indigo-700 font-bold uppercase tracking-wider text-xs">
+                    <Lightbulb size={16} /> Idea for you
+                </div>
+                <button 
+                    onClick={randomizeTopic}
+                    className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 text-xs font-bold bg-white px-3 py-1.5 rounded-full shadow-sm hover:shadow transition-all"
+                    title="Get another topic"
+                >
+                    <Shuffle size={14} /> Change Topic
+                </button>
+            </div>
+            <p className="text-xl font-bold text-slate-800 leading-snug font-serif">
+                "{currentTopic}"
+            </p>
+        </div>
+
+        {/* --- INPUT AREA --- */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="w-full h-48 p-4 bg-slate-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 resize-none text-lg text-slate-700 placeholder:text-slate-400"
-            placeholder={t.placeholder}
-          />
+          <div className="relative">
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className="w-full h-64 p-4 bg-slate-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 resize-none text-lg text-slate-700 placeholder:text-slate-400 font-serif leading-relaxed"
+                placeholder={t.placeholder}
+              />
+              
+              <div className={`absolute bottom-4 right-4 text-xs font-bold px-2 py-1 rounded transition-colors ${
+                  wordCount < MIN_WORDS ? "bg-red-100 text-red-500" : "bg-green-100 text-green-600"
+              }`}>
+                  {wordCount} / {MIN_WORDS} words
+              </div>
+          </div>
+
           <button
             onClick={handleAnalyze}
-            disabled={loading || !inputText}
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-lg transition-all 
-              ${loading 
-                ? "bg-slate-300 text-slate-500 cursor-not-allowed" 
-                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+            disabled={loading || wordCount < MIN_WORDS}
+            className={`mt-4 w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2
+              ${(loading || wordCount < MIN_WORDS)
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
+                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:-translate-y-1"
               }`}
           >
-            {loading ? t.button_analyzing : t.button_analyze}
+            {loading ? (
+                t.button_analyzing
+            ) : wordCount < MIN_WORDS ? (
+                <span>Write {MIN_WORDS - wordCount} more words...</span>
+            ) : (
+                <>{t.button_analyze} <Zap size={20} fill="currentColor" className="text-yellow-400"/></>
+            )}
           </button>
         </div>
 
@@ -173,35 +289,30 @@ export default function Home() {
               </div>
               <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <h3 className="font-bold text-lg mb-2 text-slate-800">{t.feedback_label}</h3>
-                {/* general_feedback đã được Backend trả về đúng ngôn ngữ */}
                 <p className="text-slate-600 leading-relaxed">{result.general_feedback}</p>
               </div>
             </div>
 
-            {/* CORE ERRORS - ĐÃ SỬA PHẦN DỊCH */}
+            {/* CORE ERRORS */}
             <div className="space-y-4">
               <h3 className="font-bold text-xl text-slate-900">{t.errors_label}</h3>
               {result.core_errors.map((err, index) => (
                 <div key={index} className="bg-white p-5 rounded-xl border-l-4 border-l-red-500 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
-                    {/* [MỚI] Dùng hàm translateError */}
                     <h4 className="font-bold text-red-600 text-lg">
                         {translateError(err.error_type, lang)}
                     </h4>
                     
-                    {/* [MỚI] Dịch badge mức độ */}
                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase 
                       ${err.severity === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
                       {t.priority}: {err.severity === 'High' ? t.high : t.medium}
                     </span>
                   </div>
                   
-                  {/* explanation đã được Backend trả về đúng ngôn ngữ */}
                   <p className="text-slate-600 mb-2">
                     <span className="font-semibold text-slate-900">{t.why}:</span> {err.explanation}
                   </p>
                   
-                  {/* suggestion đã được Backend trả về đúng ngôn ngữ */}
                   <div className="bg-green-50 p-3 rounded-lg text-sm text-green-800">
                     <span className="font-bold">{t.fix}: </span> {err.suggestion}
                   </div>
@@ -212,12 +323,21 @@ export default function Home() {
             {/* CORRECTED VERSION */}
             <div className="bg-slate-900 text-slate-200 p-8 rounded-2xl shadow-xl">
               <h3 className="text-emerald-400 font-bold text-lg mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <Zap size={20} fill="currentColor"/>
                 {t.fix_label}
               </h3>
-              <p className="leading-loose text-lg font-light opacity-90 whitespace-pre-wrap">
+              <p className="leading-loose text-lg font-light opacity-90 whitespace-pre-wrap font-serif">
                 {result.corrected_text}
               </p>
+            </div>
+
+            <div className="text-center pt-4">
+                <button 
+                    onClick={() => router.push("/dashboard")}
+                    className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                    View Detailed Analysis in Dashboard →
+                </button>
             </div>
 
           </div>
