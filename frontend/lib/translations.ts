@@ -19,7 +19,21 @@ export const translations = {
     dash_title: "Your Learning Hub",
     dash_subtitle: "Track your progress and identify root causes.",
     back_home: "Back to Practice",
+    // --- [MỚI] THÊM CHO DASHBOARD NÂNG CẤP ---
+    areas_improvement: "Areas for Improvement",
+    mistakes_count: "mistakes",           // Ví dụ: 5 mistakes
+    review_lesson_btn: "Review Lesson & Rules",
     
+    focus_week: "Focus of the week",
+    high_priority: "High Priority",
+    total_occurrences: "Total occurrences:",
+    fixed_stat: "Fixed:",
+    remaining_stat: "Remaining:",
+    resolved_stat: "Resolved",
+    master_rule_btn: "Master this Rule",
+    
+    all_caught_up: "All caught up!",
+    no_critical_msg: "No critical errors found. Keep writing to analyze more.",
     // Cards
     total_essays: "Total Essays",
     avg_score: "Average Score",
@@ -96,7 +110,21 @@ export const translations = {
     dash_title: "Trung tâm Học tập",
     dash_subtitle: "Theo dõi tiến độ và tìm ra nguyên nhân gốc rễ.",
     back_home: "Quay lại Luyện tập",
-
+    // --- [MỚI] THÊM CHO DASHBOARD NÂNG CẤP ---
+    areas_improvement: "Các vấn đề cần cải thiện",
+    mistakes_count: "lỗi",                // Ví dụ: 5 lỗi
+    review_lesson_btn: "Xem bài học & Quy tắc",
+    
+    focus_week: "Tâm điểm tuần này",
+    high_priority: "Ưu tiên cao",
+    total_occurrences: "Tổng số lần gặp:",
+    fixed_stat: "Đã sửa:",
+    remaining_stat: "Còn lại:",
+    resolved_stat: "Đã giải quyết",
+    master_rule_btn: "Học kỹ quy tắc này",
+    
+    all_caught_up: "Bạn đã làm rất tốt!",
+    no_critical_msg: "Không tìm thấy lỗi nghiêm trọng. Hãy viết thêm để phân tích nhé.",
     // Cards
     total_essays: "Tổng số bài",
     avg_score: "Điểm trung bình",
