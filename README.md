@@ -77,6 +77,5 @@ String Manipulation: Thuật toán cắt chuỗi và chèn thẻ HTML (Span) đ�
 Prompt Engineering: Kỹ thuật viết Prompt ép AI trả về dữ liệu chuẩn JSON (Structured Output) và xử lý đa ngôn ngữ (Việt/Anh) linh hoạt.
 
 System Design: Thiết kế cơ chế Quota (Rate Limiting) đơn giản nhưng hiệu quả bằng cách query đếm record trong Database theo mốc thời gian.
-
-5. KẾT LUẬN
+KẾT LUẬN
 CoreFix đã hoàn thiện ở mức độ MVP (Minimum Viable Product) chất lượng cao, sẵn sàng để triển khai thực tế. Sản phẩm giải quyết tốt nỗi đau của người học Writing là "Viết xong không biết sai ở đâu và tại sao sai", đồng thời cung cấp lộ trình cải thiện rõ ràng.
