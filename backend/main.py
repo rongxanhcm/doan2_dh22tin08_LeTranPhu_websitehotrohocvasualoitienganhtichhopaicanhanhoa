@@ -21,8 +21,20 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") # Lưu ý: check tên biến môi t
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-if not GEMINI_API_KEY or not SUPABASE_KEY:
-    raise ValueError("❌ CHƯA CẤU HÌNH API KEY TRONG FILE .env!")
+# --- ĐOẠN CODE KIỂM TRA LỖI MỚI (Chi tiết hơn) ---
+missing_vars = []
+if not GEMINI_API_KEY:
+    missing_vars.append("GOOGLE_API_KEY") # Hoặc GEMINI_API_KEY tùy bạn đặt
+if not SUPABASE_URL:
+    missing_vars.append("SUPABASE_URL")
+if not SUPABASE_KEY:
+    missing_vars.append("SUPABASE_KEY")
+
+if missing_vars:
+    # In ra log để xem trên Render
+    print(f"❌ CÁC BIẾN MÔI TRƯỜNG ĐANG THIẾU: {', '.join(missing_vars)}")
+    print(f"👉 Hãy vào Render > Environment > Add các biến trên vào.")
+    raise ValueError(f"Thiếu các biến môi trường: {', '.join(missing_vars)}")
 
 # Khởi tạo Clients
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
