@@ -77,11 +77,11 @@ class EssayAssessment(BaseModel):
 class ErrorItem(BaseModel):
     id: int
     error_type: str
-    original_text: str
-
+    quote: str          # <--- [THÊM DÒNG NÀY] Sửa tên thành 'quote' cho khớp DB
 class BatchQuizRequest(BaseModel):
     errors: List[ErrorItem]
     language: str = "vi"
+    
 
 class QuizQuestion(BaseModel):
     id: int # ID của lỗi tương ứng
@@ -223,7 +223,7 @@ def generate_batch_quiz(input: BatchQuizRequest):
         # Chuẩn bị context
         error_list_text = ""
         for err in input.errors:
-            error_list_text += f"- ID {err.id}: Error '{err.error_type}' in sentence: '{err.original_text}'\n"
+            error_list_text += f"- ID {err.id}: Error '{err.error_type}' in phrase: '{err.quote}'\n"
 
         prompt_text = f"""
         Act as an strict English Tutor for a Vietnamese student.
