@@ -11,7 +11,7 @@ export default function HighlightText({ text, errors }: HighlightTextProps) {
   const renderHighlightedText = () => {
     if (!text || !errors || errors.length === 0) return text;
 
-    const segments = [];
+    const segments: any[] = [];
     let lastIndex = 0;
 
     // Sắp xếp lỗi và lọc lỗi không tìm thấy

@@ -128,8 +128,8 @@ export default function AnalyzePage() {
     try {
       const currentUserId = user?.id || null; 
 
-      const response = await fetch("http://localhost:8000/analyze", {
-        method: "POST",
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },

@@ -91,8 +91,7 @@ export default function Dashboard() {
       });
 
       let maxUnresolved = -1;
-      let priorityErrObj = null;
-
+      let priorityErrObj: any = null;
       Object.entries(errorStats).forEach(([type, stat]) => {
           const unresolvedCount = stat.total - stat.resolved;
           if (unresolvedCount > maxUnresolved && unresolvedCount > 0) {
