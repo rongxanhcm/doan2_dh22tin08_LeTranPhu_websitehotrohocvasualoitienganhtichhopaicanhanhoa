@@ -38,17 +38,23 @@ export default function HistoryDetail() {
     setIsModalOpen(true);
   };
 
-  const fetchDetail = async () => {
+const fetchDetail = async () => {
     const { data: submission, error } = await supabase
       .from("submissions")
       .select(`
         *,
-        analysis_results (id, error_type, explanation, suggestion, severity, is_resolved, quote)
+        analysis_results:analysis_results!fk_analysis_submissions (
+            id, error_type, explanation, suggestion, severity, is_resolved, quote
+        )
       `)
       .eq("id", params.id)
       .single();
 
-    if (error || !submission) { router.push("/dashboard"); return; }
+    if (error || !submission) { 
+        console.error("❌ Lỗi lấy bài viết:", error);
+        // router.push("/dashboard"); // Vẫn nên comment dòng này để debug nếu cần
+        return; 
+    }
     setData(submission);
     setLoading(false);
   };

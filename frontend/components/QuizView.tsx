@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, ArrowRight, BookOpen, RotateCcw } from "lucide-react";
-import { createClient } from "@/lib/supabaseClient"; // [MỚI] Thêm import này để update DB
+import { CheckCircle, XCircle, ArrowRight, BookOpen, RotateCcw, Save, ShieldCheck } from "lucide-react";
+import { createClient } from "@/lib/supabaseClient";
 
 interface QuizViewProps {
   errors: any[];
@@ -15,28 +15,30 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
+  
+  // [LOGIC MỚI] Thay vì đếm score chung, ta lưu kết quả từng câu theo ID lỗi
+  // Map: { error_id: true/false } (Đúng/Sai)
+  const [results, setResults] = useState<Record<number, boolean>>({});
+  
   const [showResult, setShowResult] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [fetchError, setFetchError] = useState(false);
-  const [updating, setUpdating] = useState(false); // [MỚI] State loading khi update DB
+  const [saving, setSaving] = useState(false);
 
-  const supabase = createClient(); // [MỚI] Init supabase
-
-  // [QUAN TRỌNG] Lấy URL từ biến môi trường (Fix lỗi Vercel)
+  const supabase = createClient();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+  // 1. Fetch Quiz (Giữ nguyên)
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
-        // [QUAN TRỌNG] Chuẩn bị payload đúng chuẩn Backend yêu cầu
         const payload = {
             language: language,
             errors: errors.map(e => ({
                 id: e.id,
                 error_type: e.error_type,
-                quote: e.quote // [FIX] Phải gửi 'quote' mới đúng, ko gửi original_text hay explanation
+                quote: e.quote
             }))
         };
 
@@ -65,14 +67,21 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
     fetchQuiz();
   }, [errors, language]);
 
+  // 2. Xử lý trả lời (Cập nhật logic lưu kết quả từng câu)
+  const currentQ = questions[currentIndex];
+
   const handleAnswer = (optionIndex: number) => {
     if (isAnswered) return;
     setSelectedAnswer(optionIndex);
     setIsAnswered(true);
 
-    if (optionIndex === questions[currentIndex].correct_answer_index) {
-      setScore(score + 1);
-    }
+    const isCorrect = optionIndex === currentQ.correct_answer_index;
+    
+    // Lưu kết quả cho câu hỏi này (Key là error ID)
+    setResults(prev => ({
+        ...prev,
+        [currentQ.id]: isCorrect
+    }));
   };
 
   const handleNext = () => {
@@ -85,29 +94,41 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
     }
   };
 
-  // [MỚI] Hàm cập nhật trạng thái "Đã sửa" vào Database khi làm xong
-  const finishQuiz = async () => {
-      setUpdating(true);
-      try {
-          // Lấy danh sách ID các lỗi đã có trong bài Quiz này
-          const resolvedIds = errors.map(e => e.id);
-          
-          if (resolvedIds.length > 0) {
-              await supabase
-                  .from("analysis_results")
-                  .update({ is_resolved: true })
-                  .in("id", resolvedIds);
-          }
-          // Đợi xíu cho user thấy hiệu ứng rồi mới báo thành công
-          setTimeout(() => onSuccess(), 1500);
-      } catch (err) {
-          console.error("Lỗi update DB:", err);
-          setUpdating(false);
-          onSuccess(); // Vẫn cho qua dù lỗi DB
-      }
+  // 3. Xử lý hoàn thành (Chỉ lưu những câu ĐÚNG)
+  const handleComplete = async () => {
+    // Lọc ra danh sách ID của những câu trả lời ĐÚNG
+    const resolvedIds = Object.keys(results)
+        .map(Number)
+        .filter(id => results[id] === true);
+
+    if (resolvedIds.length === 0) {
+        // Nếu không đúng câu nào thì reload lại quiz chứ không gọi DB
+        setCurrentIndex(0);
+        setResults({});
+        setShowResult(false);
+        setSelectedAnswer(null);
+        setIsAnswered(false);
+        return;
+    }
+
+    setSaving(true);
+    
+    // Chỉ update những lỗi đã làm đúng thành is_resolved = true
+    const { error } = await supabase
+        .from("analysis_results")
+        .update({ is_resolved: true })
+        .in("id", resolvedIds);
+
+    if (error) {
+        alert("Lỗi lưu kết quả: " + error.message);
+        setSaving(false);
+    } else {
+        // Reload lại trang cha -> Những lỗi vừa fix sẽ biến mất khỏi list
+        onSuccess(); 
+    }
   };
 
-  // --- UI RENDERING ---
+  // --- RENDER UI ---
 
   if (loading) return (
     <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm animate-pulse">
@@ -115,53 +136,116 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
             <RotateCcw className="animate-spin text-indigo-500" />
         </div>
         <h3 className="text-lg font-bold text-slate-700">Generating personalized quiz...</h3>
-        <p className="text-slate-400 text-sm">AI is reviewing your specific errors.</p>
     </div>
   );
 
   if (fetchError) return (
     <div className="p-8 text-center bg-red-50 rounded-2xl border border-red-100">
         <h3 className="text-red-600 font-bold mb-2">Error loading questions</h3>
-        <p className="text-sm text-red-500 mb-4">Could not connect to AI server.</p>
-        <button onClick={onCancel} className="text-sm font-bold underline text-red-700">Go Back</button>
+        <button onClick={onCancel} className="text-sm font-bold underline">Back</button>
     </div>
   );
 
-  if (showResult) return (
-    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center animate-fade-in">
-        <div className="mb-6">
-            <span className="text-6xl font-black text-indigo-600">{score}</span>
-            <span className="text-slate-400 text-xl font-medium">/{questions.length}</span>
-        </div>
-        <h3 className="text-2xl font-bold text-slate-800 mb-2">
-            {score === questions.length ? "Perfect Score! 🎉" : "Good Practice!"}
-        </h3>
-        <p className="text-slate-500 mb-8">You have reviewed your mistakes.</p>
-        
-        <button 
-            onClick={finishQuiz}
-            disabled={updating}
-            className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-70 flex items-center justify-center gap-2"
-        >
-            {updating ? (
-                <>Saving Progress <RotateCcw className="animate-spin" size={18}/></>
-            ) : (
-                "Finish & Mark Resolved"
-            )}
-        </button>
-    </div>
-  );
+  // MÀN HÌNH KẾT QUẢ "THÔNG MINH"
+  if (showResult) {
+    const correctCount = Object.values(results).filter(Boolean).length;
+    const totalCount = questions.length;
+    
+    return (
+      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center animate-fade-in">
+          <div className="mb-6 relative inline-block">
+             <svg className="w-32 h-32 transform -rotate-90">
+                <circle cx="64" cy="64" r="60" stroke="#f1f5f9" strokeWidth="8" fill="transparent" />
+                <circle cx="64" cy="64" r="60" stroke={correctCount > 0 ? "#10b981" : "#ef4444"} strokeWidth="8" 
+                    fill="transparent" 
+                    strokeDasharray={377} 
+                    strokeDashoffset={377 - (377 * correctCount) / totalCount} 
+                    className="transition-all duration-1000 ease-out"
+                />
+             </svg>
+             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                 <span className={`text-4xl font-black ${correctCount > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>
+                    {correctCount}
+                 </span>
+                 <span className="text-slate-400 text-sm font-bold block">/{totalCount}</span>
+             </div>
+          </div>
+          
+          <h3 className="text-2xl font-bold text-slate-800 mb-2">
+              {correctCount === totalCount ? "All Fixed! Perfect! 🎉" : 
+               correctCount > 0 ? "Progress Made! 🚀" : "Keep Trying! 💪"}
+          </h3>
+          
+          <p className="text-slate-500 mb-8 max-w-md mx-auto">
+            {correctCount === totalCount 
+                ? "You have successfully corrected all identified errors." 
+                : correctCount > 0 
+                ? `You fixed ${correctCount} errors. These will be marked as resolved. The remaining ${totalCount - correctCount} errors will stay for next time.`
+                : "You haven't fixed any errors yet. Review the explanations and try again."}
+          </p>
 
-  const currentQ = questions[currentIndex];
+          <div className="flex flex-col gap-3">
+             {correctCount > 0 && (
+                 <button 
+                    onClick={handleComplete}
+                    disabled={saving}
+                    className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+                >
+                    {saving ? "Saving..." : <><ShieldCheck size={20}/> Save Progress & Continue</>}
+                </button>
+             )}
 
+             {correctCount < totalCount && (
+                 <button 
+                    onClick={() => {
+                        // Reset để làm lại (Nếu chưa đúng hết)
+                        setCurrentIndex(0);
+                        setResults({});
+                        setShowResult(false);
+                        setSelectedAnswer(null);
+                        setIsAnswered(false);
+                    }}
+                    className={`w-full py-4 font-bold rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                        correctCount === 0 
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200" 
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                >
+                    <RotateCcw size={20}/> {correctCount === 0 ? "Retry Quiz" : "Retry Failed Questions Later"}
+                </button>
+             )}
+             
+             {/* Nút hủy nếu không muốn lưu gì cả */}
+             <button onClick={onCancel} className="text-slate-400 text-sm font-bold hover:text-slate-600 underline">
+                Cancel & Back
+             </button>
+          </div>
+      </div>
+    );
+  }
+
+  // --- QUESTION RENDER (GIỮ NGUYÊN PHẦN HIỂN THỊ CÂU HỎI) ---
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
         {/* Header */}
         <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Question {currentIndex + 1} / {questions.length}
-            </span>
-            <button onClick={onCancel} className="text-xs font-bold text-slate-400 hover:text-red-500">Exit</button>
+            <div className="flex items-center gap-2">
+                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Question {currentIndex + 1} / {questions.length}
+                </span>
+                {/* Thanh tiến độ nhỏ */}
+                <div className="flex gap-1">
+                    {questions.map((q, idx) => {
+                        // Logic hiển thị chấm xanh/đỏ trên header
+                        let color = "bg-slate-200";
+                        if (results[q.id] === true) color = "bg-emerald-400";
+                        if (results[q.id] === false) color = "bg-red-400";
+                        if (idx === currentIndex) color = "bg-indigo-500 scale-125";
+                        
+                        return <div key={idx} className={`w-2 h-2 rounded-full transition-all ${color}`}></div>
+                    })}
+                </div>
+            </div>
         </div>
 
         {/* Question Body */}
@@ -221,7 +305,7 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
                     : "bg-slate-200 text-slate-400 cursor-not-allowed"
                 }`}
             >
-                {currentIndex === questions.length - 1 ? "View Result" : "Next Question"} <ArrowRight size={18}/>
+                {currentIndex === questions.length - 1 ? "Finish & Review" : "Next Question"} <ArrowRight size={18}/>
             </button>
         </div>
     </div>
