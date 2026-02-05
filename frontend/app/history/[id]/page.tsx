@@ -13,15 +13,30 @@ import QuizView from "@/components/QuizView";
 import { HistorySkeleton } from "@/components/Skeleton";
 import HighlightText from "@/components/HighlightText";
 
+// [MỚI 1] Import Modal và hàm lấy luật
+import GrammarLessonModal from "@/components/GrammarLessonModal";
+import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
+
 export default function HistoryDetail() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [isReviewing, setIsReviewing] = useState(false); 
 
+  // [MỚI 2] State cho Modal
+  const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
-  const { lang, t } = useLanguage(); // [QUAN TRỌNG] Lấy thêm 't'
+  const { lang, t } = useLanguage();
+
+  // [MỚI 3] Hàm mở Modal (gọi dữ liệu động từ DB/File)
+  const handleOpenLesson = async (errorType: string) => {
+    const rule = await fetchRuleByKey(errorType);
+    setSelectedRule(rule);
+    setIsModalOpen(true);
+  };
 
   const fetchDetail = async () => {
     const { data: submission, error } = await supabase
@@ -45,7 +60,6 @@ export default function HistoryDetail() {
   const unresolvedErrors = data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
   const scoreColor = data.score >= 7.0 ? "text-emerald-600" : data.score >= 5.0 ? "text-indigo-600" : "text-amber-600";
 
-  // [LOGIC] Format ngày tháng theo ngôn ngữ
   const formattedDate = new Date(data.created_at).toLocaleDateString(
     lang === 'vi' ? 'vi-VN' : 'en-US', 
     { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
@@ -53,6 +67,14 @@ export default function HistoryDetail() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-900">
+      
+      {/* [MỚI 4] Chèn Modal vào đây */}
+      <GrammarLessonModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          rule={selectedRule} 
+      />
+
       <div className="max-w-7xl mx-auto space-y-10">
         
         {/* --- 1. HEADER SECTION --- */}
@@ -60,7 +82,7 @@ export default function HistoryDetail() {
             <div>
                 <button onClick={() => router.back()} className="group flex items-center text-slate-500 hover:text-indigo-600 transition-colors mb-2 font-medium">
                     <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
-                    {t.back_dashboard} {/* Dùng biến dịch */}
+                    {t.back_dashboard}
                 </button>
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{t.history_title}</h1>
                 <div className="flex items-center text-slate-500 text-sm mt-2 font-medium">
@@ -193,7 +215,6 @@ export default function HistoryDetail() {
                                     <div className="flex items-center gap-2">
                                         <div className={`w-2 h-8 rounded-full ${err.is_resolved ? 'bg-emerald-400' : 'bg-red-500'}`}></div>
                                         <div>
-                                            {/* Dùng hàm translateError cho tên lỗi */}
                                             <span className={`block font-bold text-sm ${err.is_resolved ? "text-emerald-700" : "text-red-600"}`}>
                                                 {translateError(err.error_type, lang)}
                                             </span>
@@ -216,6 +237,16 @@ export default function HistoryDetail() {
                                     {err.explanation}
                                 </p>
                                 
+                                {/* [MỚI 5] Nút Xem bài học (Chỉ hiện nếu chưa resolved) */}
+                                {!err.is_resolved && (
+                                    <button 
+                                        onClick={() => handleOpenLesson(err.error_type)}
+                                        className="text-xs font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition-colors mb-3 w-fit"
+                                    >
+                                        <BookOpen size={14}/> {t.review_lesson_btn}
+                                    </button>
+                                )}
+
                                 <div className={`mt-auto p-3 rounded-lg text-sm font-medium border ${err.is_resolved ? 'bg-emerald-100/50 text-emerald-800 border-emerald-100' : 'bg-indigo-50 text-indigo-800 border-indigo-100'}`}>
                                     <span className="flex items-center gap-2 mb-1 text-xs uppercase opacity-70 font-bold">
                                         <Sparkles size={12} /> {t.suggestion_label}

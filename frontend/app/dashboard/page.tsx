@@ -11,8 +11,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { translateError } from "@/lib/errorMapping";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
-import { getRule, GrammarRule } from "@/lib/grammarRules";
-
+import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -32,8 +31,9 @@ export default function Dashboard() {
   const supabase = createClient();
   const { t, lang, setLang } = useLanguage();
 
-  const handleOpenLesson = (errorType: string) => {
-    const rule = getRule(errorType);
+const handleOpenLesson = async (errorType: string) => {
+    // Có thể thêm loading state cho modal nếu muốn mượt hơn
+    const rule = await fetchRuleByKey(errorType);
     setSelectedRule(rule);
     setIsModalOpen(true);
   };
