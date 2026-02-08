@@ -1,68 +1,131 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { 
   TrendingUp, AlertTriangle, FileText, 
-  ArrowRight, CheckCircle, Target, BookOpen 
+  ArrowRight, CheckCircle, Target, BookOpen, Download 
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { translateError } from "@/lib/errorMapping";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
+
+// [MỚI] Import cho tính năng Export PDF
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import toast from "react-hot-toast";
+import DashboardReport from "@/components/DashboardReport";
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState("User"); // [MỚI] Lưu email để in vào báo cáo
+  
   const [stats, setStats] = useState({
     totalEssays: 0,
     avgScore: 0,
+    highestScore: 0, // [MỚI] Thêm điểm cao nhất
     topErrors: [] as { name: string; originalName: string; count: number }[],
     recentActivity: [] as any[],
     priorityError: null as any, 
     resolutionRate: 0,
-    unresolvedCount: 0
+    unresolvedCount: 0,
+    chartData: [] as { date: string; score: number }[] // [MỚI] Dữ liệu biểu đồ cho PDF
   });
   
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // [MỚI] State xử lý Export
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const router = useRouter();
   const supabase = createClient();
   const { t, lang, setLang } = useLanguage();
 
-const handleOpenLesson = async (errorType: string) => {
-    // Có thể thêm loading state cho modal nếu muốn mượt hơn
+  const handleOpenLesson = async (errorType: string) => {
     const rule = await fetchRuleByKey(errorType);
     setSelectedRule(rule);
     setIsModalOpen(true);
   };
 
+  // [MỚI] Hàm xử lý Export PDF
+  // ... trong dashboard/page.tsx
+
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    
+    setIsExporting(true);
+    const toastId = toast.loading("Đang tạo báo cáo PDF...");
+
+    try {
+      // Thêm backgroundColor vào config
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: "#ffffff", // [FIX] Ép nền trắng
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`CoreFix_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+      
+      toast.success("Xuất báo cáo thành công!", { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi khi tạo PDF: " + error, { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   useEffect(() => {     
     const fetchData = async () => {
+      // 1. Lấy User & Email
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
+      setUserEmail(user.email || "User");
 
+      // 2. Lấy Submissions
       const { data: submissions } = await supabase
-        .from("submissions")
-        .select("id, score, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+          .from("submissions")
+          .select("id, score, created_at, general_feedback") // <--- THÊM general_feedback VÀO ĐÂY
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
 
       if (!submissions || submissions.length === 0) {
         setLoading(false);
         return;
       }
 
+      // 3. Xử lý thống kê lỗi
       const submissionIds = submissions.map(s => s.id);
       const { data: errors } = await supabase
         .from("analysis_results")
         .select("error_type, is_resolved, submission_id")
         .in("submission_id", submissionIds);
 
+      // Tính điểm
       const totalScore = submissions.reduce((acc, curr) => acc + (curr.score || 0), 0);
       const avgScore = (totalScore / submissions.length).toFixed(1);
+      const highestScore = Math.max(...submissions.map(s => s.score || 0));
 
+      // [MỚI] Chuẩn bị dữ liệu biểu đồ cho PDF (7 bài gần nhất)
+      // Reverse để biểu đồ đi từ cũ -> mới (Trái -> Phải)
+      const chartData = submissions.slice(0, 7).reverse().map(s => ({
+         date: new Date(s.created_at).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}),
+         score: s.score || 0
+      }));
+
+      // Đếm lỗi (Logic cũ)
       const errorCounts: Record<string, number> = {};
       errors?.forEach((err) => {
         const type = err.error_type.trim(); 
@@ -78,6 +141,7 @@ const handleOpenLesson = async (errorType: string) => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
+      // Tìm lỗi ưu tiên (Logic cũ)
       const errorStats: Record<string, { total: number, resolved: number, latestUnresolvedId: string | null }> = {};
       errors?.forEach((err) => {
         const type = err.error_type.trim();
@@ -110,11 +174,13 @@ const handleOpenLesson = async (errorType: string) => {
       setStats({
         totalEssays: submissions.length,
         avgScore: Number(avgScore),
+        highestScore: highestScore,
         topErrors,
-        recentActivity: submissions.slice(0, 3),
+        recentActivity: submissions.slice(0, 5), // Lấy 5 bài cho bảng
         priorityError: priorityErrObj,
         resolutionRate: priorityErrObj ? Math.round((priorityErrObj.resolved / priorityErrObj.total) * 100) : 0,
-        unresolvedCount: maxUnresolved
+        unresolvedCount: maxUnresolved,
+        chartData: chartData
       });
       
       setLoading(false);
@@ -130,6 +196,21 @@ const handleOpenLesson = async (errorType: string) => {
   return (
     <main className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans text-slate-900">
       
+      {/* [MỚI] COMPONENT BÁO CÁO ẨN (Để in ấn) */}
+      <div className="fixed top-0 left-0 -z-50 opacity-0 pointer-events-none overflow-hidden h-0 w-0">
+         <DashboardReport 
+            ref={reportRef}
+            userEmail={userEmail}
+            stats={{
+                totalEssays: stats.totalEssays,
+                avgScore: stats.avgScore,
+                highestScore: stats.highestScore
+            }}
+            recentSubs={stats.recentActivity}
+            chartData={stats.chartData}
+         />
+      </div>
+
       <GrammarLessonModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
@@ -139,12 +220,23 @@ const handleOpenLesson = async (errorType: string) => {
       <div className="max-w-5xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900">{t.dash_title}</h1>
             <p className="text-slate-500 mt-1">{t.dash_subtitle}</p>
           </div>
+          
           <div className="flex gap-3">
+             {/* [MỚI] Nút Export PDF */}
+             <button 
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm disabled:opacity-50"
+             >
+                {isExporting ? <div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"/> : <Download size={18} />}
+                {isExporting ? "Exporting..." : "Export Report"}
+             </button>
+
              <button onClick={toggleLanguage} className="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-sm font-bold transition-colors">
                {lang === "en" ? "🇻🇳 VN" : "🇺🇸 EN"}
              </button>
@@ -190,13 +282,12 @@ const handleOpenLesson = async (errorType: string) => {
           <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center gap-2">
               <TrendingUp className="text-indigo-500"/> 
-              {t.areas_improvement} {/* [FIXED] */}
+              {t.areas_improvement}
             </h3>
             
             <div className="space-y-6">
               {stats.topErrors.length > 0 ? (
                 stats.topErrors.map((item, idx) => {
-                  // Logic màu sắc: Top 1 là Đỏ, còn lại Xanh Indigo
                   const isTopOne = idx === 0;
                   const barColor = isTopOne ? "bg-red-500" : "bg-indigo-500";
                   const textColor = isTopOne ? "text-red-500 bg-red-50" : "text-indigo-600 bg-indigo-50";
@@ -206,7 +297,7 @@ const handleOpenLesson = async (errorType: string) => {
                         <div className="flex justify-between items-end mb-2">
                             <span className="font-bold text-slate-700 text-sm">{item.name}</span>
                             <span className={`text-xs font-bold px-2 py-1 rounded-full ${textColor}`}>
-                                {item.count} {t.mistakes_count} {/* [FIXED] */}
+                                {item.count} {t.mistakes_count}
                             </span>
                         </div>
                         
@@ -221,7 +312,7 @@ const handleOpenLesson = async (errorType: string) => {
                             onClick={() => handleOpenLesson(item.originalName)}
                             className="text-xs font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition-colors hover:translate-x-1"
                         >
-                            <BookOpen size={12}/> {t.review_lesson_btn} <ArrowRight size={12}/> {/* [FIXED] */}
+                            <BookOpen size={12}/> {t.review_lesson_btn} <ArrowRight size={12}/>
                         </button>
                     </div>
                   );
@@ -242,40 +333,40 @@ const handleOpenLesson = async (errorType: string) => {
               <h3 className="font-bold text-lg text-white mb-1 flex items-center gap-2">
                 <Target className="text-indigo-400"/> {t.ai_path}
               </h3>
-              <p className="text-slate-400 text-xs uppercase tracking-wider mb-6">{t.focus_week}</p> {/* [FIXED] */}
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-6">{t.focus_week}</p>
 
               {stats.priorityError ? (
                 <div className="space-y-5 relative z-10">
                   <div>
-                    <span className="text-xs font-bold bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">{t.high_priority}</span> {/* [FIXED] */}
+                    <span className="text-xs font-bold bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">{t.high_priority}</span>
                     <p className="font-black text-2xl mt-2 leading-tight">{stats.priorityError.displayType}</p>
                     <p className="text-slate-400 text-sm mt-1">
-                        {t.total_occurrences} <span className="text-white font-bold">{stats.priorityError.total}</span> {/* [FIXED] */}
+                        {t.total_occurrences} <span className="text-white font-bold">{stats.priorityError.total}</span>
                     </p>
                   </div>
                   <div>
                       <div className="flex justify-between text-xs font-bold mb-1">
-                          <span className="text-emerald-400">{t.fixed_stat} {stats.priorityError.resolved}</span> {/* [FIXED] */}
-                          <span className="text-red-400">{t.remaining_stat} {stats.priorityError.unresolved}</span> {/* [FIXED] */}
+                          <span className="text-emerald-400">{t.fixed_stat} {stats.priorityError.resolved}</span>
+                          <span className="text-red-400">{t.remaining_stat} {stats.priorityError.unresolved}</span>
                       </div>
                       <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
                           <div className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-1000" style={{ width: `${stats.resolutionRate}%` }} />
                       </div>
-                      <p className="text-right text-xs text-slate-400 mt-1">{stats.resolutionRate}% {t.resolved_stat}</p> {/* [FIXED] */}
+                      <p className="text-right text-xs text-slate-400 mt-1">{stats.resolutionRate}% {t.resolved_stat}</p>
                   </div>
                   
                   <button 
                     onClick={() => handleOpenLesson(stats.priorityError.type)}
                     className="w-full py-3 bg-white hover:bg-indigo-50 text-slate-900 rounded-xl text-sm font-bold transition-all shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center gap-2"
                   >
-                    <BookOpen size={16}/> {t.master_rule_btn} <ArrowRight size={16}/> {/* [FIXED] */}
+                    <BookOpen size={16}/> {t.master_rule_btn} <ArrowRight size={16}/>
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-48 text-center relative z-10">
                     <CheckCircle size={48} className="text-emerald-400 mb-3"/>
-                    <p className="font-bold text-lg">{t.all_caught_up}</p> {/* [FIXED] */}
-                    <p className="text-slate-400 text-sm">{t.no_critical_msg}</p> {/* [FIXED] */}
+                    <p className="font-bold text-lg">{t.all_caught_up}</p>
+                    <p className="text-slate-400 text-sm">{t.no_critical_msg}</p>
                 </div>
               )}
             </div>

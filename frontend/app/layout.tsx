@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext"; // Import này
+import { Toaster } from "react-hot-toast"; // <--- [MỚI 1] Import
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
       >
         <LanguageProvider> {/* Bọc ở đây */}
           {children}
+          <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
         </LanguageProvider>
       </body>
     </html>

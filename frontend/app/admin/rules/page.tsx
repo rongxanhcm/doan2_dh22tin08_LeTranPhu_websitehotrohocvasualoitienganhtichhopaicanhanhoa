@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 import { 
   Plus, Edit, Trash2, Search, X, Save, BookOpen 
 } from "lucide-react";
-
+import toast from "react-hot-toast";
 // Kiểu dữ liệu cho Form
 interface RuleFormData {
   id?: number;
@@ -48,7 +48,7 @@ export default function RulesManager() {
       .select("*")
       .order("id", { ascending: true }); // Sắp xếp theo ID
 
-    if (error) alert("Error loading rules: " + error.message);
+    if (error) toast.error("Lỗi khi tải" + error.message);
     else setRules(data || []);
     setLoading(false);
   };
@@ -69,10 +69,11 @@ export default function RulesManager() {
   // 3. HANDLE SAVE (CREATE & UPDATE)
   const handleSave = async () => {
     if (!formData.error_key || !formData.title) {
-        alert("Error Key and Title are required!");
+        toast.error("Key và Title là bắt buộc!");
         return;
     }
     setSaving(true);
+    toast.success("Lưu thành công!");
 
     let error;
     if (formData.id) {
@@ -107,7 +108,7 @@ export default function RulesManager() {
     }
 
     if (error) {
-        alert("Failed to save: " + error.message);
+        toast.error("Lưu thất bại!"+ error.message);
     } else {
         fetchRules(); // Refresh list
         setIsModalOpen(false);
@@ -117,14 +118,14 @@ export default function RulesManager() {
 
   // 4. HANDLE DELETE
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this rule? This cannot be undone.")) return;
+    if (!confirm("Bạn có chắc muốn xóa?")) return;
     
     const { error } = await supabase
         .from("grammar_rules")
         .delete()
         .eq("id", id);
     
-    if (error) alert("Failed to delete: " + error.message);
+    if (error) toast.error("Xóa thất bại!" + error.message);
     else fetchRules();
   };
 

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Terminal, Book, Users, 
   LogOut, ShieldAlert, ChevronLeft 
 } from "lucide-react";
-
+import toast from "react-hot-toast";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       // 1. Lấy User hiện tại
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login"); 
+        router.push("/login");
+        toast.success("Đăng nhập thành công!"); 
         return;
       }
 
@@ -32,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .single();
 
       if (profile?.role !== "admin") {
-        alert("⛔ Bạn không có quyền truy cập trang này!");
+        toast.error("Bạn không có quyền truy cập trang này");
         router.push("/dashboard"); // Đá về trang thường
         return;
       }

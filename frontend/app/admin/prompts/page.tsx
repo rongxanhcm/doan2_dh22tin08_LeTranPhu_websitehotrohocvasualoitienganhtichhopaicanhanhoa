@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { Save, RefreshCw, AlertCircle, Check } from "lucide-react";
-
+import toast from "react-hot-toast";
 export default function PromptsManager() {
   const [prompts, setPrompts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function PromptsManager() {
     } else {
       // Cập nhật lại list local
       setPrompts(prompts.map(p => p.key === selectedKey ? { ...p, content: editContent } : p));
-      alert("✅ Prompt updated successfully!");
+      toast.success("Sửa Prompt thành công!");
     }
     setSaving(false);
   };

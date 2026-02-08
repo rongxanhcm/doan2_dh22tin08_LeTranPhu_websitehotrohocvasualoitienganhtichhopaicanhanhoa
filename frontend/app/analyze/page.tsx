@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext"; 
 import { translateError } from "@/lib/errorMapping";
 import { Zap, Shuffle, Lightbulb } from "lucide-react"; 
-
+import toast, { Toast } from "react-hot-toast";
 // --- 1. SHORT TOPIC POOL (KHO ĐỀ NGẮN GỌN - DỄ VIẾT) ---
 const SHORT_TOPICS = [
   "Should students be required to wear uniforms?",
@@ -157,8 +157,9 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
 
       const data = await response.json();
       setResult(data);
+      toast.success("Phân tích thành công!");
     } catch (error) {
-      alert("Error occurred. Please try again!");
+      toast.error("Lỗi, vuu lòng thử lại!");
       console.error(error);
     } finally {
       setLoading(false);

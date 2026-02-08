@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabaseClient"; // Import file vừa tạo ở Bước 2
 import { useRouter } from "next/navigation";
-
+import toast from "react-hot-toast";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,8 +22,8 @@ export default function LoginPage() {
           password,
         });
         if (error) throw error;
-        alert("Đăng ký thành công! Hãy kiểm tra email để xác nhận (hoặc tắt confirm trong Supabase).");
-      } else {
+        router.push("/login"); // Đăng nhập xong đẩy về trang chủ
+        toast.success("Đăng ký thành công!");      } else {
         // Xử lý Đăng nhập
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -31,6 +31,7 @@ export default function LoginPage() {
         });
         if (error) throw error;
         router.push("/"); // Đăng nhập xong đẩy về trang chủ
+        toast.success("Đăng nhập thành công!");      
       }
     } catch (error: any) {
       alert(error.message);
