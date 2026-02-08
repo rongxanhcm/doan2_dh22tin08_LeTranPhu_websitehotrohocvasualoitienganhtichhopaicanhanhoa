@@ -154,4 +154,4 @@ export default function PromptsManager() {
       </div>
     </div>
   );
-}
+}   

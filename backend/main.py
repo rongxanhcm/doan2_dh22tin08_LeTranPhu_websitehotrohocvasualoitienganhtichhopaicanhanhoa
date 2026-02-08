@@ -141,7 +141,7 @@ def analyze_essay(input: EssayInput):
 
         # 4. GỌI GEMINI
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash-lite', 
+            model='gemini-3-pro-preview', 
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
@@ -206,7 +206,7 @@ def generate_batch_quiz(input: BatchQuizRequest):
             prompt_text = f"Generate quiz for: {error_list_text}"
 
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash-lite',
+            model='gemini-3-pro-preview',
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
@@ -218,4 +218,4 @@ def generate_batch_quiz(input: BatchQuizRequest):
     except Exception as e:
         print(f"QUIZ ERROR: {e}")
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) 
