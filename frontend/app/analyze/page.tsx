@@ -5,9 +5,10 @@ import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext"; 
 import { translateError } from "@/lib/errorMapping";
-import { Zap, Shuffle, Lightbulb } from "lucide-react"; 
+import { Zap, Shuffle, Lightbulb, Globe, ChevronDown } from "lucide-react"; // [MỚI] Thêm icon Globe, ChevronDown
 import toast, { Toast } from "react-hot-toast";
-// --- 1. SHORT TOPIC POOL (KHO ĐỀ NGẮN GỌN - DỄ VIẾT) ---
+
+// --- 1. SHORT TOPIC POOL ---
 const SHORT_TOPICS = [
   "Should students be required to wear uniforms?",
   "Is technology making us lazy?",
@@ -59,7 +60,21 @@ const SHORT_TOPICS = [
   "Is living in a big family better than living alone?",
   "Should people work for passion or salary?",
   "Is technology improving education?"
+];
 
+// [MỚI] Danh sách ngôn ngữ hỗ trợ Global
+const SUPPORTED_LANGUAGES = [
+    { code: "English", label: "English (Default)", flag: "🇺🇸" },
+    { code: "Vietnamese", label: "Vietnamese (Tiếng Việt)", flag: "🇻🇳" },
+    { code: "Spanish", label: "Spanish (Español)", flag: "🇪🇸" },
+    { code: "Chinese", label: "Chinese (中文)", flag: "🇨🇳" },
+    { code: "Hindi", label: "Hindi (हिन्दी)", flag: "🇮🇳" },
+    { code: "Japanese", label: "Japanese (日本語)", flag: "🇯🇵" },
+    { code: "Korean", label: "Korean (한국어)", flag: "🇰🇷" },
+    { code: "French", label: "French (Français)", flag: "🇫🇷" },
+    { code: "Portuguese", label: "Portuguese (Português)", flag: "🇵🇹" },
+    { code: "Russian", label: "Russian (Русский)", flag: "🇷🇺" },
+    { code: "Arabic", label: "Arabic (العربية)", flag: "🇸🇦" },
 ];
 
 // --- Types ---
@@ -84,6 +99,9 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<EssayAssessment | null>(null);
   const [currentTopic, setCurrentTopic] = useState(""); 
   
+  // [MỚI] State lưu ngôn ngữ mẹ đẻ để nhận Feedback
+  const [nativeLang, setNativeLang] = useState("English");
+
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -93,17 +111,18 @@ export default function AnalyzePage() {
   const MIN_WORDS = 20;
   const wordCount = inputText.trim().split(/\s+/).filter(w => w.length > 0).length;
 
-  // --- 2. EFFECT: LOAD USER & RANDOM TOPIC ---
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      // [OPTIONAL] Nếu muốn xịn hơn, có thể fetch native_language từ bảng profiles của user để set default
+      // if (user) { ... fetch profile ... setNativeLang(profile.native_language) }
     };
     checkUser();
     randomizeTopic(); 
   }, []);
 
-  // --- 3. HÀM RANDOM TOPIC ---
   const randomizeTopic = () => {
     const randomIndex = Math.floor(Math.random() * SHORT_TOPICS.length);
     setCurrentTopic(SHORT_TOPICS[randomIndex]);
@@ -127,28 +146,25 @@ export default function AnalyzePage() {
 
     try {
       const currentUserId = user?.id || null; 
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      
+      const response = await fetch(`${API_URL}/analyze`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
             text: inputText, 
             user_id: currentUserId,
-            language: lang 
+            language: lang, // Ngôn ngữ giao diện (nếu cần)
+            native_language: nativeLang // [MỚI] Gửi ngôn ngữ user muốn nhận feedback
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        if (response.status === 429) {
+        if (response.status === 429 || response.status === 400) {
             alert(`⚠️ ${errorData.detail}`); 
-            setLoading(false);
-            return;
-        }
-        if (response.status === 400) {
-            alert(`⚠️ ${errorData.detail}`);
             setLoading(false);
             return;
         }
@@ -157,9 +173,9 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
 
       const data = await response.json();
       setResult(data);
-      toast.success("Phân tích thành công!");
+      toast.success("Analysis complete!");
     } catch (error) {
-      toast.error("Lỗi, vuu lòng thử lại!");
+      toast.error("Error analyzing essay. Please try again.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -173,6 +189,7 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
         {/* --- HEADER --- */}
         <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6">
           <div className="flex items-center gap-4">
+             {/* UI Language Toggle */}
              <button 
                onClick={toggleLanguage}
                className="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-bold transition-colors border border-slate-200"
@@ -220,7 +237,7 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
           <p className="text-slate-500">{t.subtitle}</p>
         </div>
 
-        {/* --- TOPIC SUGGESTION CARD (Gọn gàng hơn) --- */}
+        {/* --- TOPIC SUGGESTION CARD --- */}
         <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl relative group hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2 text-indigo-700 font-bold uppercase tracking-wider text-xs">
@@ -239,40 +256,68 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
             </p>
         </div>
 
-        {/* --- INPUT AREA --- */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="relative">
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="w-full h-64 p-4 bg-slate-50 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 resize-none text-lg text-slate-700 placeholder:text-slate-400 font-serif leading-relaxed"
-                placeholder={t.placeholder}
-              />
+        {/* --- INPUT AREA WITH SETTINGS --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            
+          {/* [MỚI] GLOBAL SETTINGS BAR */}
+          <div className="bg-slate-50 p-3 border-b border-slate-200 flex flex-wrap items-center gap-4 justify-between">
               
-              <div className={`absolute bottom-4 right-4 text-xs font-bold px-2 py-1 rounded transition-colors ${
-                  wordCount < MIN_WORDS ? "bg-red-100 text-red-500" : "bg-green-100 text-green-600"
+              {/* Dropdown chọn ngôn ngữ */}
+              <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                      <Globe size={14} /> Feedback Language:
+                  </div>
+                  <div className="relative">
+                      <select 
+                          value={nativeLang}
+                          onChange={(e) => setNativeLang(e.target.value)}
+                          className="appearance-none pl-3 pr-8 py-1.5 bg-white border border-slate-300 hover:border-indigo-400 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm transition-all"
+                      >
+                          {SUPPORTED_LANGUAGES.map((l) => (
+                              <option key={l.code} value={l.code}>
+                                  {l.flag} {l.label}
+                              </option>
+                          ))}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
+                  </div>
+              </div>
+
+              {/* Word Count (Moved here) */}
+              <div className={`text-xs font-bold px-2 py-1 rounded transition-colors ${
+                  wordCount < MIN_WORDS ? "bg-red-100 text-red-500" : "bg-emerald-100 text-emerald-600"
               }`}>
                   {wordCount} / {MIN_WORDS} words
               </div>
           </div>
 
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || wordCount < MIN_WORDS}
-            className={`mt-4 w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2
-              ${(loading || wordCount < MIN_WORDS)
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
-                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:-translate-y-1"
-              }`}
-          >
-            {loading ? (
-                t.button_analyzing
-            ) : wordCount < MIN_WORDS ? (
-                <span>Write {MIN_WORDS - wordCount} more words...</span>
-            ) : (
-                <>{t.button_analyze} <Zap size={20} fill="currentColor" className="text-yellow-400"/></>
-            )}
-          </button>
+          <div className="p-6">
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                className="w-full h-64 bg-transparent border-0 focus:ring-0 resize-none text-lg text-slate-700 placeholder:text-slate-300 font-serif leading-relaxed p-0"
+                placeholder={t.placeholder}
+                spellCheck={false}
+              />
+              
+              <button
+                onClick={handleAnalyze}
+                disabled={loading || wordCount < MIN_WORDS}
+                className={`mt-6 w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2
+                  ${(loading || wordCount < MIN_WORDS)
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:-translate-y-1"
+                  }`}
+              >
+                {loading ? (
+                    t.button_analyzing
+                ) : wordCount < MIN_WORDS ? (
+                    <span>Write {MIN_WORDS - wordCount} more words...</span>
+                ) : (
+                    <>{t.button_analyze} <Zap size={20} fill="currentColor" className="text-yellow-400"/></>
+                )}
+              </button>
+          </div>
         </div>
 
         {/* --- RESULT SECTION --- */}
@@ -289,7 +334,13 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
                 </div>
               </div>
               <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="font-bold text-lg mb-2 text-slate-800">{t.feedback_label}</h3>
+                <h3 className="font-bold text-lg mb-2 text-slate-800 flex items-center gap-2">
+                    {t.feedback_label} 
+                    {/* Badge nhỏ hiển thị ngôn ngữ feedback */}
+                    <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                        via {nativeLang} AI
+                    </span>
+                </h3>
                 <p className="text-slate-600 leading-relaxed">{result.general_feedback}</p>
               </div>
             </div>
@@ -301,6 +352,7 @@ const response = await fetch(`${API_URL}/analyze`, {        method: "POST",
                 <div key={index} className="bg-white p-5 rounded-xl border-l-4 border-l-red-500 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-bold text-red-600 text-lg">
+                        {/* Error Type luôn là tiếng Anh để chuẩn hóa */}
                         {translateError(err.error_type, lang)}
                     </h4>
                     

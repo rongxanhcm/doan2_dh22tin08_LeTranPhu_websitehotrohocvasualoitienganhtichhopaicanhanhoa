@@ -208,6 +208,7 @@ export default function Dashboard() {
             }}
             recentSubs={stats.recentActivity}
             chartData={stats.chartData}
+            language={lang} // <--- [MỚI] Truyền biến lang (vi hoặc en) vào đây
          />
       </div>
 

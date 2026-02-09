@@ -158,7 +158,7 @@ const fetchDetail = async () => {
                     </div>
                     <QuizView 
                         errors={unresolvedErrors}
-                        language={lang}
+                        language={data.target_language || "English"}
                         onSuccess={() => { setIsReviewing(false); fetchDetail(); }}
                         onCancel={() => setIsReviewing(false)}
                     />

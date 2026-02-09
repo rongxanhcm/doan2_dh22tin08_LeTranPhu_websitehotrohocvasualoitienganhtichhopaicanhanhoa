@@ -67,6 +67,7 @@ class EssayInput(BaseModel):
     text: str
     user_id: Optional[str] = None
     language: str = "vi"
+    native_language: str = "English" # <--- [MỚI] Mặc định là English
 
 # Models cho Quiz
 class ErrorItem(BaseModel):
@@ -99,11 +100,20 @@ def analyze_essay(input: EssayInput):
         if word_count < MIN_WORD_COUNT:
             raise HTTPException(status_code=400, detail=f"Bài viết quá ngắn ({word_count} từ).")
 
-        # 2. CHUẨN BỊ INSTRUCTION NGÔN NGỮ
-        if input.language == "vi":
-            lang_instruction = "IMPORTANT: Write 'explanation', 'suggestion', and 'general_feedback' in VIETNAMESE. Keep 'error_type' in English."
+        # Nếu là tiếng Anh thì giữ nguyên, nếu ngôn ngữ khác thì ép AI trả lời bằng tiếng đó
+        target_lang = input.native_language.strip()
+        
+        if target_lang.lower() in ["english", "en", "us", "uk"]:
+            lang_instruction = "Write explanation, suggestion, and general_feedback in English."
         else:
-            lang_instruction = "Write everything in English."
+            # Prompt quyền lực: Ép AI dịch output sang ngôn ngữ user muốn
+            lang_instruction = f"""
+            IMPORTANT: You are analyzing an essay for a student whose native language is '{target_lang}'.
+            Rules:
+            1. 'error_type' MUST remain in English (standard terminology).
+            2. 'explanation', 'suggestion', and 'general_feedback' MUST be written in {target_lang} (translated professionally).
+            3. The 'quote' must be the exact original substring.
+            """
 
         # 3. LẤY PROMPT TỪ DB
         raw_prompt = get_system_prompt("analyze_essay")
@@ -133,7 +143,8 @@ def analyze_essay(input: EssayInput):
                     "original_text": input.text,
                     "corrected_text": result.corrected_text,
                     "score": result.score,
-                    "general_feedback": result.general_feedback # [CỐT LÕI] Lưu vào đây
+                    "general_feedback": result.general_feedback, # [CỐT LÕI] Lưu vào đây
+                    "target_language": input.native_language  # <--- [MỚI] Lưu ngôn ngữ (Chinese/Vietnamese...) vào đây
                 }
                 sub_res = supabase.table("submissions").insert(sub_data).execute()
                 
@@ -161,24 +172,48 @@ def analyze_essay(input: EssayInput):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==========================================
-# ENDPOINT 2: BATCH QUIZ
+# ENDPOINT 2: BATCH QUIZ (GLOBAL NATIVE VERSION)
 # ==========================================
 @app.post("/generate-batch-quiz")
 def generate_batch_quiz(input: BatchQuizRequest):
     try:
+        # 1. Tạo danh sách lỗi
         error_list_text = ""
         for err in input.errors:
             error_list_text += f"- Error '{err.error_type}' in phrase: '{err.quote}'\n"
 
+        # 2. XỬ LÝ NGÔN NGỮ ĐỘNG (HYBRID LOGIC)
+        target_lang = input.language.strip()
+        
+        if target_lang.lower() in ["english", "en", "us", "uk"]:
+            lang_instruction = "Write everything (question, options, explanation) in English."
+        else:
+            # Prompt này cực quan trọng:
+            # - question: Dùng tiếng bản địa để hỏi, nhưng ví dụ tiếng Anh giữ nguyên.
+            # - options: Tiếng Anh (để chọn).
+            # - explanation: Tiếng bản địa (để hiểu).
+            lang_instruction = f"""
+            IMPORTANT: You are creating a quiz for a student whose native language is '{target_lang}'.
+            
+            RULES FOR LANGUAGE:
+            1. 'question': The instruction must be in {target_lang}, but the sentence being tested must remain in English.
+               (Example for Vietnamese: "Chọn từ đúng để điền vào câu: 'She ___ to school'.")
+            2. 'options': MUST be in English.
+            3. 'explanation': MUST be in {target_lang} so the student understands the grammar rule.
+            """
+
+        # 3. LẤY PROMPT TỪ DB
         raw_prompt = get_system_prompt("generate_quiz")
         if not raw_prompt:
             raise HTTPException(status_code=500, detail="Quiz prompt not found.")
             
-        prompt_text = raw_prompt.replace("{{error_list_text}}", error_list_text)
+        # 4. THAY THẾ
+        prompt_text = raw_prompt.replace("{{error_list_text}}", error_list_text)\
+                                .replace("{{lang_instruction}}", lang_instruction)
 
+        # 5. GỌI GEMINI
         response = genai_client.models.generate_content(
-            model='gemini-3-pro-preview',
+            model='gemini-3-pro-preview', # Dùng model xịn nhất để xử lý logic lai ngôn ngữ
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
