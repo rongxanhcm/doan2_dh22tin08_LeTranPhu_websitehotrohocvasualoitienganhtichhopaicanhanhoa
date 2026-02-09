@@ -114,10 +114,10 @@ export default function QuizView({ errors, language, onSuccess, onCancel }: Quiz
     
     // Gọi Supabase update
     const { error, count } = await supabase
-        .from("analysis_results")
-        .update({ is_resolved: true })
-        .in("id", resolvedIds)
-        .select('id', { count: 'exact' }); // Lấy số lượng dòng đã sửa
+    .from("analysis_results")
+    .update({ is_resolved: true })
+    .in("id", resolvedIds)
+    .select();
 
     if (error) {
         alert("Lỗi Database: " + error.message);
