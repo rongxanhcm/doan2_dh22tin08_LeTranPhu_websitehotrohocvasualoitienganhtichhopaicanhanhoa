@@ -1,6 +1,7 @@
+"use client";
+
 import React, { forwardRef } from "react";
-// Lưu ý: Không cần import icon nếu không dùng
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, Calendar, Crown, Award, Target, Zap } from "lucide-react";
 
 interface ReportProps {
   userEmail: string;
@@ -11,181 +12,162 @@ interface ReportProps {
   };
   recentSubs: any[];
   chartData: { date: string; score: number }[];
-  language?: string; // [MỚI] Nhận ngôn ngữ từ trang cha (mặc định 'en' hoặc 'vi')
+  language?: string;
 }
 
-// [MỚI] TỪ ĐIỂN DỊCH THUẬT CHO BÁO CÁO
 const TRANSLATIONS: any = {
   en: {
-    title: "Progress Report",
-    subtitle: "CoreFix AI Learning System",
-    generated_on: "Generated on",
-    overview_title: "Performance Overview",
-    total_essays: "TOTAL ESSAYS",
-    avg_score: "AVERAGE SCORE",
-    highest_score: "HIGHEST SCORE",
-    chart_title: "Growth Chart (Recent)",
-    chart_note: "Chart shows scores of recent submissions (Band 0-9.0)",
-    table_title: "Submission Details",
-    col_date: "Date",
-    col_score: "Score",
-    col_feedback: "General Feedback",
+    title: "Intelligence Report",
+    subtitle: "IELTS Progress Analysis",
+    total_essays: "Essays Analyzed",
+    avg_score: "Mean Band Score",
+    highest_score: "Peak Performance",
+    chart_title: "Growth Trajectory",
+    table_title: "Recent Evaluations",
     no_feedback: "No feedback recorded",
-    no_data_chart: "Not enough data to display chart",
-    footer_left: "CoreFix AI - Automated Education System",
-    footer_right: "Generated via CoreFix Dashboard"
+    footer: "Confidential AI-Generated Progress Report • CoreFix Ultimate"
   },
   vi: {
-    title: "Báo Cáo Tiến Độ",
-    subtitle: "Hệ thống Học tập CoreFix AI",
-    generated_on: "Ngày xuất",
-    overview_title: "Tổng Quan Hiệu Suất",
-    total_essays: "TỔNG SỐ BÀI",
-    avg_score: "ĐIỂM TRUNG BÌNH",
-    highest_score: "ĐIỂM CAO NHẤT",
-    chart_title: "Biểu Đồ Tăng Trưởng (Gần đây)",
-    chart_note: "Biểu đồ thể hiện điểm số của các bài nộp gần đây (Thang điểm 9.0)",
-    table_title: "Chi Tiết Các Bài Nộp",
-    col_date: "Ngày nộp",
-    col_score: "Điểm số",
-    col_feedback: "Đánh giá chung",
+    title: "Báo Cáo Trí Tuệ",
+    subtitle: "Phân Tích Tiến Độ IELTS",
+    total_essays: "Bài Đã Phân Tích",
+    avg_score: "Điểm Số Trung Bình",
+    highest_score: "Thành Tích Cao Nhất",
+    chart_title: "Quỹ Đạo Tăng Trưởng",
+    table_title: "Lịch Sử Đánh Giá",
     no_feedback: "Chưa có nhận xét",
-    no_data_chart: "Chưa có đủ dữ liệu để vẽ biểu đồ",
-    footer_left: "CoreFix AI - Hệ thống Giáo dục Tự động",
-    footer_right: "Xuất từ CoreFix Dashboard"
+    footer: "Báo Cáo Tiến Độ Tự Động • Hệ Thống CoreFix Ultimate"
   }
 };
 
 const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
   ({ userEmail, stats, recentSubs, chartData, language = "en" }, ref) => {
-    
-    // 1. Chọn từ điển dựa trên ngôn ngữ (fallback về 'en' nếu không tìm thấy)
     const t = TRANSLATIONS[language] || TRANSLATIONS["en"];
-    
-    // 2. Format ngày tháng theo ngôn ngữ
-    // Nếu là 'vi' thì dùng 'vi-VN', ngược lại dùng 'en-US'
     const dateLocale = language === "vi" ? "vi-VN" : "en-US";
     const currentDate = new Date().toLocaleDateString(dateLocale, {
-      day: "numeric", 
-      month: "long", 
+      day: "numeric",
+      month: "long",
       year: "numeric"
     });
+
+    const getStatus = (score: number) => {
+      if (score >= 7.5) return { label: "EXCELLENT", color: "#059669", bg: "#ecfdf5" };
+      if (score >= 6.5) return { label: "GOOD", color: "#2563eb", bg: "#eff6ff" };
+      return { label: "IMPROVING", color: "#4b5563", bg: "#f3f4f6" };
+    };
 
     return (
       <div 
         ref={ref} 
-        // Ép nền trắng và chữ đen bằng mã HEX cứng
-        className="w-[210mm] min-h-[297mm] bg-[#ffffff] p-12 text-[#0f172a] font-sans relative"
-        style={{ backgroundColor: "#ffffff", color: "#0f172a" }}
+        // Dùng inline style để đè hoàn toàn các hàm màu lạ
+        style={{ 
+            backgroundColor: "#ffffff", 
+            color: "#0f172a",
+            width: "210mm",
+            minHeight: "297mm",
+            padding: "60px",
+            fontFamily: "sans-serif",
+            position: "relative"
+        }}
       >
-        
         {/* HEADER */}
-        <div className="flex justify-between items-start border-b-2 border-[#0f172a] pb-6 mb-8">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "40px" }}>
           <div>
-            <h1 className="text-3xl font-black text-[#4338ca] tracking-tight uppercase">{t.title}</h1>
-            <p className="text-[#64748b] font-medium mt-1">{t.subtitle}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <div style={{ width: "32px", height: "32px", backgroundColor: "#4f46e5", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Crown size={18} color="#ffffff" />
+              </div>
+              <span style={{ fontSize: "10px", fontWeight: 900, letterSpacing: "2px", color: "#4f46e5" }}>ULTIMATE ANALYTICS</span>
+            </div>
+            <h1 style={{ fontSize: "32px", fontWeight: 900, color: "#0f172a", margin: 0 }}>{t.title}</h1>
+            <p style={{ color: "#64748b", fontWeight: 500, fontSize: "18px", margin: "4px 0 0 0" }}>{t.subtitle}</p>
           </div>
-          <div className="text-right">
-            <p className="font-bold text-[#0f172a]">{userEmail}</p>
-            <p className="text-sm text-[#64748b]">{t.generated_on}: {currentDate}</p>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "14px", fontWeight: 900, color: "#0f172a", margin: 0 }}>{userEmail}</p>
+            <p style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 700, marginTop: "4px" }}>{currentDate}</p>
           </div>
         </div>
 
         {/* 1. OVERVIEW CARDS */}
-        <div className="mb-10">
-          <h2 className="text-lg font-bold text-[#334155] mb-4 flex items-center gap-2">
-            <TrendingUp size={20} color="#334155"/> {t.overview_title}
-          </h2>
-          <div className="grid grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-[#f8fafc] p-4 rounded-xl border border-[#e2e8f0]">
-                <span className="text-xs text-[#64748b] uppercase font-bold">{t.total_essays}</span>
-                <p className="text-3xl font-black text-[#1e293b] mt-1">{stats.totalEssays}</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "40px" }}>
+          {[
+            { label: t.total_essays, value: stats.totalEssays, icon: <Target size={16}/>, color: "#4f46e5", bg: "#f8fafc" },
+            { label: t.avg_score, value: stats.avgScore, icon: <TrendingUp size={16}/>, color: "#4f46e5", bg: "#eff6ff" },
+            { label: t.highest_score, value: stats.highestScore, icon: <Award size={16}/>, color: "#059669", bg: "#ecfdf5" }
+          ].map((card, idx) => (
+            <div key={idx} style={{ backgroundColor: card.bg, padding: "24px", borderRadius: "24px", border: "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: card.color }}>
+                    {card.icon}
+                    <span style={{ fontSize: "10px", fontWeight: 900, letterSpacing: "1px" }}>{card.label}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                    <p style={{ fontSize: "40px", fontWeight: 900, color: "#0f172a", margin: 0 }}>{card.value}</p>
+                    {card.label === t.avg_score && <span style={{ color: "#94a3b8", fontWeight: 700, fontSize: "14px" }}>/ 9.0</span>}
+                </div>
             </div>
-            {/* Card 2 */}
-            <div className="bg-[#eef2ff] p-4 rounded-xl border border-[#e0e7ff]">
-                <span className="text-xs text-[#6366f1] uppercase font-bold">{t.avg_score}</span>
-                <p className="text-3xl font-black text-[#4338ca] mt-1">{stats.avgScore}</p>
-            </div>
-            {/* Card 3 */}
-            <div className="bg-[#ecfdf5] p-4 rounded-xl border border-[#d1fae5]">
-                <span className="text-xs text-[#10b981] uppercase font-bold">{t.highest_score}</span>
-                <p className="text-3xl font-black text-[#047857] mt-1">{stats.highestScore}</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* 2. GROWTH CHART */}
-        <div className="mb-10">
-           <h2 className="text-lg font-bold text-[#334155] mb-6 flex items-center gap-2">
-            <ActivityIcon /> {t.chart_title}
+        {/* 2. GROWTH CHART (Sử dụng HEX màu tối thay cho lab/oklch) */}
+        <div style={{ backgroundColor: "#0f172a", borderRadius: "32px", padding: "40px", marginBottom: "40px" }}>
+          <h2 style={{ color: "#ffffff", fontSize: "12px", fontWeight: 900, letterSpacing: "2px", margin: "0 0 32px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+             <Zap size={14} color="#eab308" /> {t.chart_title}
           </h2>
-          <div className="h-64 flex items-end justify-between gap-4 border-b border-[#cbd5e1] pb-2 px-4">
-             {chartData.length === 0 ? (
-                <div className="w-full text-center text-[#94a3b8] italic">{t.no_data_chart}</div>
-             ) : (
-                 chartData.map((d, idx) => (
-                    <div key={idx} className="flex flex-col items-center flex-1 group">
-                        <div className="relative w-full flex justify-center items-end h-48">
-                             {/* Cột điểm */}
-                             <div 
-                                style={{ height: `${(d.score / 9) * 100}%` }} 
-                                className={`w-8 rounded-t-md transition-all ${d.score >= 6.0 ? 'bg-[#4f46e5]' : 'bg-[#94a3b8]'}`}
-                             >
-                             </div>
-                             <span className="absolute -top-6 text-xs font-bold text-[#475569]">{d.score}</span>
+          <div style={{ height: "180px", display: "flex", alignItems: "end", justifyContent: "space-between", gap: "20px" }}>
+             {chartData.map((d, idx) => (
+                <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
+                    <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "end", justifyContent: "center", marginBottom: "12px" }}>
+                        <div style={{ 
+                            height: `${(d.score / 9) * 100}%`, 
+                            width: "30px", 
+                            backgroundColor: d.score >= 7 ? "#6366f1" : "#334155",
+                            borderRadius: "8px 8px 2px 2px",
+                            position: "relative"
+                        }}>
+                            <div style={{ position: "absolute", top: "-24px", left: "50%", transform: "translateX(-50%)", fontSize: "11px", fontWeight: 900, color: "#ffffff" }}>
+                                {d.score}
+                            </div>
                         </div>
-                        <span className="text-[10px] text-[#64748b] mt-2 font-medium truncate w-full text-center">
-                            {d.date}
-                        </span>
                     </div>
-                 ))
-             )}
+                    <span style={{ fontSize: "9px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>{d.date}</span>
+                </div>
+             ))}
           </div>
-          <p className="text-xs text-center text-[#94a3b8] mt-2 italic">{t.chart_note}</p>
         </div>
 
-        {/* 3. RECENT ACTIVITY TABLE (Đã fix layout) */}
+        {/* 3. RECENT ACTIVITY */}
         <div>
-           <h2 className="text-lg font-bold text-[#334155] mb-4 flex items-center gap-2">
-            <Calendar size={20} color="#334155"/> {t.table_title}
-          </h2>
-          <table className="w-full text-left text-sm border-collapse table-fixed">
-            <thead>
-                <tr className="bg-[#f1f5f9] text-[#475569]">
-                    <th className="p-3 font-bold border-b border-[#e2e8f0] w-[15%]">{t.col_date}</th>
-                    <th className="p-3 font-bold border-b border-[#e2e8f0] w-[15%]">{t.col_score}</th>
-                    <th className="p-3 font-bold border-b border-[#e2e8f0] w-[70%]">{t.col_feedback}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {recentSubs.slice(0, 8).map((sub, i) => (
-                    <tr key={i} className="border-b border-[#f1f5f9]">
-                        <td className="p-3 text-[#475569] align-top">
-                            {new Date(sub.created_at).toLocaleDateString(dateLocale)}
-                        </td>
-                        <td className="p-3 font-bold align-top">
-                            <span className={`px-2 py-1 rounded ${
-                                sub.score >= 6 
-                                ? 'bg-[#d1fae5] text-[#047857]' 
-                                : 'bg-[#f1f5f9] text-[#334155]'
-                            }`}>
-                                {sub.score}
-                            </span>
-                        </td>
-                        <td className="p-3 text-[#64748b] italic whitespace-normal leading-relaxed">
-                            {sub.general_feedback || t.no_feedback}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-          </table>
+          <h2 style={{ fontSize: "12px", fontWeight: 900, color: "#94a3b8", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "20px" }}>{t.table_title}</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {recentSubs.slice(0, 5).map((sub, i) => {
+              const status = getStatus(sub.score);
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "20px", padding: "20px", borderRadius: "20px", border: "1px solid #f1f5f9" }}>
+                  <div style={{ fontSize: "10px", fontWeight: 900, color: "#0f172a", minWidth: "50px" }}>
+                    {new Date(sub.created_at).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "18px", fontWeight: 900, color: "#0f172a" }}>{sub.score}</span>
+                      <span style={{ backgroundColor: status.bg, color: status.color, fontSize: "8px", fontWeight: 900, padding: "2px 8px", borderRadius: "10px" }}>
+                        {status.label}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "12px", color: "#64748b", fontStyle: "italic", margin: 0 }}>
+                        "{sub.general_feedback || t.no_feedback}"
+                    </p>
+                  </div>
+                  <div style={{ fontSize: "10px", fontWeight: 800, color: "#4f46e5" }}>ANALYSIS →</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* FOOTER */}
-        <div className="absolute bottom-12 left-12 right-12 border-t border-[#e2e8f0] pt-4 flex justify-between text-xs text-[#94a3b8]">
-            <span>{t.footer_left}</span>
-            <span>{t.footer_right}</span>
+        <div style={{ position: "absolute", bottom: "40px", left: "60px", right: "60px", paddingTop: "20px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", fontSize: "10px", fontWeight: 700, color: "#94a3b8" }}>
+          <span>{t.footer}</span>
+          <span>POWERED BY <strong style={{ color: "#4f46e5" }}>COREFIX AI</strong></span>
         </div>
       </div>
     );
@@ -193,9 +175,4 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
 );
 
 DashboardReport.displayName = "DashboardReport";
-
-const ActivityIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-)
-
 export default DashboardReport;
