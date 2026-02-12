@@ -1,19 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // Dùng Image cho logo
-import { useLanguage } from "@/context/LanguageContext";
+import Image from "next/image";
 import { translateError } from "@/lib/errorMapping";
 import { 
   Zap, Shuffle, Lightbulb, Globe, ChevronDown, 
   Sparkles, X, Check, Wand2, ArrowLeft, 
   History, PencilLine, BookOpen, Quote, Lock, 
-  LayoutDashboard, FileText, BarChart3
+  LayoutDashboard, FileText, BarChart3, RotateCcw
 } from "lucide-react";
 import toast from "react-hot-toast";
 import PricingModal from "@/components/PricingModal";
+import UserDropdown from "@/components/UserDropdown";
+import GrammarLessonModal from "@/components/GrammarLessonModal"; // Nhớ import cái này
+import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 
 // --- REFINED ANIMATIONS (CYAN THEME) ---
 const enhancedStyles = `
@@ -39,7 +41,7 @@ const enhancedStyles = `
   .animate-scan-line {
     position: absolute;
     top: 0; bottom: 0; width: 2px;
-    background: linear-gradient(to bottom, transparent, #06b6d4, transparent); /* CYAN-500 */
+    background: linear-gradient(to bottom, transparent, #06b6d4, transparent);
     box-shadow: 0 0 15px 2px rgba(6, 182, 212, 0.5);
     z-index: 30;
     animation: scan-line 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
@@ -78,12 +80,19 @@ export default function AnalyzePage() {
   const [mode, setMode] = useState<"grammar" | "vocab">("grammar"); 
   const [activeError, setActiveError] = useState<any | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [user, setUser] = useState<any>(null);
   
+  // User & Pro State
+  const [user, setUser] = useState<any>(null);
+  const [isPro, setIsPro] = useState(false);
+  
+  // Modals
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const router = useRouter();
   const supabase = createClient();
-  const { t, lang, setLang } = useLanguage();
+  const resultRef = useRef<HTMLDivElement>(null); // Để scroll tự động
 
   const MIN_WORDS = 20;
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
@@ -91,7 +100,11 @@ export default function AnalyzePage() {
   useEffect(() => {
     const checkUser = async () => { 
         const { data: { user } } = await supabase.auth.getUser(); 
-        setUser(user); 
+        if(user) {
+            setUser(user);
+            const { data } = await supabase.from('user_usage').select('is_pro').eq('user_id', user.id).single();
+            if(data) setIsPro(data.is_pro);
+        }
     };
     checkUser();
     randomizeTopic();
@@ -99,43 +112,61 @@ export default function AnalyzePage() {
 
   const randomizeTopic = () => setCurrentTopic(SHORT_TOPICS[Math.floor(Math.random() * SHORT_TOPICS.length)]);
 
+  const handleOpenLesson = async (errorType: string) => {
+    const rule = await fetchRuleByKey(errorType);
+    setSelectedRule(rule);
+    setIsModalOpen(true);
+  };
+
+  const handleReset = () => {
+      setResult(null);
+      setInputText("");
+      setActiveError(null);
+      setMode("grammar");
+      randomizeTopic();
+      toast.success("Ready for a new essay!");
+  };
+
   const handleUpgradeSuccess = async () => {
     if (!result?.submission_id) {
-        toast.error("No submission found. Try writing a new essay.");
+        toast.error("No submission found.");
         return;
     }    
-      if (result && !result.polished_text && result.submission_id) {
-          const toastId = toast.loading("Unlocking Band 9.0 Version...");
-          try {
-              const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-              const res = await fetch(`${API_URL}/upgrade-submission`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ 
-                      submission_id: result.submission_id,
-                      user_id: user?.id 
-                  })
-              });
+    
+    if (result && !result.polished_text) {
+        const toastId = toast.loading("Unlocking Band 9.0 Version...");
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const res = await fetch(`${API_URL}/upgrade-submission`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    submission_id: result.submission_id,
+                    user_id: user?.id 
+                })
+            });
 
-              if (!res.ok) throw new Error("Unlock failed");
-              const data = await res.json();
+            if (!res.ok) throw new Error("Unlock failed");
+            const data = await res.json();
 
-              setResult((prev: any) => ({
-                  ...prev,
-                  polished_text: data.polished_text
-              }));
+            setResult((prev: any) => ({
+                ...prev,
+                polished_text: data.polished_text
+            }));
 
-              toast.success("Unlocked!", { id: toastId });
-              setMode("vocab");
-              setIsAnimating(true);
-              setTimeout(() => setIsAnimating(false), 1200);
+            setIsPro(true); // Update UI instantly
+            toast.success("Unlocked!", { id: toastId });
+            setMode("vocab");
+            setIsAnimating(true);
+            setTimeout(() => setIsAnimating(false), 1200);
 
-          } catch (error) {
-              toast.error("Unlock failed.", { id: toastId });
-          }
-      } else {
-           toast.success("You are now Pro!");
-      }
+        } catch (error) {
+            toast.error("Unlock failed.", { id: toastId });
+        }
+    } else {
+         setIsPro(true);
+         toast.success("You are now Pro!");
+    }
   };
   
   const handleAnalyze = async () => {
@@ -153,7 +184,7 @@ export default function AnalyzePage() {
         body: JSON.stringify({ 
             text: inputText, 
             user_id: user?.id || null, 
-            language: lang, 
+            language: "en", // Hardcode English target
             native_language: nativeLang 
         }),
       });
@@ -171,6 +202,12 @@ export default function AnalyzePage() {
       const data = await response.json();
       setResult(data);
       toast.success("Analysis complete!");
+      
+      // Auto scroll to results on mobile/tablet
+      setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+
     } catch (error: any) {
          toast.error(error.message || "Could not analyze essay.");
     } finally {
@@ -201,7 +238,6 @@ export default function AnalyzePage() {
   };
 
   return (
-    // STYLE MỚI: Nền Dot Grid + White Background
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-cyan-100 selection:text-cyan-900 relative">
       <style>{enhancedStyles}</style>
       
@@ -210,45 +246,72 @@ export default function AnalyzePage() {
            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
 
-      {/* --- NAVBAR CHUYÊN NGHIỆP --- */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <div 
-              onClick={() => router.push("/")}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-                <div className="relative w-8 h-8">
-                    {/* Placeholder Logo nếu chưa có file */}
-                    <Image src="/logo.svg" alt="Eloqua Logo" width={32} height={32} className="object-contain" priority />
-                </div>
-                <span className="font-bold text-xl text-slate-900 tracking-tight group-hover:text-cyan-600 transition-colors">Eloqua</span>
-            </div>
-            
-            <div className="hidden md:flex h-5 w-[1px] bg-slate-200" />
-            
-            <div className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-500">
-                <FileText size={16} />
-                <span>Analyzer / New Essay</span>
-            </div>
+      <PricingModal 
+        isOpen={showPricingModal} 
+        onClose={() => setShowPricingModal(false)}
+        onSuccess={handleUpgradeSuccess}
+      />
+
+      <GrammarLessonModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        rule={selectedRule} 
+      />
+
+      {/* --- NAVBAR --- */}
+<nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+  <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+    <div className="flex items-center gap-6">
+      <div 
+        onClick={() => router.push("/")} // Logo về Home
+        className="flex items-center gap-2 cursor-pointer group"
+      >
+          <div className="relative w-8 h-8">
+              <Image src="/logo.svg" alt="Eloqua Logo" width={32} height={32} className="object-contain" priority />
           </div>
+          <span className="font-bold text-xl text-slate-900 tracking-tight group-hover:text-cyan-600 transition-colors">Eloqua</span>
+      </div>
+      
+      {/* Vạch ngăn cách dọc */}
+      <div className="hidden md:flex h-5 w-[1px] bg-slate-200" />
+      
+      {/* Cụm link điều hướng mới */}
+      <div className="hidden md:flex items-center gap-4">
+          <button 
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-cyan-600 transition-all"
+          >
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
+          </button>
+          
+          <div className="h-3 w-[1px] bg-slate-200" />
+          
+          <div className="flex items-center gap-1.5 text-sm font-black text-cyan-600">
+              <FileText size={16} />
+              <span>Analyzer</span>
+          </div>
+      </div>
+    </div>
 
           <div className="flex items-center gap-4">
-            <button 
-                onClick={() => setLang(lang === 'en' ? 'vi' : 'en')}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-cyan-200 transition-all"
-            >
-                {lang === 'en' ? '🇺🇸 EN' : '🇻🇳 VN'}
-            </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                <div className="text-right hidden sm:block">
-                    <p className="text-xs font-bold text-slate-700">{user?.email?.split('@')[0] || "Guest"}</p>
-                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">Free Plan</p>
+            {/* Nếu đã có kết quả, hiện nút Reset ở Navbar để tiện thao tác */}
+            {result && (
+                <button 
+                    onClick={handleReset}
+                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all"
+                >
+                    <RotateCcw size={12}/> Reset
+                </button>
+            )}
+
+            {user ? (
+                <div className="pl-4 border-l border-slate-200">
+                    <UserDropdown user={user} isPro={isPro} />
                 </div>
-                <div className="w-9 h-9 bg-slate-100 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
-                    <LayoutDashboard size={18} />
-                </div>
-            </div>
+            ) : (
+                <button onClick={() => router.push('/login')} className="text-sm font-bold text-slate-600 hover:text-slate-900">Login</button>
+            )}
           </div>
         </div>
       </nav>
@@ -259,7 +322,7 @@ export default function AnalyzePage() {
         {/* --- LEFT COLUMN: EDITOR (8 Cols) --- */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* Prompt Card (Minimalist) */}
+          {/* Prompt Card */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-cyan-300 transition-colors">
             <div className="flex items-start gap-4">
                 <div className="p-2.5 bg-cyan-50 text-cyan-600 rounded-lg shrink-0">
@@ -278,10 +341,9 @@ export default function AnalyzePage() {
           {/* Main Editor Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 flex flex-col min-h-[680px] overflow-hidden relative">
             
-            {/* Toolbar (Clean) */}
+            {/* Toolbar */}
             <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
               <div className="flex items-center gap-3">
-                 {/* Language Selector */}
                  <div className="relative group">
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-200">
                         <Globe size={14} className="text-slate-400" />
@@ -296,7 +358,6 @@ export default function AnalyzePage() {
                     </div>
                  </div>
                  
-                 {/* Word Count */}
                  <div className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border uppercase tracking-wider transition-colors ${wordCount >= MIN_WORDS ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                     {wordCount} Words
                  </div>
@@ -328,14 +389,13 @@ export default function AnalyzePage() {
                 <textarea 
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={t.placeholder}
+                  placeholder="Start writing your essay here..."
                   className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
                   spellCheck={false}
                 />
               ) : (
                 <div className="relative min-h-[400px]">
                   {mode === 'grammar' ? (
-                    // --- GRAMMAR MODE ---
                     <div className="text-lg md:text-xl text-slate-800 font-serif whitespace-pre-wrap leading-loose animate-fade-in-up">
                         {(() => {
                             let lastIndex = 0;
@@ -362,7 +422,6 @@ export default function AnalyzePage() {
                         })()}
                     </div>
                   ) : (
-                    // --- VOCAB MODE ---
                     <div className="relative h-full bg-white">
                       {result.polished_text ? (
                         <div className="relative w-full min-h-[300px]">
@@ -379,7 +438,6 @@ export default function AnalyzePage() {
                           {isAnimating && <div className="animate-scan-line pointer-events-none" />}
                         </div>
                       ) : (
-                        // LOCKED STATE
                         <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden">
                              <div className="absolute inset-0 opacity-10 blur-[2px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-slate-900">
                                 {inputText}
@@ -426,19 +484,27 @@ export default function AnalyzePage() {
                         )}
                     </button>
                ) : (
-                     <button 
-                        onClick={() => {setResult(null); setActiveError(null);}}
-                        className="w-full py-4 rounded-xl font-bold text-slate-500 border border-slate-200 hover:border-cyan-500 hover:text-cyan-600 hover:bg-cyan-50 transition-all flex items-center justify-center gap-2"
-                    >
-                        <PencilLine size={18} /> Write New Essay
-                    </button>
+                     <div className="flex gap-3">
+                        <button 
+                            onClick={handleReset}
+                            className="flex-1 py-4 rounded-xl font-bold text-slate-500 border border-slate-200 hover:border-cyan-500 hover:text-cyan-600 hover:bg-cyan-50 transition-all flex items-center justify-center gap-2"
+                        >
+                            <PencilLine size={18} /> Write New Essay
+                        </button>
+                        <button 
+                            onClick={() => router.push("/dashboard")}
+                            className="flex-1 py-4 rounded-xl font-bold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+                        >
+                            <LayoutDashboard size={18} /> Back to Dashboard
+                        </button>
+                    </div>
                )}
             </div>
           </div>
         </div>
 
         {/* --- RIGHT COLUMN: SIDEBAR (4 Cols) --- */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-6" ref={resultRef}>
             {!result ? (
                 // Empty State
                 <div className="h-full min-h-[400px] bg-white p-8 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-center">
@@ -451,7 +517,7 @@ export default function AnalyzePage() {
             ) : (
                 <div className="space-y-5 animate-fade-in-up">
                     
-                    {/* Score Card (Dark Professional) */}
+                    {/* Score Card */}
                     <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800 relative overflow-hidden">
                          <div className="relative z-10 flex justify-between items-start">
                             <div>
@@ -484,7 +550,7 @@ export default function AnalyzePage() {
                             <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-xl shadow-red-500/5">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider rounded">
-                                        {translateError(activeError.error_type, lang)}
+                                        {translateError(activeError.error_type, 'en')}
                                     </span>
                                     <button onClick={() => setActiveError(null)} className="text-slate-300 hover:text-slate-500"><X size={16}/></button>
                                 </div>
@@ -492,12 +558,20 @@ export default function AnalyzePage() {
                                     <span className="text-slate-400">AI Suggestion:</span><br/>
                                     "{activeError.explanation}"
                                 </p>
-                                <button 
-                                    onClick={() => applyFix(activeError)}
-                                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
-                                >
-                                    <Check size={16} /> Apply Fix
-                                </button>
+                                <div className="flex flex-col gap-2">
+                                    <button 
+                                        onClick={() => handleOpenLesson(activeError.error_type)}
+                                        className="w-full py-2 bg-slate-50 text-slate-500 hover:text-cyan-600 font-bold rounded-lg text-xs flex items-center justify-center gap-2 transition-all uppercase tracking-wide"
+                                    >
+                                        <BookOpen size={14} /> Review Lesson
+                                    </button>
+                                    <button 
+                                        onClick={() => applyFix(activeError)}
+                                        className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
+                                    >
+                                        <Check size={16} /> Apply Fix
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center h-full min-h-[200px]">
@@ -522,7 +596,7 @@ export default function AnalyzePage() {
                                         className={`w-full text-left p-3 rounded-lg text-xs transition-all border ${activeError === e ? 'bg-cyan-50 border-cyan-200 text-cyan-900' : 'bg-white border-transparent hover:bg-slate-50 text-slate-600'}`}
                                     >
                                         <div className="font-bold truncate mb-0.5">"{e.quote}"</div>
-                                        <div className="text-slate-400 text-[10px] uppercase">{translateError(e.error_type, lang)}</div>
+                                        <div className="text-slate-400 text-[10px] uppercase">{translateError(e.error_type, 'en')}</div>
                                     </button>
                                 ))
                              ) : (
@@ -535,12 +609,6 @@ export default function AnalyzePage() {
             )}
         </div>
       </div>
-      
-      <PricingModal 
-        isOpen={showPricingModal} 
-        onClose={() => setShowPricingModal(false)}
-        onSuccess={handleUpgradeSuccess}
-      />
     </main>
   );
 }

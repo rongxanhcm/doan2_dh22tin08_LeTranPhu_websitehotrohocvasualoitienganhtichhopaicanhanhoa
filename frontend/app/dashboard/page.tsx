@@ -14,7 +14,7 @@ import { DashboardSkeleton } from "@/components/Skeleton";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 import PricingModal from "@/components/PricingModal";
-
+import UserDropdown from "@/components/UserDropdown";
 // PDF Exports
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -201,41 +201,52 @@ export default function Dashboard() {
 
       <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
-        {/* --- HEADER --- */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-sm">
+ {/* --- HEADER (Updated with Smart UserDropdown) --- */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-sm relative z-20">
+          
+          {/* LEFT: Branding & Welcome */}
           <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12">
+            <div className="relative w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/")}>
                <Image src="/logo.svg" alt="Logo" fill className="object-contain" />
+               
             </div>
             <div>
               <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-[0.2em]">Student Portal</p>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome back, {userEmail.split('@')[0]}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Welcome back, {userEmail.split('@')[0]}
+              </h1>
             </div>
           </div>
           
+          {/* RIGHT: Actions */}
           <div className="flex items-center gap-3">
-             {isPro ? (
-                 <div className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest shadow-lg shadow-cyan-600/20">
-                     <Zap size={14} fill="currentColor" className="text-yellow-300" />
-                     Pro Member
-                 </div>
-             ) : (
-                 <button 
-                    onClick={() => setShowPricingModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-cyan-600 transition-colors shadow-lg shadow-slate-900/10"
-                 >
-                     <Sparkles size={14} className="text-cyan-400" />
-                     Upgrade to Pro
-                 </button>
-             )}
-
+             
+             {/* Nút Viết bài mới (Luôn hiện) */}
              <button 
                 onClick={() => router.push("/analyze")}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-lg hover:border-cyan-500 hover:text-cyan-600 transition-all shadow-sm active:scale-95"
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:border-cyan-500 hover:text-cyan-600 transition-all shadow-sm active:scale-95 text-sm"
              >
                 <FileText size={18} />
                 New Essay
              </button>
+
+             {/* Nút Upgrade (CHỈ HIỆN KHI LÀ FREE USER - Để kích thích mua hàng) */}
+             {!isPro && (
+                 <button 
+                    onClick={() => setShowPricingModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                 >
+                     <Sparkles size={14} className="text-cyan-400" />
+                     <span className="hidden sm:inline">Upgrade Pro</span>
+                     <span className="sm:hidden">Pro</span>
+                 </button>
+             )}
+
+             {/* User Dropdown (Thay thế cho nút Logout cũ & Badge Pro tĩnh) */}
+             <div className="pl-3 border-l border-slate-200">
+                <UserDropdown user={{ email: userEmail }} isPro={isPro} />
+             </div>
+
           </div>
         </header>
 
@@ -260,7 +271,7 @@ export default function Dashboard() {
                 </button>
             </div>
         )}
-
+        
         {/* --- STATS OVERVIEW --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard icon={<FileText size={20} />} label="Total Essays" value={stats.totalEssays} subValue="Submissions" color="slate" />

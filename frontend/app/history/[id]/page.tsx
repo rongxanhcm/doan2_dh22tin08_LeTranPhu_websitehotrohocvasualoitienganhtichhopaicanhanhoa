@@ -4,9 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
 import { 
-  ArrowLeft, Clock, Zap, Check, FileText, 
+  ArrowLeft, Clock, Check, FileText, 
   Sparkles, AlertTriangle, BookOpen, ChevronRight,
-  Wand2, Lock, Lightbulb, Shield, BarChart3, CheckCircle
+  Wand2, Lock, Lightbulb, Shield, BarChart3, CheckCircle, Zap
 } from "lucide-react"; 
 import { translateError } from "@/lib/errorMapping";
 import QuizView from "@/components/QuizView";
@@ -62,6 +62,7 @@ export default function HistoryDetail() {
   const [viewMode, setViewMode] = useState<"corrected" | "polished">("corrected");
   
   const [user, setUser] = useState<any>(null);
+  const [isPro, setIsPro] = useState(false); // [MỚI] State check quyền Pro
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -70,7 +71,6 @@ export default function HistoryDetail() {
   const router = useRouter();
   const supabase = createClient();
 
-  // --- FIX LOGIC: Dùng useMemo để tránh QuizView bị re-render liên tục ---
   const unresolvedErrors = useMemo(() => {
     return data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
   }, [data?.analysis_results]);
@@ -84,6 +84,16 @@ export default function HistoryDetail() {
   const fetchDetail = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+
+    if (user) {
+        // [MỚI] Lấy thông tin Pro status ngay khi load trang
+        const { data: usage } = await supabase
+            .from("user_usage")
+            .select("is_pro")
+            .eq("user_id", user.id)
+            .single();
+        if (usage) setIsPro(usage.is_pro);
+    }
 
     const { data: submission, error } = await supabase
       .from("submissions")
@@ -114,9 +124,12 @@ export default function HistoryDetail() {
       setViewMode(mode);
   };
 
+  // Hàm này giờ phục vụ cả 2 mục đích:
+  // 1. User Free mua Pro thành công -> Tự động chạy
+  // 2. User Pro bấm nút "Kích hoạt" ở bài cũ -> Chạy luôn
   const handleUpgradeSuccess = async () => {
     if (!data?.id || !user?.id) return;
-    const toastId = toast.loading("Unlocking Band 9.0 version...");
+    const toastId = toast.loading("Generating Band 9.0 version...");
     try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         const res = await fetch(`${API_URL}/upgrade-submission`, {
@@ -125,14 +138,15 @@ export default function HistoryDetail() {
             body: JSON.stringify({ submission_id: data.id, user_id: user.id })
         });
 
-        if (!res.ok) throw new Error("Upgrade failed");
+        if (!res.ok) throw new Error("Generation failed");
         const resData = await res.json();
 
         setData((prev: any) => ({ ...prev, polished_text: resData.polished_text }));
-        toast.success("Unlocked!", { id: toastId });
+        setIsPro(true); // Đảm bảo state Pro được cập nhật nếu vừa mua xong
+        toast.success("Essay Upgraded Successfully!", { id: toastId });
         handleSwitchMode("polished");
     } catch (error) {
-        toast.error("Unlock failed.", { id: toastId });
+        toast.error("Could not generate text. Please try again.", { id: toastId });
     }
   };
 
@@ -146,7 +160,6 @@ export default function HistoryDetail() {
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-cyan-100">
       <style>{enhancedStyles}</style>
       
-      {/* Background Dot Grid */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
@@ -177,7 +190,7 @@ export default function HistoryDetail() {
             </div>
         </div>
         
-        {/* --- COMPARISON AREA (Side-by-side) --- */}
+        {/* --- COMPARISON AREA --- */}
         <div className="grid lg:grid-cols-2 gap-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             
             {/* Left: Original Draft */}
@@ -188,9 +201,7 @@ export default function HistoryDetail() {
                 </div>
                 
                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex-1 min-h-[500px] overflow-hidden relative"> 
-                    {/* Thanh accent đỏ cho cột trái */}
                     <div className="absolute top-8 left-0 w-1 h-12 bg-red-500 rounded-r-full shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
-                    
                     <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
                         <HighlightText text={data.original_text} errors={data.analysis_results} />
                     </div>
@@ -237,6 +248,7 @@ export default function HistoryDetail() {
                     ) : (
                         <div className="h-full relative overflow-y-auto pr-2 custom-scrollbar">
                             {data.polished_text ? (
+                                // STATE 1: Đã có nội dung (Pro User đã generate xong)
                                 <div className="relative">
                                     {isAnimating && (
                                         <div className="absolute inset-0 text-lg text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
@@ -254,23 +266,48 @@ export default function HistoryDetail() {
                                     </div>
                                 </div>
                             ) : (
-                                // LOCKED STATE
+                                // STATE 2: Chưa có nội dung (Cần check quyền Pro)
                                 <div className="h-full flex flex-col items-center justify-center text-center relative">
                                     <div className="absolute inset-0 text-left opacity-10 select-none blur-[2px] font-serif text-lg text-slate-900 overflow-hidden pointer-events-none">
                                         {data.original_text}
                                     </div>
+                                    
                                     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-2xl max-w-sm relative z-10">
                                         <div className="mx-auto w-12 h-12 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center mb-6 border border-cyan-100">
-                                            <Lock size={24} />
+                                            {isPro ? <Zap size={24} /> : <Lock size={24} />}
                                         </div>
-                                        <h4 className="text-xl font-bold text-slate-900 mb-2">Elite Version Locked</h4>
-                                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">Upgrade to Pro to access Band 9.0 rewrites.</p>
-                                        <button 
-                                            onClick={() => setShowPricingModal(true)}
-                                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-cyan-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
-                                        >
-                                            <Sparkles size={16} /> Upgrade & Unlock
-                                        </button>
+                                        
+                                        <h4 className="text-xl font-bold text-slate-900 mb-2">
+                                            {isPro ? "Ready to Generate?" : "Elite Version Locked"}
+                                        </h4>
+                                        
+                                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                                            {isPro 
+                                                ? "You are a Pro user! Click below to generate the Band 9.0 version for this essay." 
+                                                : "Upgrade to Pro to instantly rewrite this essay with native-level vocabulary."}
+                                        </p>
+                                        
+                                        {/* [LOGIC QUAN TRỌNG] */}
+                                        {isPro ? (
+                                            <button 
+                                                onClick={handleUpgradeSuccess} // User Pro -> Gọi hàm Generate luôn
+                                                className="w-full py-3 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-700 transition-all flex justify-center items-center gap-2 shadow-lg shadow-cyan-200"
+                                            >
+                                                <Zap size={16} fill="currentColor" className="text-yellow-300"/> 
+                                                Generate Band 9.0 (Free)
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => setShowPricingModal(true)} // User Free -> Hiện bảng giá
+                                                className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-cyan-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
+                                            >
+                                                <Sparkles size={16} /> Upgrade & Unlock
+                                            </button>
+                                        )}
+                                        
+                                        <div className="mt-4 flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                            <Shield size={12}/> {isPro ? "Pro Member Access" : "Secure 1-Click Upgrade"}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -279,20 +316,18 @@ export default function HistoryDetail() {
                 </div>
             </div>
         </div>
-
+        {/* ... (Phần dưới giữ nguyên) ... */}
         <hr className="border-slate-200 my-8" />
-
-        {/* --- DIAGNOSTICS AREA --- */}
         <section className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            {isReviewing ? (
-                // QUIZ VIEW CONTAINER (Updated Colors)
+             {/* ... Diagnostics Area giữ nguyên ... */}
+             {isReviewing ? (
+                // ...
                 <div className="bg-white p-8 rounded-2xl border border-cyan-100 shadow-xl shadow-cyan-900/5">
                     <div className="flex items-center gap-2 mb-8 text-cyan-700 bg-cyan-50 px-4 py-2 rounded-xl w-fit border border-cyan-100">
                         <BookOpen size={20} />
                         <span className="font-bold uppercase tracking-widest text-xs">Practice Mode</span>
                         <span className="text-cyan-400 text-xs font-medium">| {unresolvedErrors.length} issues remaining</span>
                     </div>
-                    {/* TRUYỀN unresolvedErrors VÀO ĐÂY */}
                     <QuizView 
                         errors={unresolvedErrors}
                         language={data.target_language || "English"}
@@ -301,7 +336,9 @@ export default function HistoryDetail() {
                     />
                 </div>
             ) : (
-                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                 // ... Diagnostics Report UI (Copy từ code cũ) ...
+                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    {/* ... (Phần UI này giữ nguyên như code trước) ... */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                         <div>
                             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
@@ -389,7 +426,7 @@ export default function HistoryDetail() {
                             </div>
                         ))}
                     </div>
-                </div>
+                 </div>
             )}
         </section>
       </div>
