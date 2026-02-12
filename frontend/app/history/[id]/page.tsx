@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
-import Image from "next/image";
 import { 
   ArrowLeft, Clock, Zap, Check, FileText, 
   Sparkles, AlertTriangle, BookOpen, ChevronRight,
@@ -18,7 +17,7 @@ import PricingModal from "@/components/PricingModal";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 
-// --- REFINED ANIMATIONS (CYAN THEME) ---
+// --- REFINED ANIMATIONS ---
 const enhancedStyles = `
   @keyframes clip-reveal {
     0% { clip-path: inset(0 100% 0 0); }
@@ -70,6 +69,11 @@ export default function HistoryDetail() {
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
+
+  // --- FIX LOGIC: Dùng useMemo để tránh QuizView bị re-render liên tục ---
+  const unresolvedErrors = useMemo(() => {
+    return data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
+  }, [data?.analysis_results]);
 
   const handleOpenLesson = async (errorType: string) => {
     const rule = await fetchRuleByKey(errorType);
@@ -125,16 +129,15 @@ export default function HistoryDetail() {
         const resData = await res.json();
 
         setData((prev: any) => ({ ...prev, polished_text: resData.polished_text }));
-        toast.success("Essay unlocked!", { id: toastId });
+        toast.success("Unlocked!", { id: toastId });
         handleSwitchMode("polished");
     } catch (error) {
-        toast.error("Could not unlock automatically.", { id: toastId });
+        toast.error("Unlock failed.", { id: toastId });
     }
   };
 
   if (loading) return <HistorySkeleton />;
 
-  const unresolvedErrors = data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
   const formattedDate = new Date(data.created_at).toLocaleDateString('en-US', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
   });
@@ -175,7 +178,8 @@ export default function HistoryDetail() {
         </div>
         
         {/* --- COMPARISON AREA (Side-by-side) --- */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            
             {/* Left: Original Draft */}
             <div className="flex flex-col h-full space-y-4">
                 <div className="flex items-center gap-2 px-1">
@@ -184,14 +188,10 @@ export default function HistoryDetail() {
                 </div>
                 
                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex-1 min-h-[500px] overflow-hidden relative"> 
-                    {/* Thanh accent chuyển màu theo trạng thái lỗi */}
+                    {/* Thanh accent đỏ cho cột trái */}
                     <div className="absolute top-8 left-0 w-1 h-12 bg-red-500 rounded-r-full shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
                     
                     <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
-                        {/* Logic HighlightText bên trong component này nên render:
-                            - Error chưa fix -> Underline Red/Wavy
-                            - Error đã fix -> Underline Green/Solid 
-                        */}
                         <HighlightText text={data.original_text} errors={data.analysis_results} />
                     </div>
                 </div>
@@ -250,7 +250,7 @@ export default function HistoryDetail() {
                                     
                                     <div className="mt-8 p-4 bg-cyan-50 rounded-xl border border-cyan-100 text-xs text-cyan-800 flex items-start gap-3">
                                         <Lightbulb size={18} className="text-cyan-600 shrink-0"/>
-                                        <p className="font-medium leading-relaxed">This elite version employs complex rhetorical devices and academic collocations to ensure a 8.5-9.0 band performance.</p>
+                                        <p className="font-medium leading-relaxed">This elite version employs complex rhetorical devices and academic collocations.</p>
                                     </div>
                                 </div>
                             ) : (
@@ -264,7 +264,7 @@ export default function HistoryDetail() {
                                             <Lock size={24} />
                                         </div>
                                         <h4 className="text-xl font-bold text-slate-900 mb-2">Elite Version Locked</h4>
-                                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">Upgrade to Pro to access Band 9.0 rewrites and advanced vocabulary insights for your past essays.</p>
+                                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">Upgrade to Pro to access Band 9.0 rewrites.</p>
                                         <button 
                                             onClick={() => setShowPricingModal(true)}
                                             className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-cyan-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
@@ -280,97 +280,117 @@ export default function HistoryDetail() {
             </div>
         </div>
 
-{/* --- DIAGNOSTICS AREA (Nơi cần lấy lại "hứng" fix) --- */}
-        <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                <div>
-                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-                        <div className="p-2 bg-slate-900 text-white rounded-lg shadow-lg"><BarChart3 size={20}/></div>
-                        Diagnostic Report
-                    </h3>
-                    <p className="text-sm text-slate-500 mt-2">
-                        {unresolvedErrors.length > 0 ? (
-                            <span>
-                                You have <b className="text-red-600 font-black px-1.5 py-0.5 bg-red-50 rounded mx-1">{unresolvedErrors.length} issues</b> that need immediate attention.
-                            </span>
-                        ) : (
-                            <span className="text-emerald-600 font-bold flex items-center gap-1">
-                                <CheckCircle size={14}/> Perfect! All identified issues have been mastered.
-                            </span>
-                        )}
-                    </p>
-                </div>
-                
-                {unresolvedErrors.length > 0 && (
-                    <button 
-                        onClick={() => setIsReviewing(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-red-600/20 transition-all flex items-center gap-3 active:scale-95 animate-pulse hover:animate-none"
-                    >
-                        <Zap size={20} fill="currentColor" className="text-yellow-300"/>
-                        Fix Remaining Issues
-                    </button>
-                )}
-            </div>
+        <hr className="border-slate-200 my-8" />
 
-            {/* GRID CÁC THẺ LỖI - TRỰC QUAN HƠN */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {data.analysis_results.map((err: any) => (
-                    <div 
-                        key={err.id} 
-                        className={`flex flex-col p-6 rounded-2xl border transition-all duration-300 group relative overflow-hidden
-                        ${err.is_resolved 
-                            ? "bg-slate-50 border-slate-100 opacity-60 grayscale" 
-                            : "bg-white border-slate-200 shadow-md hover:shadow-xl hover:border-red-300" 
-                        }`}
-                    >
-                        {/* Status Label mờ phía sau */}
-                        <div className={`absolute -right-4 -top-2 text-4xl font-black opacity-[0.03] select-none uppercase transition-all group-hover:opacity-[0.07] ${err.is_resolved ? 'text-emerald-900' : 'text-red-900'}`}>
-                            {err.is_resolved ? 'Solved' : err.severity}
-                        </div>
-
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div className="space-y-1">
-                                <span className={`block font-black text-xs uppercase tracking-tighter ${err.is_resolved ? "text-emerald-600" : "text-red-600"}`}>
-                                    {translateError(err.error_type, 'en')}
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{err.error_type}</span>
-                            </div>
-                            {err.is_resolved ? (
-                                <div className="p-1 bg-emerald-100 text-emerald-600 rounded-full shadow-inner"><Check size={14} strokeWidth={4}/></div>
-                            ) : (
-                                <div className="p-1 bg-red-100 text-red-600 rounded-full animate-bounce shadow-sm"><AlertTriangle size={14}/></div>
-                            )}
-                        </div>
-
-                        <p className={`text-sm mb-6 leading-relaxed font-medium grow ${err.is_resolved ? 'text-slate-400' : 'text-slate-700'}`}>
-                            "{err.explanation}"
-                        </p>
-                        
-                        <div className="space-y-4 mt-auto relative z-10">
-                            {!err.is_resolved && (
-                                <button 
-                                    onClick={() => handleOpenLesson(err.error_type)}
-                                    className="text-[10px] font-black text-slate-400 hover:text-cyan-600 flex items-center gap-1.5 transition-colors uppercase tracking-widest"
-                                >
-                                    <BookOpen size={12}/> Study this rule
-                                </button>
-                            )}
-                            
-                            <div className={`p-4 rounded-xl text-xs font-bold border transition-all ${
-                                err.is_resolved 
-                                ? 'bg-slate-100 border-slate-200 text-slate-500' 
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-100 group-hover:bg-emerald-100 group-hover:scale-[1.02]'
-                            }`}>
-                                <div className="text-[10px] uppercase opacity-50 mb-1 flex justify-between">
-                                    <span>Correct Version</span>
-                                    {!err.is_resolved && <Sparkles size={10} className="text-emerald-500 animate-pulse"/>}
-                                </div>
-                                <span className="text-sm font-serif">"{err.suggestion}"</span>
-                            </div>
-                        </div>
+        {/* --- DIAGNOSTICS AREA --- */}
+        <section className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            {isReviewing ? (
+                // QUIZ VIEW CONTAINER (Updated Colors)
+                <div className="bg-white p-8 rounded-2xl border border-cyan-100 shadow-xl shadow-cyan-900/5">
+                    <div className="flex items-center gap-2 mb-8 text-cyan-700 bg-cyan-50 px-4 py-2 rounded-xl w-fit border border-cyan-100">
+                        <BookOpen size={20} />
+                        <span className="font-bold uppercase tracking-widest text-xs">Practice Mode</span>
+                        <span className="text-cyan-400 text-xs font-medium">| {unresolvedErrors.length} issues remaining</span>
                     </div>
-                ))}
-            </div>
+                    {/* TRUYỀN unresolvedErrors VÀO ĐÂY */}
+                    <QuizView 
+                        errors={unresolvedErrors}
+                        language={data.target_language || "English"}
+                        onSuccess={() => { setIsReviewing(false); fetchDetail(); }}
+                        onCancel={() => setIsReviewing(false)}
+                    />
+                </div>
+            ) : (
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                                <div className="p-2 bg-slate-900 text-white rounded-lg shadow-lg"><BarChart3 size={20}/></div>
+                                Diagnostic Report
+                            </h3>
+                            <p className="text-sm text-slate-500 mt-2">
+                                {unresolvedErrors.length > 0 ? (
+                                    <span>
+                                        You have <b className="text-red-600 font-black px-1.5 py-0.5 bg-red-50 rounded mx-1">{unresolvedErrors.length} issues</b> that need immediate attention.
+                                    </span>
+                                ) : (
+                                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                                        <CheckCircle size={14}/> Perfect! All identified issues have been mastered.
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        
+                        {unresolvedErrors.length > 0 && (
+                            <button 
+                                onClick={() => setIsReviewing(true)}
+                                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-red-600/20 transition-all flex items-center gap-3 active:scale-95 animate-pulse hover:animate-none"
+                            >
+                                <Zap size={20} fill="currentColor" className="text-yellow-300"/>
+                                Fix Remaining Issues
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {data.analysis_results.map((err: any) => (
+                            <div 
+                                key={err.id} 
+                                className={`flex flex-col p-6 rounded-2xl border transition-all duration-300 group relative overflow-hidden
+                                ${err.is_resolved 
+                                    ? "bg-slate-50 border-slate-100 opacity-60 grayscale" 
+                                    : "bg-white border-slate-200 shadow-md hover:shadow-xl hover:border-red-300" 
+                                }`}
+                            >
+                                <div className={`absolute -right-4 -top-2 text-4xl font-black opacity-[0.03] select-none uppercase transition-all group-hover:opacity-[0.07] ${err.is_resolved ? 'text-emerald-900' : 'text-red-900'}`}>
+                                    {err.is_resolved ? 'Solved' : err.severity}
+                                </div>
+
+                                <div className="flex justify-between items-start mb-4 relative z-10">
+                                    <div className="space-y-1">
+                                        <span className={`block font-black text-xs uppercase tracking-tighter ${err.is_resolved ? "text-emerald-600" : "text-red-600"}`}>
+                                            {translateError(err.error_type, 'en')}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{err.error_type}</span>
+                                    </div>
+                                    {err.is_resolved ? (
+                                        <div className="p-1 bg-emerald-100 text-emerald-600 rounded-full shadow-inner"><Check size={14} strokeWidth={4}/></div>
+                                    ) : (
+                                        <div className="p-1 bg-red-100 text-red-600 rounded-full animate-bounce shadow-sm"><AlertTriangle size={14}/></div>
+                                    )}
+                                </div>
+
+                                <p className={`text-sm mb-6 leading-relaxed font-medium grow ${err.is_resolved ? 'text-slate-400' : 'text-slate-700'}`}>
+                                    "{err.explanation}"
+                                </p>
+                                
+                                <div className="space-y-4 mt-auto relative z-10">
+                                    {!err.is_resolved && (
+                                        <button 
+                                            onClick={() => handleOpenLesson(err.error_type)}
+                                            className="text-[10px] font-black text-slate-400 hover:text-cyan-600 flex items-center gap-1.5 transition-colors uppercase tracking-widest"
+                                        >
+                                            <BookOpen size={12}/> Study this rule
+                                        </button>
+                                    )}
+                                    
+                                    <div className={`p-4 rounded-xl text-xs font-bold border transition-all ${
+                                        err.is_resolved 
+                                        ? 'bg-slate-100 border-slate-200 text-slate-500' 
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-100 group-hover:bg-emerald-100 group-hover:scale-[1.02]'
+                                    }`}>
+                                        <div className="text-[10px] uppercase opacity-50 mb-1 flex justify-between">
+                                            <span>Correct Version</span>
+                                            {!err.is_resolved && <Sparkles size={10} className="text-emerald-500 animate-pulse"/>}
+                                        </div>
+                                        <span className="text-sm font-serif">"{err.suggestion}"</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
       </div>
       
