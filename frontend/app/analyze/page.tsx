@@ -3,16 +3,19 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // Dùng Image cho logo
 import { useLanguage } from "@/context/LanguageContext";
 import { translateError } from "@/lib/errorMapping";
 import { 
   Zap, Shuffle, Lightbulb, Globe, ChevronDown, 
   Sparkles, X, Check, Wand2, ArrowLeft, 
-  History, PencilLine, BookOpen, Quote, Lock 
+  History, PencilLine, BookOpen, Quote, Lock, 
+  LayoutDashboard, FileText, BarChart3
 } from "lucide-react";
 import toast from "react-hot-toast";
-import PricingModal from "@/components/PricingModal"; // [MỚI]
-// --- REFINED ANIMATIONS ---
+import PricingModal from "@/components/PricingModal";
+
+// --- REFINED ANIMATIONS (CYAN THEME) ---
 const enhancedStyles = `
   @keyframes clip-reveal {
     0% { clip-path: inset(0 100% 0 0); }
@@ -24,9 +27,9 @@ const enhancedStyles = `
     90% { opacity: 1; }
     100% { left: 100%; opacity: 0; }
   }
-  @keyframes bounce-in {
-    0% { transform: scale(0.9); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+  @keyframes fade-in-up {
+    0% { transform: translateY(10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
   }
   .animate-reveal-text {
     background-color: transparent; 
@@ -35,14 +38,14 @@ const enhancedStyles = `
   }
   .animate-scan-line {
     position: absolute;
-    top: 0; bottom: 0; width: 3px;
-    background: linear-gradient(to bottom, transparent, #6366f1, transparent);
-    box-shadow: 0 0 20px 2px rgba(99, 102, 241, 0.6);
+    top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(to bottom, transparent, #06b6d4, transparent); /* CYAN-500 */
+    box-shadow: 0 0 15px 2px rgba(6, 182, 212, 0.5);
     z-index: 30;
     animation: scan-line 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
   }
-  .animate-bounce-in {
-    animation: bounce-in 0.3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out forwards;
   }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -76,10 +79,8 @@ export default function AnalyzePage() {
   const [activeError, setActiveError] = useState<any | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [hasPolishedOnce, setHasPolishedOnce] = useState(false);
-
-  const [showPricingModal, setShowPricingModal] = useState(false); // [MỚI]
-// (Bỏ cái state showLimitModal cũ đi hoặc tái sử dụng logic này cho gọn)
+  
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const { t, lang, setLang } = useLanguage();
@@ -98,25 +99,15 @@ export default function AnalyzePage() {
 
   const randomizeTopic = () => setCurrentTopic(SHORT_TOPICS[Math.floor(Math.random() * SHORT_TOPICS.length)]);
 
-const handleUpgradeSuccess = async () => {
-    // [DEBUG] In ra xem có ID không?
-    console.log("DEBUG UPGRADE:", {
-        sub_id: result?.submission_id,
-        user_id: user?.id
-    });
-
-    // Nếu không có ID thì chặn luôn, đỡ gọi API tốn công
+  const handleUpgradeSuccess = async () => {
     if (!result?.submission_id) {
-        toast.error("Không tìm thấy ID bài viết. Hãy thử viết một bài mới!");
+        toast.error("No submission found. Try writing a new essay.");
         return;
     }    
-      // Nếu đang có kết quả phân tích mà chưa có bản Band 9.0
       if (result && !result.polished_text && result.submission_id) {
           const toastId = toast.loading("Unlocking Band 9.0 Version...");
           try {
               const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-              
-              // Gọi API nâng cấp bài cũ
               const res = await fetch(`${API_URL}/upgrade-submission`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -129,25 +120,21 @@ const handleUpgradeSuccess = async () => {
               if (!res.ok) throw new Error("Unlock failed");
               const data = await res.json();
 
-              // Cập nhật State ngay lập tức (Real-time update)
               setResult((prev: any) => ({
                   ...prev,
                   polished_text: data.polished_text
               }));
 
               toast.success("Unlocked!", { id: toastId });
-              
-              // Tự động chuyển sang tab Vocab để user thấy hàng nóng
               setMode("vocab");
               setIsAnimating(true);
               setTimeout(() => setIsAnimating(false), 1200);
 
           } catch (error) {
-              toast.error("Could not unlock essay automatically.", { id: toastId });
+              toast.error("Unlock failed.", { id: toastId });
           }
       } else {
-          // Trường hợp user mua khi chưa phân tích bài nào -> Chỉ cần reload nhẹ để cập nhật quyền
-           toast.success("You are now Pro! Start writing.");
+           toast.success("You are now Pro!");
       }
   };
   
@@ -157,7 +144,6 @@ const handleUpgradeSuccess = async () => {
     setResult(null);
     setActiveError(null);
     setMode("grammar");
-    setHasPolishedOnce(false); 
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -174,23 +160,19 @@ const handleUpgradeSuccess = async () => {
 
       if (!response.ok) {
         const errData = await response.json();
-        
-        // [QUAN TRỌNG] Bắt lỗi 403 từ backend để hiện Modal nạp tiền
         if (response.status === 403 || (errData.detail && errData.detail.includes("limit"))) {
-            setShowPricingModal(true); // Bật luôn bảng giá lên thay vì modal báo lỗi riêng lẻ
-                toast.error("Daily limit reached! Upgrade to continue.");
-                return;
+            setShowPricingModal(true);
+            toast.error("Daily limit reached! Upgrade to continue.");
+            return;
         }
         throw new Error(errData.detail || "Analysis failed");
       }
 
       const data = await response.json();
       setResult(data);
-      toast.success("Analysis complete!", { icon: '🚀' });
+      toast.success("Analysis complete!");
     } catch (error: any) {
-      if (!setShowPricingModal) {
          toast.error(error.message || "Could not analyze essay.");
-      }
     } finally {
       setLoading(false);
     }
@@ -204,137 +186,157 @@ const handleUpgradeSuccess = async () => {
         core_errors: result.core_errors.filter((e: any) => e.quote !== error.quote)
     });
     setActiveError(null);
-    toast.success("Corrected!");
+    toast.success("Fixed!");
   };
 
   const switchMode = (newMode: "grammar" | "vocab") => {
-      // Logic: Luôn chạy animation mỗi khi bấm vào vocab (nếu là Pro User - có text)
       if (newMode === "vocab" && result?.polished_text) {
           setMode("vocab");
           setIsAnimating(true);
-          setHasPolishedOnce(true);
           setTimeout(() => setIsAnimating(false), 1200);
       } else {
-          setMode(newMode); // Nếu Free User thì chuyển mode bình thường (để hiện khóa)
+          setMode(newMode);
       }
       setActiveError(null);
   };
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 selection:bg-indigo-100 relative">
+    // STYLE MỚI: Nền Dot Grid + White Background
+    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-cyan-100 selection:text-cyan-900 relative">
       <style>{enhancedStyles}</style>
       
-      {/* --- TOP NAVIGATION --- */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <button onClick={() => router.push("/dashboard")} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
-                <ArrowLeft size={20} />
-            </button>
-            <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                    <Zap size={18} fill="currentColor" />
+      {/* Background Pattern */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
+           style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+      </div>
+
+      {/* --- NAVBAR CHUYÊN NGHIỆP --- */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-6">
+            <div 
+              onClick={() => router.push("/")}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+                <div className="relative w-8 h-8">
+                    {/* Placeholder Logo nếu chưa có file */}
+                    <Image src="/logo.svg" alt="Eloqua Logo" width={32} height={32} className="object-contain" priority />
                 </div>
-                <span className="font-black text-xl tracking-tight">CoreFix <span className="text-indigo-600">AI</span></span>
+                <span className="font-bold text-xl text-slate-900 tracking-tight group-hover:text-cyan-600 transition-colors">Eloqua</span>
+            </div>
+            
+            <div className="hidden md:flex h-5 w-[1px] bg-slate-200" />
+            
+            <div className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-500">
+                <FileText size={16} />
+                <span>Analyzer / New Essay</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <button 
                 onClick={() => setLang(lang === 'en' ? 'vi' : 'en')}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-cyan-200 transition-all"
             >
                 {lang === 'en' ? '🇺🇸 EN' : '🇻🇳 VN'}
             </button>
-            <div className="h-6 w-[1px] bg-slate-200 mx-2 hidden md:block" />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
                 <div className="text-right hidden sm:block">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Account</p>
-                    <p className="text-sm font-bold text-slate-700">{user?.email?.split('@')[0] || "Guest"}</p>
+                    <p className="text-xs font-bold text-slate-700">{user?.email?.split('@')[0] || "Guest"}</p>
+                    <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">Free Plan</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full border-2 border-white shadow-md" />
+                <div className="w-9 h-9 bg-slate-100 rounded-full border border-slate-200 flex items-center justify-center text-slate-400">
+                    <LayoutDashboard size={18} />
+                </div>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* --- MAIN LAYOUT --- */}
+      <div className="max-w-7xl mx-auto p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
         
-        {/* --- LEFT COLUMN: INPUT & EDITOR (8 Cols) --- */}
+        {/* --- LEFT COLUMN: EDITOR (8 Cols) --- */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* Topic Card */}
-          <div className="bg-white p-6 rounded-[32px] border border-slate-200/60 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Quote size={80} />
-            </div>
-            <div className="relative z-10">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-                        <Lightbulb size={12} /> Writing Prompt
-                    </div>
-                    <button onClick={randomizeTopic} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all active:rotate-180 duration-500">
-                        <Shuffle size={18} />
-                    </button>
+          {/* Prompt Card (Minimalist) */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-cyan-300 transition-colors">
+            <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-cyan-50 text-cyan-600 rounded-lg shrink-0">
+                    <Lightbulb size={20} />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-800 leading-snug font-serif">"{currentTopic}"</h2>
+                <div>
+                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Writing Prompt</h2>
+                    <p className="text-lg font-serif font-medium text-slate-800 leading-snug italic">"{currentTopic}"</p>
+                </div>
             </div>
+            <button onClick={randomizeTopic} className="self-end md:self-center p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-full transition-all active:rotate-180">
+                <Shuffle size={20} />
+            </button>
           </div>
 
           {/* Main Editor Card */}
-          <div className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-200/50 flex flex-col min-h-[650px] overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/40 flex flex-col min-h-[680px] overflow-hidden relative">
             
-            {/* Editor Toolbar */}
-            <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-white/50">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-xl">
-                    <Globe size={14} className="text-slate-500" />
-                    <select 
-                        value={nativeLang} 
-                        onChange={(e) => setNativeLang(e.target.value)}
-                        className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none cursor-pointer"
-                    >
-                        {SUPPORTED_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                    </select>
-                </div>
-                <div className={`text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest ${wordCount < MIN_WORDS ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            {/* Toolbar (Clean) */}
+            <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-3">
+                 {/* Language Selector */}
+                 <div className="relative group">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-200">
+                        <Globe size={14} className="text-slate-400" />
+                        <select 
+                            value={nativeLang} 
+                            onChange={(e) => setNativeLang(e.target.value)}
+                            className="bg-transparent text-xs font-bold text-slate-600 focus:outline-none cursor-pointer appearance-none pr-4"
+                        >
+                            {SUPPORTED_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                        </select>
+                        <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
+                    </div>
+                 </div>
+                 
+                 {/* Word Count */}
+                 <div className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border uppercase tracking-wider transition-colors ${wordCount >= MIN_WORDS ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>
                     {wordCount} Words
-                </div>
+                 </div>
               </div>
 
+              {/* Mode Switcher */}
               {result && (
-                <div className="flex bg-slate-100 p-1 rounded-2xl">
+                <div className="flex p-1 bg-slate-100 rounded-lg">
                     <button 
                         onClick={() => switchMode("grammar")}
-                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${mode === 'grammar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'grammar' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        GRAMMAR
+                        Grammar
                     </button>
                     <button 
                         onClick={() => switchMode("vocab")}
-                        className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${mode === 'vocab' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'vocab' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        <Sparkles size={12}/> VOCAB ULTIMATE
+                        <Sparkles size={12} className={mode === 'vocab' ? 'text-cyan-100' : ''}/>
+                        Band 9.0
                     </button>
                 </div>
               )}
             </div>
 
             {/* Writing Area */}
-            <div className="flex-1 p-8 md:p-12 overflow-y-auto hide-scrollbar">
+            <div className="flex-1 p-8 md:p-10 overflow-y-auto hide-scrollbar relative bg-white">
               {!result ? (
                 <textarea 
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={t.placeholder}
-                  className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 resize-none text-xl text-slate-700 placeholder:text-slate-200 font-serif leading-relaxed"
+                  className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
                   spellCheck={false}
                 />
               ) : (
                 <div className="relative min-h-[400px]">
                   {mode === 'grammar' ? (
                     // --- GRAMMAR MODE ---
-                    <div className="text-xl text-slate-700 font-serif whitespace-pre-wrap leading-relaxed animate-fade-in">
+                    <div className="text-lg md:text-xl text-slate-800 font-serif whitespace-pre-wrap leading-loose animate-fade-in-up">
                         {(() => {
                             let lastIndex = 0;
                             const elements = [];
@@ -348,7 +350,7 @@ const handleUpgradeSuccess = async () => {
                                     <span 
                                         key={idx}
                                         onClick={() => setActiveError(err)}
-                                        className={`cursor-pointer border-b-3 transition-all duration-300 ${activeError === err ? 'bg-rose-100 border-rose-500 text-rose-700 shadow-[0_4px_12px_rgba(244,63,94,0.2)]' : 'border-rose-300 hover:bg-rose-50'}`}
+                                        className={`cursor-pointer border-b-2 transition-all duration-200 ${activeError === err ? 'bg-red-50 border-red-500 text-red-700 rounded-sm px-0.5' : 'border-red-300 hover:bg-red-50 text-slate-900'}`}
                                     >
                                         {err.quote}
                                     </span>
@@ -360,59 +362,46 @@ const handleUpgradeSuccess = async () => {
                         })()}
                     </div>
                   ) : (
- // --- VOCAB MODE ---
-<div className="relative h-full bg-white"> {/* Thêm bg-white ở đây để đảm bảo nền sạch */}
-  {result.polished_text ? (
-    <div className="relative w-full min-h-[300px] bg-white">
-      
-      {/* LỚP 1: TEXT CŨ (Nằm dưới) */}
-      {isAnimating && (
-        <div className="absolute inset-0 top-0 left-0 w-full h-full text-xl text-slate-300 font-serif whitespace-pre-wrap leading-relaxed select-none z-0">
-          {inputText}
-        </div>
-      )}
-
-      {/* LỚP 2: TEXT MỚI (Nằm trên) */}
-      <div 
-        className={`text-xl text-indigo-900 font-serif whitespace-pre-wrap leading-relaxed relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}
-        style={{ backgroundColor: 'white' }} // Đảm bảo lớp này đặc, che hoàn toàn lớp dưới
-      >
-        {result.polished_text}
-      </div>
-      
-      {/* LỚP 3: THANH SÁNG */}
-      {isAnimating && (
-        <div className="animate-scan-line pointer-events-none" />
-      )}
-    </div>
-  ) : (
-                            // [FREE USER] Không có bài văn -> Hiển thị Ổ KHÓA
-                            <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-indigo-200 p-8 text-center overflow-hidden">
-                                
-                                {/* Background mờ ảo chữ để kích thích */}
-                                <div className="absolute inset-0 opacity-20 blur-[3px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-indigo-900">
-                                    In contemporary discourse, the omnipresence of digital technology has catalyzed a paradigm shift in educational methodologies. Proponents argue that...
-                                    (Content Hidden)
-                                </div>
-
-                                {/* Thẻ khóa */}
-                                <div className="z-10 bg-white p-8 rounded-[32px] shadow-2xl shadow-indigo-200/50 border border-white ring-4 ring-indigo-50 max-w-sm animate-bounce-in">
-                                    <div className="mx-auto w-14 h-14 bg-gradient-to-tr from-indigo-500 to-violet-500 text-white rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                                        <Lock size={24} />
-                                    </div>
-                                    <h3 className="text-xl font-black text-slate-800 mb-2">Unlock Band 9.0 Rewrite</h3>
-                                    <p className="text-slate-500 mb-6 text-sm font-medium leading-relaxed">
-                                        See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Advanced Structures</b>.
-                                    </p>
-                                    <button 
-                                        onClick={() => setShowPricingModal(true)}
-                                        className="w-full py-3.5 bg-slate-900 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-2"
-                                    >
-                                        <Sparkles size={16} /> Upgrade to Pro
-                                    </button>
-                                </div>
+                    // --- VOCAB MODE ---
+                    <div className="relative h-full bg-white">
+                      {result.polished_text ? (
+                        <div className="relative w-full min-h-[300px]">
+                          {isAnimating && (
+                            <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
+                              {inputText}
                             </div>
-                        )}
+                          )}
+                          <div 
+                            className={`text-lg md:text-xl text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}
+                          >
+                            {result.polished_text}
+                          </div>
+                          {isAnimating && <div className="animate-scan-line pointer-events-none" />}
+                        </div>
+                      ) : (
+                        // LOCKED STATE
+                        <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden">
+                             <div className="absolute inset-0 opacity-10 blur-[2px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-slate-900">
+                                {inputText}
+                            </div>
+                            
+                            <div className="z-10 bg-white p-8 rounded-2xl shadow-xl shadow-cyan-900/10 border border-slate-100 max-w-sm">
+                                <div className="mx-auto w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mb-4 text-cyan-600">
+                                    <Lock size={24} />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2">Unlock Band 9.0 Rewrite</h3>
+                                <p className="text-slate-500 mb-6 text-sm leading-relaxed">
+                                    See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Native Phrasing</b>.
+                                </p>
+                                <button 
+                                    onClick={() => setShowPricingModal(true)}
+                                    className="w-full py-3 bg-slate-900 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Sparkles size={16} /> Upgrade to Pro
+                                </button>
+                            </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -420,147 +409,137 @@ const handleUpgradeSuccess = async () => {
             </div>
 
             {/* Action Footer */}
-            <div className="p-6 bg-slate-50/50 border-t border-slate-100">
+            <div className="p-5 border-t border-slate-100 bg-white">
                {!result ? (
                     <button 
                         onClick={handleAnalyze}
                         disabled={loading || wordCount < MIN_WORDS}
-                        className={`w-full py-4 rounded-[20px] font-black text-white shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] ${loading || wordCount < MIN_WORDS ? 'bg-slate-300' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'}`}
+                        className={`w-full py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 active:scale-[0.99] ${loading || wordCount < MIN_WORDS ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-600/20'}`}
                     >
                         {loading ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                                {t.button_analyzing}
-                            </div>
+                            <>Processing...</>
                         ) : (
                             <>
-                                <Zap size={20} fill="currentColor" className="text-yellow-300"/>
-                                {t.button_analyze}
+                                <Zap size={18} fill="currentColor" className="text-cyan-200"/>
+                                Analyze Essay
                             </>
                         )}
                     </button>
                ) : (
-                    <div className="flex gap-4">
-                         <button 
-                            onClick={() => {setResult(null); setActiveError(null);}}
-                            className="flex-1 py-4 rounded-[20px] font-black text-slate-500 border-2 border-dashed border-slate-200 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
-                        >
-                            <PencilLine size={20} /> New Essay
-                        </button>
-                    </div>
+                     <button 
+                        onClick={() => {setResult(null); setActiveError(null);}}
+                        className="w-full py-4 rounded-xl font-bold text-slate-500 border border-slate-200 hover:border-cyan-500 hover:text-cyan-600 hover:bg-cyan-50 transition-all flex items-center justify-center gap-2"
+                    >
+                        <PencilLine size={18} /> Write New Essay
+                    </button>
                )}
             </div>
           </div>
         </div>
 
-        {/* --- RIGHT COLUMN: INTELLIGENCE SIDEBAR (4 Cols) --- */}
+        {/* --- RIGHT COLUMN: SIDEBAR (4 Cols) --- */}
         <div className="lg:col-span-4 space-y-6">
             {!result ? (
-                <div className="bg-white p-8 rounded-[32px] border border-slate-200 border-dashed flex flex-col items-center justify-center text-center space-y-4 h-full min-h-[400px]">
-                    <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-300">
-                        <BookOpen size={32} />
+                // Empty State
+                <div className="h-full min-h-[400px] bg-white p-8 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-4">
+                        <BarChart3 size={32} />
                     </div>
-                    <div>
-                        <h3 className="font-bold text-slate-800">Ready to Upgrade?</h3>
-                        <p className="text-sm text-slate-400 max-w-[200px] mx-auto">Submit your text to see AI feedback and Band scores.</p>
-                    </div>
+                    <h3 className="font-bold text-slate-700 mb-2">Metrics awaiting...</h3>
+                    <p className="text-sm text-slate-400">Submit your writing to get comprehensive AI grading and feedback.</p>
                 </div>
             ) : (
-                <div className="space-y-6 animate-fade-in-right">
-                    {/* Score Card */}
-                    <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden group">
-                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/20 rounded-full blur-2xl group-hover:bg-indigo-500/40 transition-all duration-700" />
-                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Estimated Band</p>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-6xl font-black tracking-tighter">{result.score}</span>
-                            <span className="text-xl font-bold text-slate-500">/ 9.0</span>
-                        </div>
-                        <div className="mt-4 p-3 bg-white/5 rounded-2xl border border-white/10 text-xs text-indigo-100 italic leading-relaxed">
-                           "{result.general_feedback}"
-                        </div>
+                <div className="space-y-5 animate-fade-in-up">
+                    
+                    {/* Score Card (Dark Professional) */}
+                    <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-xl shadow-slate-900/10 border border-slate-800 relative overflow-hidden">
+                         <div className="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-1">Overall Band</p>
+                                <div className="text-5xl font-black tracking-tighter">{result.score}</div>
+                            </div>
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <BarChart3 size={20} className="text-cyan-400"/>
+                            </div>
+                         </div>
+                         <div className="mt-6 pt-4 border-t border-slate-800">
+                             <p className="text-sm text-slate-300 italic leading-relaxed">"{result.general_feedback}"</p>
+                         </div>
                     </div>
 
-                    {/* Contextual Action Box */}
-                    <div className="min-h-[220px]">
+                    {/* Context Action */}
+                    <div className="min-h-[200px]">
                         {mode === 'vocab' ? (
-                            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 text-white p-6 rounded-[32px] shadow-lg border border-indigo-400/30">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-white/10 rounded-lg"><Wand2 size={16} className="text-yellow-300"/></div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Vocabulary Upgrade</span>
+                            <div className="bg-gradient-to-br from-cyan-500 to-teal-600 text-white p-6 rounded-2xl shadow-lg">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Sparkles size={16} className="text-yellow-300"/>
+                                    <span className="text-xs font-bold uppercase tracking-wide">Elite Phrasing</span>
                                 </div>
-                                <h3 className="text-xl font-black mb-2">Smart Rewrite</h3>
-                                <p className="text-sm text-indigo-100 leading-relaxed opacity-90">
-                                    We've enhanced your essay with <b>academic collocations</b> and <b>C1/C2 vocabulary</b> while maintaining your original meaning.
+                                <h3 className="text-lg font-bold mb-2">Refined by Eloqua AI</h3>
+                                <p className="text-sm text-cyan-50 leading-relaxed opacity-90">
+                                    Your essay has been rewritten to meet strict <b>academic standards</b>. Compare the changes to learn.
                                 </p>
                             </div>
                         ) : activeError ? (
-                            <div className="bg-white p-6 rounded-[32px] border-2 border-rose-100 shadow-xl shadow-rose-100/20 animate-bounce-in">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                            <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-xl shadow-red-500/5">
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider rounded">
                                         {translateError(activeError.error_type, lang)}
                                     </span>
-                                    <button onClick={() => setActiveError(null)} className="text-slate-300 hover:text-slate-500"><X size={18}/></button>
+                                    <button onClick={() => setActiveError(null)} className="text-slate-300 hover:text-slate-500"><X size={16}/></button>
                                 </div>
-                                <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed italic">
+                                <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">
+                                    <span className="text-slate-400">AI Suggestion:</span><br/>
                                     "{activeError.explanation}"
                                 </p>
                                 <button 
                                     onClick={() => applyFix(activeError)}
-                                    className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95"
+                                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all"
                                 >
-                                    <Check size={18} /> Apply Fix: "{activeError.suggestion}"
+                                    <Check size={16} /> Apply Fix
                                 </button>
                             </div>
                         ) : (
-                            <div className="bg-white p-8 rounded-[32px] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center h-full">
-                                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                                    <PencilLine size={20} className="text-slate-300" />
-                                </div>
-                                <p className="text-xs font-bold text-slate-400 leading-relaxed px-4">
-                                    Click on <span className="text-rose-400 underline decoration-2">highlighted errors</span> to see AI suggestions.
-                                </p>
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center h-full min-h-[200px]">
+                                <p className="text-sm text-slate-500">Select any highlighted text to view details.</p>
                             </div>
                         )}
                     </div>
 
-                    {/* Issues List Card */}
-                    <div className="bg-white rounded-[32px] border border-slate-200/60 shadow-sm flex flex-col overflow-hidden max-h-[400px]">
-                        <div className="p-5 border-b border-slate-50 flex justify-between items-center">
-                            <h4 className="font-black text-xs text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <History size={14} /> Critical Issues ({result.core_errors.length})
+                    {/* Error List */}
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[350px]">
+                        <div className="p-4 bg-slate-50 border-b border-slate-100">
+                             <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <History size={14} /> Detected Issues ({result.core_errors.length})
                             </h4>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-2 hide-scrollbar">
-                            {result.core_errors.length > 0 ? (
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 hide-scrollbar">
+                             {result.core_errors.length > 0 ? (
                                 result.core_errors.map((e: any, i: number) => (
-                                    <div 
+                                    <button 
                                         key={i} 
                                         onClick={() => setActiveError(e)}
-                                        className={`p-4 rounded-[20px] cursor-pointer transition-all border-l-4 ${activeError === e ? 'bg-rose-50 border-rose-500 shadow-sm' : 'hover:bg-slate-50 border-transparent'}`}
+                                        className={`w-full text-left p-3 rounded-lg text-xs transition-all border ${activeError === e ? 'bg-cyan-50 border-cyan-200 text-cyan-900' : 'bg-white border-transparent hover:bg-slate-50 text-slate-600'}`}
                                     >
-                                        <p className="text-xs font-black text-slate-700 mb-1 truncate">"{e.quote}"</p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase">{translateError(e.error_type, lang)}</p>
-                                    </div>
+                                        <div className="font-bold truncate mb-0.5">"{e.quote}"</div>
+                                        <div className="text-slate-400 text-[10px] uppercase">{translateError(e.error_type, lang)}</div>
+                                    </button>
                                 ))
-                            ) : (
-                                <div className="py-12 text-center">
-                                    <Check size={32} className="mx-auto text-emerald-400 mb-2 opacity-30" />
-                                    <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No errors found!</p>
-                                </div>
-                            )}
+                             ) : (
+                                <div className="py-8 text-center text-slate-400 text-xs">No errors found.</div>
+                             )}
                         </div>
                     </div>
+
                 </div>
             )}
         </div>
-
-        {/* --- DAILY LIMIT MODAL --- */}
-{/* --- DAILY LIMIT MODAL --- */}
       </div>
-    <PricingModal 
+      
+      <PricingModal 
         isOpen={showPricingModal} 
         onClose={() => setShowPricingModal(false)}
-        onSuccess={handleUpgradeSuccess} // [QUAN TRỌNG] Truyền hàm callback vào
+        onSuccess={handleUpgradeSuccess}
       />
     </main>
   );

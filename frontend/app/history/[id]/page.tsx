@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import { 
   ArrowLeft, Clock, Zap, Check, FileText, 
   Sparkles, AlertTriangle, BookOpen, ChevronRight,
-  Wand2, Lock, Lightbulb, Shield
+  Wand2, Lock, Lightbulb, Shield, BarChart3, CheckCircle
 } from "lucide-react"; 
-import { useLanguage } from "@/context/LanguageContext";
 import { translateError } from "@/lib/errorMapping";
 import QuizView from "@/components/QuizView";
 import { HistorySkeleton } from "@/components/Skeleton";
@@ -18,7 +18,7 @@ import PricingModal from "@/components/PricingModal";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 
-// --- REFINED ANIMATIONS ---
+// --- REFINED ANIMATIONS (CYAN THEME) ---
 const enhancedStyles = `
   @keyframes clip-reveal {
     0% { clip-path: inset(0 100% 0 0); }
@@ -30,9 +30,9 @@ const enhancedStyles = `
     90% { opacity: 1; }
     100% { left: 100%; opacity: 0; }
   }
-  @keyframes bounce-in {
-    0% { transform: scale(0.9); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+  @keyframes fade-in-up {
+    0% { transform: translateY(10px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
   }
   .animate-reveal-text {
     background-color: transparent; 
@@ -41,15 +41,18 @@ const enhancedStyles = `
   }
   .animate-scan-line {
     position: absolute;
-    top: 0; bottom: 0; width: 3px;
-    background: linear-gradient(to bottom, transparent, #6366f1, transparent);
-    box-shadow: 0 0 20px 2px rgba(99, 102, 241, 0.6);
+    top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(to bottom, transparent, #06b6d4, transparent);
+    box-shadow: 0 0 15px 2px rgba(6, 182, 212, 0.5);
     z-index: 30;
     animation: scan-line 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
   }
-  .animate-bounce-in {
-    animation: bounce-in 0.3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out forwards;
   }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 `;
 
 export default function HistoryDetail() {
@@ -59,17 +62,14 @@ export default function HistoryDetail() {
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [viewMode, setViewMode] = useState<"corrected" | "polished">("corrected");
   
-  // States cho User và Hiệu ứng
   const [user, setUser] = useState<any>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const params = useParams();
   const router = useRouter();
   const supabase = createClient();
-  const { lang, t } = useLanguage();
 
   const handleOpenLesson = async (errorType: string) => {
     const rule = await fetchRuleByKey(errorType);
@@ -93,7 +93,7 @@ export default function HistoryDetail() {
       .single();
 
     if (error || !submission) { 
-        console.error("❌ Lỗi lấy bài viết:", error);
+        router.push("/dashboard");
         return; 
     }
     setData(submission);
@@ -102,7 +102,6 @@ export default function HistoryDetail() {
 
   useEffect(() => { fetchDetail(); }, [params.id]);
 
-  // Hàm chuyển đổi tab có kèm hiệu ứng
   const handleSwitchMode = (mode: "corrected" | "polished") => {
       if (mode === "polished" && data?.polished_text) {
           setIsAnimating(true);
@@ -111,204 +110,167 @@ export default function HistoryDetail() {
       setViewMode(mode);
   };
 
-  // Hàm xử lý "Hồi tố" - Nâng cấp bài cũ ngay lập tức
   const handleUpgradeSuccess = async () => {
     if (!data?.id || !user?.id) return;
-
-    const toastId = toast.loading("Unlocking Band 9.0 Version for this essay...");
+    const toastId = toast.loading("Unlocking Band 9.0 version...");
     try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        
         const res = await fetch(`${API_URL}/upgrade-submission`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                submission_id: data.id,
-                user_id: user.id 
-            })
+            body: JSON.stringify({ submission_id: data.id, user_id: user.id })
         });
 
         if (!res.ok) throw new Error("Upgrade failed");
         const resData = await res.json();
 
-        setData((prev: any) => ({
-            ...prev,
-            polished_text: resData.polished_text
-        }));
-
-        toast.success("Unlocked successfully!", { id: toastId });
-        
-        // Tự động chuyển tab và bật hiệu ứng lau kính
+        setData((prev: any) => ({ ...prev, polished_text: resData.polished_text }));
+        toast.success("Essay unlocked!", { id: toastId });
         handleSwitchMode("polished");
-
     } catch (error) {
-        console.error(error);
-        toast.error("Could not unlock essay automatically.", { id: toastId });
+        toast.error("Could not unlock automatically.", { id: toastId });
     }
   };
 
   if (loading) return <HistorySkeleton />;
 
   const unresolvedErrors = data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
-  const scoreColor = data.score >= 7.0 ? "text-emerald-600" : data.score >= 5.0 ? "text-indigo-600" : "text-amber-600";
-
-  const formattedDate = new Date(data.created_at).toLocaleDateString(
-    lang === 'vi' ? 'vi-VN' : 'en-US', 
-    { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
-  );
+  const formattedDate = new Date(data.created_at).toLocaleDateString('en-US', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+  });
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] p-4 md:p-10 font-sans text-slate-900 selection:bg-indigo-100">
+    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-cyan-100">
       <style>{enhancedStyles}</style>
       
-      <GrammarLessonModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-          rule={selectedRule} 
-      />
+      {/* Background Dot Grid */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
+           style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+      </div>
 
-      <div className="max-w-7xl mx-auto space-y-8">
+      <GrammarLessonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} rule={selectedRule} />
+
+      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
         {/* --- HEADER --- */}
-        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-200/60 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-fade-in-up">
-            <div>
-                <button onClick={() => router.back()} className="group flex items-center text-slate-400 hover:text-indigo-600 transition-colors mb-3 font-bold text-sm uppercase tracking-widest">
-                    <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
-                    {t.back_dashboard}
+        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-fade-in-up">
+            <div className="space-y-4">
+                <button onClick={() => router.push("/dashboard")} className="group flex items-center text-slate-400 hover:text-cyan-600 transition-colors font-bold text-xs uppercase tracking-widest">
+                    <ArrowLeft size={14} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
+                    Back to Dashboard
                 </button>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{t.history_title}</h1>
-                <div className="flex items-center text-slate-500 text-sm mt-2 font-medium bg-slate-50 px-3 py-1.5 rounded-lg w-fit">
-                    <Clock size={16} className="mr-2 text-slate-400" />
-                    {t.submitted_on} {formattedDate}
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">Essay Analysis</h1>
+                    <div className="flex items-center text-slate-500 text-xs font-medium bg-slate-50 px-3 py-1.5 rounded-lg w-fit border border-slate-100">
+                        <Clock size={14} className="mr-2 text-slate-400" />
+                        Submitted on {formattedDate}
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-slate-900 px-8 py-5 rounded-[24px] shadow-xl shadow-slate-900/20 flex flex-col items-center min-w-[160px] relative overflow-hidden group">
-                 <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                 <span className={`text-6xl font-black ${scoreColor} drop-shadow-md tracking-tighter relative z-10`}>{data.score}</span>
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 relative z-10">{t.score_label}</span>
+            <div className="bg-slate-900 px-8 py-6 rounded-xl shadow-xl shadow-slate-900/10 flex flex-col items-center min-w-[180px] border border-slate-800">
+                 <span className="text-5xl font-black text-cyan-400 tracking-tighter">{data.score.toFixed(1)}</span>
+                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Overall Band Score</span>
             </div>
         </div>
-
-        {/* --- ESSAY COMPARISON (SIDE-BY-SIDE) --- */}
-        <div className="grid lg:grid-cols-2 gap-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            
-            {/* Cột Trái: Original */}
-            <div className="flex flex-col h-full">
-                <div className="flex items-center gap-2 mb-4 px-2">
-                    <div className="p-1.5 bg-rose-100 text-rose-600 rounded-lg"><FileText size={18}/></div>
-                    <h3 className="font-bold text-slate-700">{t.orig_draft}</h3>
+        
+        {/* --- COMPARISON AREA (Side-by-side) --- */}
+        <div className="grid lg:grid-cols-2 gap-8">
+            {/* Left: Original Draft */}
+            <div className="flex flex-col h-full space-y-4">
+                <div className="flex items-center gap-2 px-1">
+                    <div className="p-1.5 bg-red-50 text-red-600 rounded-md border border-red-100"><FileText size={16}/></div>
+                    <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide italic">Marked Draft</h3>
                 </div>
                 
-                <div className="bg-white p-8 rounded-[32px] border border-slate-200/60 shadow-sm flex-1 relative min-h-[500px] overflow-hidden"> 
-                    {/* Thẻ line accent */}
-                    <div className="absolute top-8 left-0 w-1.5 h-12 bg-rose-400 rounded-r-full" />
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex-1 min-h-[500px] overflow-hidden relative"> 
+                    {/* Thanh accent chuyển màu theo trạng thái lỗi */}
+                    <div className="absolute top-8 left-0 w-1 h-12 bg-red-500 rounded-r-full shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
                     
                     <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                        {/* Logic HighlightText bên trong component này nên render:
+                            - Error chưa fix -> Underline Red/Wavy
+                            - Error đã fix -> Underline Green/Solid 
+                        */}
                         <HighlightText text={data.original_text} errors={data.analysis_results} />
                     </div>
                 </div>
             </div>
 
-            {/* Cột Phải: Switcher */}
-            <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4 px-2">
+            {/* Right: AI Version Switcher */}
+            <div className="flex flex-col h-full space-y-4">
+                <div className="flex items-center justify-between px-1">
                     <div className="flex items-center gap-2">
                         {viewMode === 'corrected' ? (
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-emerald-100 text-emerald-600 rounded-lg"><Check size={18}/></div>
-                                <h3 className="font-bold text-slate-700">{t.ai_version}</h3>
-                            </div>
+                             <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100"><Check size={16}/></div>
                         ) : (
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg"><Wand2 size={18}/></div>
-                                <h3 className="font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Band 9.0 Ultimate</h3>
-                            </div>
+                             <div className="p-1.5 bg-cyan-50 text-cyan-600 rounded-md border border-cyan-100"><Sparkles size={16}/></div>
                         )}
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                            {viewMode === 'corrected' ? "Grammar Fix" : "Band 9.0 Ultimate"}
+                        </h3>
                     </div>
 
-                    {/* Switcher Toggle */}
-                    <div className="flex bg-slate-200/70 p-1.5 rounded-xl shadow-inner">
+                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
                         <button 
                             onClick={() => handleSwitchMode('corrected')}
-                            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all ${viewMode === 'corrected' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all ${viewMode === 'corrected' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             STANDARD
                         </button>
                         <button 
                             onClick={() => handleSwitchMode('polished')}
-                            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all flex items-center gap-1.5 ${viewMode === 'polished' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1.5 ${viewMode === 'polished' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         >
-                            <Sparkles size={12}/> BAND 9.0
+                            <Sparkles size={12}/> ELITE
                         </button>
                     </div>
                 </div>
 
-                {/* Right Content Box */}
-                <div className={`relative p-8 rounded-[32px] shadow-xl flex-1 min-h-[500px] overflow-hidden border transition-all duration-500 ${viewMode === 'corrected' ? 'bg-slate-900 border-slate-800' : 'bg-gradient-to-br from-slate-50 to-indigo-50/30 border-indigo-200'}`}>
-                    
-                    {/* Line accent */}
-                    <div className={`absolute top-8 left-0 w-1.5 h-12 rounded-r-full transition-colors ${viewMode === 'corrected' ? 'bg-emerald-500' : 'bg-indigo-500'}`} />
-
+                <div className={`relative p-8 rounded-2xl shadow-xl flex-1 min-h-[500px] overflow-hidden border transition-all duration-500 ${viewMode === 'corrected' ? 'bg-slate-900 border-slate-800' : 'bg-white border-cyan-100'}`}>
                     {viewMode === 'corrected' ? (
-                        // 1. STANDARD FIX
-                        <div className="animate-fade-in h-full overflow-y-auto pr-2 custom-scrollbar">
-                            <p className="whitespace-pre-wrap text-slate-200 leading-loose font-sans text-lg tracking-wide">
+                        <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
+                            <p className="whitespace-pre-wrap text-slate-300 leading-loose font-serif text-lg">
                                 {data.corrected_text}
                             </p>
-                            <div className="absolute -bottom-10 -right-10 text-emerald-900 opacity-20 transform -rotate-12 pointer-events-none">
-                                <Sparkles size={160} />
-                            </div>
                         </div>
                     ) : (
-                        // 2. BAND 9.0 MODE
                         <div className="h-full relative overflow-y-auto pr-2 custom-scrollbar">
                             {data.polished_text ? (
-                                // [PRO USER] Đã có dữ liệu
                                 <div className="relative">
                                     {isAnimating && (
-                                        <div className="absolute inset-0 text-lg text-slate-300 font-serif whitespace-pre-wrap leading-loose select-none z-0">
+                                        <div className="absolute inset-0 text-lg text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
                                             {data.corrected_text}
                                         </div>
                                     )}
-                                    <div className={`text-lg text-indigo-950 font-serif whitespace-pre-wrap leading-loose relative z-10 ${isAnimating ? 'animate-reveal-text' : ''}`}>
+                                    <div className={`text-lg text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}>
                                         {data.polished_text}
                                     </div>
                                     {isAnimating && <div className="animate-scan-line pointer-events-none" />}
                                     
-                                    <div className="mt-8 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-sm text-indigo-800 flex items-start gap-3">
-                                        <div className="bg-white p-2 rounded-xl shadow-sm"><Lightbulb size={18} className="text-yellow-500"/></div>
-                                        <p className="font-medium leading-relaxed">This version utilizes C2 level vocabulary and complex grammatical structures to maximize Lexical Resource and Grammatical Range scores.</p>
+                                    <div className="mt-8 p-4 bg-cyan-50 rounded-xl border border-cyan-100 text-xs text-cyan-800 flex items-start gap-3">
+                                        <Lightbulb size={18} className="text-cyan-600 shrink-0"/>
+                                        <p className="font-medium leading-relaxed">This elite version employs complex rhetorical devices and academic collocations to ensure a 8.5-9.0 band performance.</p>
                                     </div>
                                 </div>
                             ) : (
-                                // [FREE USER] Khóa UI
-                                <div className="h-full flex flex-col items-center justify-center text-center relative z-10">
-                                    {/* Text mờ làm nền */}
-                                    <div className="absolute inset-0 text-left opacity-30 select-none blur-[4px] font-serif text-lg text-slate-400 overflow-hidden pointer-events-none">
-                                        In contemporary discourse, the omnipresence of digital technology has catalyzed a paradigm shift in educational methodologies. Proponents argue that...
-                                        (Content Hidden)
+                                // LOCKED STATE
+                                <div className="h-full flex flex-col items-center justify-center text-center relative">
+                                    <div className="absolute inset-0 text-left opacity-10 select-none blur-[2px] font-serif text-lg text-slate-900 overflow-hidden pointer-events-none">
+                                        {data.original_text}
                                     </div>
-
-                                    {/* Box Lock */}
-                                    <div className="bg-white p-8 rounded-[32px] border border-white ring-4 ring-indigo-50 shadow-2xl shadow-indigo-200/50 max-w-sm animate-bounce-in relative z-20">
-                                        <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-indigo-500 to-violet-500 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30">
-                                            <Lock size={28} />
+                                    <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-2xl max-w-sm relative z-10">
+                                        <div className="mx-auto w-12 h-12 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center mb-6 border border-cyan-100">
+                                            <Lock size={24} />
                                         </div>
-                                        <h4 className="text-2xl font-black text-slate-900 mb-2">Band 9.0 Locked</h4>
-                                        <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">
-                                            Upgrade to Pro to instantly rewrite this essay with native-level vocabulary and advanced structures.
-                                        </p>
-                                        
+                                        <h4 className="text-xl font-bold text-slate-900 mb-2">Elite Version Locked</h4>
+                                        <p className="text-slate-500 text-sm mb-8 leading-relaxed">Upgrade to Pro to access Band 9.0 rewrites and advanced vocabulary insights for your past essays.</p>
                                         <button 
                                             onClick={() => setShowPricingModal(true)}
-                                            className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 transition-all shadow-xl hover:-translate-y-1 flex justify-center items-center gap-2"
+                                            className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-cyan-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
                                         >
-                                            <Sparkles size={18} className="text-yellow-400" /> Upgrade & Unlock
+                                            <Sparkles size={16} /> Upgrade & Unlock
                                         </button>
-                                        <div className="mt-4 flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                            <Shield size={12}/> Secure 1-Click Upgrade
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -318,130 +280,101 @@ export default function HistoryDetail() {
             </div>
         </div>
 
-        <hr className="border-slate-200 my-8" />
-
-        {/* --- QUIZ & ERROR AREA --- */}
-        <section className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            {isReviewing ? (
-                <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm animate-fade-in">
-                    <div className="flex items-center gap-2 mb-8 text-indigo-700 bg-indigo-50 px-4 py-2 rounded-xl w-fit">
-                        <BookOpen size={20} />
-                        <span className="font-black uppercase tracking-widest text-sm">{t.practice_mode}</span>
-                        <span className="text-indigo-400 text-sm font-medium">| {unresolvedErrors.length} {t.issues} remaining</span>
-                    </div>
-                    <QuizView 
-                        errors={unresolvedErrors}
-                        language={data.target_language || "English"}
-                        onSuccess={() => { setIsReviewing(false); fetchDetail(); }}
-                        onCancel={() => setIsReviewing(false)}
-                    />
-                </div>
-            ) : (
-                <div className="bg-white p-8 rounded-[32px] border border-slate-200/60 shadow-sm">
-                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-                        <div>
-                            <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-                                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl"><AlertTriangle size={24}/></div>
-                                {t.analysis_title}
-                            </h3>
-                            <p className="text-slate-500 mt-2 font-medium">
-                                {t.found_points} <b className="text-slate-800">{data.analysis_results.length}</b> {t.points_improve}. 
-                                {unresolvedErrors.length > 0 && <span className="text-rose-500 font-bold ml-1">{unresolvedErrors.length} {t.fixes_learn}</span>}
-                            </p>
-                        </div>
-                        
+{/* --- DIAGNOSTICS AREA (Nơi cần lấy lại "hứng" fix) --- */}
+        <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                        <div className="p-2 bg-slate-900 text-white rounded-lg shadow-lg"><BarChart3 size={20}/></div>
+                        Diagnostic Report
+                    </h3>
+                    <p className="text-sm text-slate-500 mt-2">
                         {unresolvedErrors.length > 0 ? (
-                            <button 
-                                onClick={() => setIsReviewing(true)}
-                                className="group bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-200 flex items-center gap-4 transition-all hover:-translate-y-1"
-                            >
-                                <div className="bg-white/20 p-2.5 rounded-xl group-hover:bg-white/30 transition-colors">
-                                    <Zap size={24} fill="currentColor" className="text-yellow-300"/>
-                                </div>
-                                <div className="text-left">
-                                    <span className="block text-[10px] uppercase opacity-80 tracking-widest mb-0.5">{t.rec_label}</span>
-                                    <span className="block text-lg leading-none">{t.start_quiz}</span>
-                                </div>
-                                <ChevronRight className="opacity-0 group-hover:opacity-100 transition-all -ml-4 group-hover:ml-0 text-indigo-200" />
-                            </button>
+                            <span>
+                                You have <b className="text-red-600 font-black px-1.5 py-0.5 bg-red-50 rounded mx-1">{unresolvedErrors.length} issues</b> that need immediate attention.
+                            </span>
                         ) : (
-                            <div className="bg-emerald-50 text-emerald-800 px-8 py-4 rounded-2xl font-bold flex items-center gap-4 border border-emerald-100 shadow-sm">
-                                <div className="bg-emerald-500 p-2 rounded-full text-white shadow-md shadow-emerald-200">
-                                    <Check size={20} strokeWidth={3}/>
-                                </div>
-                                <div>
-                                    <span className="block text-[10px] uppercase opacity-70 tracking-widest mb-0.5">{t.mission_complete}</span>
-                                    <span className="block text-lg leading-none">{t.all_resolved}</span>
-                                </div>
-                            </div>
+                            <span className="text-emerald-600 font-bold flex items-center gap-1">
+                                <CheckCircle size={14}/> Perfect! All identified issues have been mastered.
+                            </span>
                         )}
-                    </div>
-
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {data.analysis_results.map((err: any) => (
-                            <div 
-                                key={err.id} 
-                                className={`flex flex-col p-6 rounded-[24px] border transition-all duration-300 group
-                                ${err.is_resolved 
-                                    ? "bg-emerald-50/30 border-emerald-100 opacity-70 grayscale-[0.2] hover:grayscale-0" 
-                                    : "bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:border-indigo-300 hover:-translate-y-1" 
-                                }`}
-                            >
-                                <div className="flex justify-between items-start mb-5">
-                                    <div className="flex items-start gap-3">
-                                        <div className={`w-1.5 h-10 rounded-full mt-1 ${err.is_resolved ? 'bg-emerald-400' : 'bg-rose-500'}`}></div>
-                                        <div>
-                                            <span className={`block font-black text-sm mb-0.5 ${err.is_resolved ? "text-emerald-700" : "text-rose-600"}`}>
-                                                {translateError(err.error_type, lang)}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">
-                                                {err.error_type}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    {err.is_resolved ? (
-                                        <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-md font-black uppercase tracking-widest border border-emerald-200">{t.resolved_label}</span>
-                                    ) : (
-                                        <span className="bg-slate-100 text-slate-500 text-[10px] px-2.5 py-1 rounded-md font-black uppercase tracking-widest">
-                                            {err.severity}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <p className="text-slate-600 text-sm mb-5 leading-relaxed font-medium flex-grow">
-                                    "{err.explanation}"
-                                </p>
-                                
-                                {!err.is_resolved && (
-                                    <button 
-                                        onClick={() => handleOpenLesson(err.error_type)}
-                                        className="text-xs font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1.5 transition-colors mb-4 w-fit bg-indigo-50 px-3 py-1.5 rounded-lg"
-                                    >
-                                        <BookOpen size={14}/> {t.review_lesson_btn}
-                                    </button>
-                                )}
-
-                                <div className={`mt-auto p-4 rounded-xl text-sm font-medium border ${err.is_resolved ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-slate-50 text-slate-800 border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 group-hover:text-indigo-900 transition-colors'}`}>
-                                    <span className="flex items-center gap-2 mb-1.5 text-[10px] uppercase opacity-60 font-black tracking-widest">
-                                        <Sparkles size={12} /> {t.suggestion_label}
-                                    </span>
-                                    {err.suggestion}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    </p>
                 </div>
-            )}
-        </section>
+                
+                {unresolvedErrors.length > 0 && (
+                    <button 
+                        onClick={() => setIsReviewing(true)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-red-600/20 transition-all flex items-center gap-3 active:scale-95 animate-pulse hover:animate-none"
+                    >
+                        <Zap size={20} fill="currentColor" className="text-yellow-300"/>
+                        Fix Remaining Issues
+                    </button>
+                )}
+            </div>
 
+            {/* GRID CÁC THẺ LỖI - TRỰC QUAN HƠN */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data.analysis_results.map((err: any) => (
+                    <div 
+                        key={err.id} 
+                        className={`flex flex-col p-6 rounded-2xl border transition-all duration-300 group relative overflow-hidden
+                        ${err.is_resolved 
+                            ? "bg-slate-50 border-slate-100 opacity-60 grayscale" 
+                            : "bg-white border-slate-200 shadow-md hover:shadow-xl hover:border-red-300" 
+                        }`}
+                    >
+                        {/* Status Label mờ phía sau */}
+                        <div className={`absolute -right-4 -top-2 text-4xl font-black opacity-[0.03] select-none uppercase transition-all group-hover:opacity-[0.07] ${err.is_resolved ? 'text-emerald-900' : 'text-red-900'}`}>
+                            {err.is_resolved ? 'Solved' : err.severity}
+                        </div>
+
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div className="space-y-1">
+                                <span className={`block font-black text-xs uppercase tracking-tighter ${err.is_resolved ? "text-emerald-600" : "text-red-600"}`}>
+                                    {translateError(err.error_type, 'en')}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{err.error_type}</span>
+                            </div>
+                            {err.is_resolved ? (
+                                <div className="p-1 bg-emerald-100 text-emerald-600 rounded-full shadow-inner"><Check size={14} strokeWidth={4}/></div>
+                            ) : (
+                                <div className="p-1 bg-red-100 text-red-600 rounded-full animate-bounce shadow-sm"><AlertTriangle size={14}/></div>
+                            )}
+                        </div>
+
+                        <p className={`text-sm mb-6 leading-relaxed font-medium grow ${err.is_resolved ? 'text-slate-400' : 'text-slate-700'}`}>
+                            "{err.explanation}"
+                        </p>
+                        
+                        <div className="space-y-4 mt-auto relative z-10">
+                            {!err.is_resolved && (
+                                <button 
+                                    onClick={() => handleOpenLesson(err.error_type)}
+                                    className="text-[10px] font-black text-slate-400 hover:text-cyan-600 flex items-center gap-1.5 transition-colors uppercase tracking-widest"
+                                >
+                                    <BookOpen size={12}/> Study this rule
+                                </button>
+                            )}
+                            
+                            <div className={`p-4 rounded-xl text-xs font-bold border transition-all ${
+                                err.is_resolved 
+                                ? 'bg-slate-100 border-slate-200 text-slate-500' 
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-100 group-hover:bg-emerald-100 group-hover:scale-[1.02]'
+                            }`}>
+                                <div className="text-[10px] uppercase opacity-50 mb-1 flex justify-between">
+                                    <span>Correct Version</span>
+                                    {!err.is_resolved && <Sparkles size={10} className="text-emerald-500 animate-pulse"/>}
+                                </div>
+                                <span className="text-sm font-serif">"{err.suggestion}"</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
       </div>
       
-      <PricingModal 
-          isOpen={showPricingModal} 
-          onClose={() => setShowPricingModal(false)} 
-          onSuccess={handleUpgradeSuccess}
-      />
+      <PricingModal isOpen={showPricingModal} onClose={() => setShowPricingModal(false)} onSuccess={handleUpgradeSuccess} />
     </main>
   );
 }
