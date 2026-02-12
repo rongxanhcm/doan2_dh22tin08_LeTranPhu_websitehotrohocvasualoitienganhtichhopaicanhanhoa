@@ -341,3 +341,10 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    # Lấy port từ biến môi trường Heroku, mặc định là 8000 nếu chạy local
+    port = int(os.environ.get("PORT", 8000))
+    # Chạy app
+    uvicorn.run(app, host="0.0.0.0", port=port)
