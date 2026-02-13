@@ -66,7 +66,7 @@ export default function UserDropdown({ user, isPro }: { user: any, isPro: boolea
                 <Settings size={16} className="text-slate-400"/> Settings
             </button>
             <button 
-                onClick={() => router.push("/settings?tab=billing")} 
+                onClick={() => router.push("/setting?tab=billing")} 
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors text-left font-medium"
             >
                 <CreditCard size={16} className="text-slate-400"/> Billing
