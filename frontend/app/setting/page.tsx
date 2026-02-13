@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react"; // 1. Import Suspense
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { User, CreditCard, Shield, Mail, Zap, Check, ArrowLeft } from "lucide-react";
+import { User, CreditCard, Shield, Mail, Zap, Check, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default function SettingsPage() {
+// 2. Tách logic chính ra một Component con
+function SettingsContent() {
   const [activeTab, setActiveTab] = useState("general");
   const [user, setUser] = useState<any>(null);
   const [isPro, setIsPro] = useState(false);
   const supabase = createClient();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // Hook này gây lỗi nếu ko có Suspense
   const router = useRouter();
 
   useEffect(() => {
@@ -32,31 +33,24 @@ export default function SettingsPage() {
     getUser();
   }, [searchParams]);
 
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      
-      {/* Header đơn giản */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center gap-4">
-            <Link href="/dashboard" className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-                <ArrowLeft size={20}/>
-            </Link>
-            <h1 className="font-bold text-lg">Account Settings</h1>
-        </div>
-      </div>
+  // Hàm update URL khi click tab
+  const handleTabChange = (tab: string) => {
+      setActiveTab(tab);
+      router.push(`/setting?tab=${tab}`, { scroll: false });
+  };
 
-      <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
-        
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-12 gap-10">
         {/* SIDEBAR TABS */}
         <div className="md:col-span-3 space-y-1">
             <button 
-                onClick={() => setActiveTab("general")}
+                onClick={() => handleTabChange("general")}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "general" ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
             >
                 <User size={18}/> General
             </button>
             <button 
-                onClick={() => setActiveTab("billing")}
+                onClick={() => handleTabChange("billing")}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === "billing" ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
             >
                 <CreditCard size={18}/> Billing & Plans
@@ -109,7 +103,7 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {/* --- TAB: BILLING (Nơi nịnh Google Cloud & Vertex AI) --- */}
+            {/* --- TAB: BILLING --- */}
             {activeTab === "billing" && (
                 <div className="space-y-6">
                     <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
@@ -164,9 +158,33 @@ export default function SettingsPage() {
                     </div>
                 </div>
             )}
+        </div>
+    </div>
+  );
+}
 
+// 3. Component chính chỉ đóng vai trò Layout và bọc Suspense
+export default function SettingsPage() {
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      {/* Header để ở ngoài Suspense để nó hiển thị ngay lập tức */}
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center gap-4">
+            <Link href="/dashboard" className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                <ArrowLeft size={20}/>
+            </Link>
+            <h1 className="font-bold text-lg">Account Settings</h1>
         </div>
       </div>
+
+      {/* Bọc phần logic dùng searchParams bằng Suspense */}
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        </div>
+      }>
+        <SettingsContent />
+      </Suspense>
     </div>
   );
 }
