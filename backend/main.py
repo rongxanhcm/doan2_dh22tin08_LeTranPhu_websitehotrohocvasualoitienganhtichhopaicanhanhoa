@@ -414,6 +414,20 @@ async def lemon_squeezy_webhook(request: Request, x_signature: str = Header(None
 
     # Các sự kiện khác (VD: subscription_cancelled) xử lý sau
     return {"status": "ignored", "reason": "event_not_handled"}
+
+# --- Dán đoạn này ngay dưới cái @app.post("/webhook") ---
+
+@app.get("/webhook")
+def check_webhook_get():
+    """
+    Cái bẫy để bắt lỗi 405. 
+    Nếu Lemon Squeezy báo 200 OK mà trả về message này -> Do lỗi Redirect.
+    """
+    print("⚠️ CẢNH BÁO: Đang nhận được request GET (lẽ ra phải là POST)!")
+    return {
+        "status": "error", 
+        "message": "Bạn đang gửi GET request. Hãy kiểm tra lại URL trong Lemon Squeezy, xóa dấu / ở cuối đi."
+    }
 if __name__ == "__main__":
     import uvicorn
     # Lấy port từ biến môi trường Heroku, mặc định là 8000 nếu chạy local
