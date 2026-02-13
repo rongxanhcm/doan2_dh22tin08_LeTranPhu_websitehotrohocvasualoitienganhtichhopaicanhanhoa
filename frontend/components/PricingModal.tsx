@@ -25,41 +25,35 @@ export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
 
   if (!isOpen) return null;
 
-  const handleCheckout = async () => {
-    setIsLoading(true);
-    try {
-      // 1. Lấy thông tin User hiện tại
-      const { data: { user } } = await supabase.auth.getUser();
+const handleCheckout = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please login to upgrade.");
+        setIsLoading(false);
+        return;
+      }
+
+      const baseUrl = billingCycle === 'monthly' ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
+
+      // --- ĐOẠN SỬA LỖI Ở ĐÂY ---
+      // Kiểm tra xem link gốc đã có '?' chưa. Nếu có rồi thì dùng '&', chưa có thì dùng '?'
+      const separator = baseUrl.includes("?") ? "&" : "?";
       
-      if (!user) {
-        toast.error("Please login to upgrade.");
-        setIsLoading(false);
-        return;
-      }
+      // Nối chuỗi đúng chuẩn
+      const checkoutUrl = `${baseUrl}${separator}checkout[custom][user_id]=${user.id}`;
 
-      // 2. Chọn link dựa trên gói khách chọn (Tháng hoặc Năm)
-      const baseUrl = billingCycle === 'monthly' ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
+      console.log("Redirecting to:", checkoutUrl); // Log ra để kiểm tra
+      window.location.href = checkoutUrl;
 
-      // 3. Kiểm tra nếu chưa thay link Yearly
-      if (baseUrl.includes("xxxxxxxx")) {
-        toast.error("Yearly plan is coming soon. Please choose Monthly.");
-        setIsLoading(false);
-        return;
-      }
-
-      // 4. Tạo URL thanh toán có gắn User ID (Quan trọng để Webhook nhận diện)
-      // Cấu trúc: ?checkout[custom][user_id]=USER_ID
-      const checkoutUrl = `${baseUrl}?checkout[custom][user_id]=${user.id}`;
-
-      // 5. Chuyển hướng sang Lemon Squeezy
-      window.location.href = checkoutUrl;
-
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong. Please try again.");
-      setIsLoading(false);
-    }
-  };
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
+  };
 
   const comparisonFeatures = [
     { name: "Daily Analysis Limit", free: "2 essays", pro: "50 essays", icon: <Zap size={16}/> },
