@@ -98,64 +98,15 @@ export default function AnalyzePage() {
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
 
   useEffect(() => {
-    const checkUserAndHandlePayment = async () => { 
+    const checkUser = async () => { 
         const { data: { user } } = await supabase.auth.getUser(); 
         if(user) {
             setUser(user);
             const { data } = await supabase.from('user_usage').select('is_pro').eq('user_id', user.id).single();
             if(data) setIsPro(data.is_pro);
-            
-            // Check if returning from successful payment
-            const params = new URLSearchParams(window.location.search);
-            if(params.get('payment_success') === 'true') {
-                toast.success("Payment successful! Enjoy Band 9.0 Rewrite!");
-                // Clean up URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // Retrieve stored submission and trigger rewrite
-                const storedSubmission = localStorage.getItem('pendingRewriteSubmission');
-                if(storedSubmission) {
-                    try {
-                        const submission = JSON.parse(storedSubmission);
-                        setResult(submission);
-                        setIsPro(true);
-                        
-                        // Trigger rewrite API call
-                        const toastId = toast.loading("Unlocking Band 9.0 Version...");
-                        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-                        const res = await fetch(`${API_URL}/upgrade-submission`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                                submission_id: submission.submission_id,
-                                user_id: user.id 
-                            })
-                        });
-
-                        if (res.ok) {
-                            const data = await res.json();
-                            setResult((prev: any) => ({
-                                ...prev,
-                                polished_text: data.polished_text
-                            }));
-                            setMode("vocab");
-                            setIsAnimating(true);
-                            setTimeout(() => setIsAnimating(false), 1200);
-                            toast.success("Unlocked!", { id: toastId });
-                        } else {
-                            toast.error("Unlock failed", { id: toastId });
-                        }
-                        
-                        localStorage.removeItem('pendingRewriteSubmission');
-                    } catch (error) {
-                        console.error("Error processing payment return:", error);
-                        toast.error("Error processing payment return");
-                    }
-                }
-            }
         }
     };
-    checkUserAndHandlePayment();
+    checkUser();
     randomizeTopic();
   }, []);
 
@@ -208,8 +159,6 @@ export default function AnalyzePage() {
             setMode("vocab");
             setIsAnimating(true);
             setTimeout(() => setIsAnimating(false), 1200);
-            // Clear localStorage after successful rewrite
-            localStorage.removeItem('pendingRewriteSubmission');
 
         } catch (error) {
             toast.error("Unlock failed.", { id: toastId });
@@ -277,22 +226,11 @@ export default function AnalyzePage() {
     toast.success("Fixed!");
   };
 
-  const handleOpenPricingModal = () => {
-    // Store current result so we can continue rewrite after payment
-    if (result?.submission_id) {
-        localStorage.setItem('pendingRewriteSubmission', JSON.stringify(result));
-    }
-    setShowPricingModal(true);
-  };
-
   const switchMode = (newMode: "grammar" | "vocab") => {
-      if (newMode === "vocab" && result?.polished_text && isPro) {
+      if (newMode === "vocab" && result?.polished_text) {
           setMode("vocab");
           setIsAnimating(true);
           setTimeout(() => setIsAnimating(false), 1200);
-      } else if (newMode === "vocab" && !isPro) {
-          handleOpenPricingModal();
-          toast.error("Upgrade to Pro to access Band 9.0 Rewrite!");
       } else {
           setMode(newMode);
       }
@@ -485,7 +423,7 @@ export default function AnalyzePage() {
                     </div>
                   ) : (
                     <div className="relative h-full bg-white">
-                      {result.polished_text && isPro ? (
+                      {result.polished_text ? (
                         <div className="relative w-full min-h-[300px]">
                           {isAnimating && (
                             <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
@@ -514,7 +452,7 @@ export default function AnalyzePage() {
                                     See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Native Phrasing</b>.
                                 </p>
                                 <button 
-                                    onClick={handleOpenPricingModal}
+                                    onClick={() => setShowPricingModal(true)}
                                     className="w-full py-3 bg-slate-900 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
                                 >
                                     <Sparkles size={16} /> Upgrade to Pro
