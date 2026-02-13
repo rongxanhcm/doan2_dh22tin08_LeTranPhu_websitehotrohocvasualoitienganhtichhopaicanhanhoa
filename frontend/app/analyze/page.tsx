@@ -227,10 +227,13 @@ export default function AnalyzePage() {
   };
 
   const switchMode = (newMode: "grammar" | "vocab") => {
-      if (newMode === "vocab" && result?.polished_text) {
+      if (newMode === "vocab" && result?.polished_text && isPro) {
           setMode("vocab");
           setIsAnimating(true);
           setTimeout(() => setIsAnimating(false), 1200);
+      } else if (newMode === "vocab" && !isPro) {
+          setShowPricingModal(true);
+          toast.error("Upgrade to Pro to access Band 9.0 Rewrite!");
       } else {
           setMode(newMode);
       }
@@ -423,7 +426,7 @@ export default function AnalyzePage() {
                     </div>
                   ) : (
                     <div className="relative h-full bg-white">
-                      {result.polished_text ? (
+                      {result.polished_text && isPro ? (
                         <div className="relative w-full min-h-[300px]">
                           {isAnimating && (
                             <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
