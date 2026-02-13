@@ -2,9 +2,11 @@ import os
 import traceback
 import json
 from datetime import datetime
-from typing import List, Optional, Union # [FIX] Đã thêm Union
+from typing import List, Optional, Union
 import hmac
 import hashlib
+from functools import lru_cache # [NEW] Để cache prompt
+import requests
 from fastapi import Request, Header
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +23,8 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Secret Webhook (Thay bằng mã thực tế của bạn)
+LEMONSQUEEZY_WEBHOOK_SECRET = "861218" 
 
 # Khởi tạo Clients
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
@@ -41,8 +45,10 @@ FREE_DAILY_LIMIT = 2
 PRO_DAILY_LIMIT = 50   
 MIN_WORD_COUNT = 15
 
-# --- HELPER FUNCTION ---
-def get_system_prompt(key: str):
+# --- [NEW] HELPER FUNCTION WITH CACHE ---
+# Dùng cache để không tốn thời gian gọi DB mỗi lần request
+@lru_cache(maxsize=5) 
+def get_system_prompt_cached(key: str):
     try:
         response = supabase.table("system_prompts").select("content").eq("key", key).single().execute()
         if response.data:
@@ -60,12 +66,17 @@ class ErrorDetail(BaseModel):
     explanation: str
     suggestion: str
 
-class EssayAssessment(BaseModel):
+# [FIX] Tách schema để tiết kiệm token
+class BaseEssayAssessment(BaseModel):
     score: float
     general_feedback: str
     core_errors: List[ErrorDetail]
     corrected_text: str
-    polished_text: Optional[str] = None 
+    # KHÔNG CÓ polished_text ở đây để tránh AI tự bịa ra cho user Free
+
+# [FIX] Schema riêng cho Pro
+class ProEssayAssessment(BaseEssayAssessment):
+    polished_text: str 
 
 class EssayInput(BaseModel):
     text: str
@@ -93,17 +104,18 @@ class QuizQuestion(BaseModel):
 class BatchQuizResponse(BaseModel):
     questions: List[QuizQuestion]
 
-# Model cho Debug Upgrade
+# Model Debug & Upgrade
 class UpgradeRequest(BaseModel):
     user_id: str
 
-# Model cho Upgrade Submission (Fix lỗi 422/500)
 class UpgradeSubmissionRequest(BaseModel):
-    submission_id: Union[int, str] # [FIX] Chấp nhận cả số và chuỗi
+    submission_id: Union[int, str]
     user_id: str
 
+class PortalRequest(BaseModel):
+    user_email: str
 # ==========================================
-# ENDPOINT 1: ANALYZE ESSAY
+# ENDPOINT 1: ANALYZE ESSAY (ĐÃ TỐI ƯU)
 # ==========================================
 @app.post("/analyze")
 def analyze_essay(input: EssayInput):
@@ -118,7 +130,6 @@ def analyze_essay(input: EssayInput):
         usage_count = 0
         
         if input.user_id:
-            # Dùng .execute() trả về list để an toàn
             usage_res = supabase.table("user_usage").select("*").eq("user_id", input.user_id).execute()
             usage_data = None
 
@@ -147,53 +158,69 @@ def analyze_essay(input: EssayInput):
 
             limit = PRO_DAILY_LIMIT if is_pro else FREE_DAILY_LIMIT
             if usage_count >= limit:
-                 raise HTTPException(status_code=403, detail=f"Bạn đã hết lượt dùng miễn phí hôm nay ({limit}/{limit}). Hãy nâng cấp Pro để tiếp tục!")
+                 raise HTTPException(status_code=403, detail=f"Daily limit reached ({limit}/{limit}). Upgrade to Pro for more!")
 
-        # 3. CHUẨN BỊ PROMPT
+        # 3. CHUẨN BỊ PROMPT & SCHEMA (TỐI ƯU HÓA)
         target_lang = input.native_language.strip()
+        
+        # [NEW] Instruction ngắn gọn hơn để tiết kiệm Input Token
         if target_lang.lower() in ["english", "en", "us", "uk"]:
-            lang_instruction = "Write explanation, suggestion, and general_feedback in English."
+            lang_instruction = "Output JSON in English."
         else:
-            lang_instruction = f"""
-            IMPORTANT: You are analyzing an essay for a student whose native language is '{target_lang}'.
-            Rules:
-            1. 'error_type' MUST remain in English.
-            2. 'explanation', 'suggestion', and 'general_feedback' MUST be written in {target_lang}.
-            3. The 'quote' must be the exact original substring.
-            """
+            lang_instruction = f"Explain and suggest in {target_lang}. Keep 'error_type' in English."
 
+        # [FIX] Dynamic Schema Check
+    # [FIX] Dynamic Schema Check & Length Constraint
         if is_pro:
-            polish_instruction = ', "polished_text": "<string: The ULTIMATE IELTS BAND 9.0 version. Rewrite the entire essay using C2 vocabulary.>"'
+            # Code CŨ (Gây dài dòng):
+            # polish_instruction = ', "polished_text": "<Rewrite the essay to Band 9.0 Level (C2 Vocab)>"'
+            
+            # Code MỚI (Ép độ dài):
+            polish_instruction = (
+                ', "polished_text": "<Rewrite to Band 9.0 (C2 Vocab). '
+                'CRITICAL: Keep word count similar to original (max +10%). '
+                'Focus on upgrading vocabulary and grammar structures ONLY. '
+                'Do NOT expand ideas or add new sentences.>"'
+            )
+            target_schema = ProEssayAssessment
         else:
+            # Free: Không có instruction
             polish_instruction = ""
+            target_schema = BaseEssayAssessment
 
-        raw_prompt = get_system_prompt("analyze_essay")
+        # [NEW] Dùng Cached Prompt
+        raw_prompt = get_system_prompt_cached("analyze_essay")
         if not raw_prompt:
-            raise HTTPException(status_code=500, detail="System prompt not found.")
+            # Fallback nếu DB lỗi (Optional)
+            raw_prompt = "Analyze this essay: {{input_text}}. {{lang_instruction}}. {{polish_instruction}}"
+            # raise HTTPException(status_code=500, detail="System prompt not found.")
 
         prompt_text = raw_prompt.replace("{{lang_instruction}}", lang_instruction)\
                                 .replace("{{polish_instruction}}", polish_instruction)\
                                 .replace("{{input_text}}", input.text)
 
-        # 4. GỌI GEMINI
+        # 4. GỌI GEMINI (Dùng model Flash 1.5 cho rẻ)
         response = genai_client.models.generate_content(
-            model='gemini-3-pro-preview', 
+            model='gemini-2.5-flash', # [TIẾT KIỆM] Dùng 1.5 thay vì 2.5
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
-                response_schema=EssayAssessment
+                response_schema=target_schema # [FIX] Schema động
             )
         )
         result = response.parsed
 
-        # 5. CHUẨN BỊ KẾT QUẢ TRẢ VỀ (Convert sang Dict)
+        # 5. CHUẨN BỊ KẾT QUẢ
         response_data = result.model_dump()
 
-        # 6. LƯU DATABASE & GẮN ID
+        # 6. LƯU DATABASE
         if input.user_id:
             supabase.table("user_usage").update({"usage_count": usage_count + 1}).eq("user_id", input.user_id).execute()
 
             try:
+                # [FIX] Dùng getattr để lấy polished_text an toàn (vì Free ko có trường này)
+                polished_content = getattr(result, 'polished_text', None)
+
                 sub_data = {
                     "user_id": input.user_id,
                     "original_text": input.text,
@@ -201,13 +228,12 @@ def analyze_essay(input: EssayInput):
                     "score": result.score,
                     "general_feedback": result.general_feedback,
                     "target_language": input.native_language,
-                    "polished_text": getattr(result, 'polished_text', None) 
+                    "polished_text": polished_content
                 }
                 
                 sub_res = supabase.table("submissions").insert(sub_data).execute()
                 
                 if sub_res.data:
-                    # [QUAN TRỌNG] Gắn ID vào response để Frontend nhận được
                     submission_id = sub_res.data[0]['id']
                     response_data['submission_id'] = submission_id
                     
@@ -242,29 +268,25 @@ def generate_batch_quiz(input: BatchQuizRequest):
     try:
         error_list_text = ""
         for err in input.errors:
-            error_list_text += f"- Error '{err.error_type}' in phrase: '{err.quote}'\n"
+            error_list_text += f"- {err.error_type}: '{err.quote}'\n"
 
         target_lang = input.language.strip()
         
+        # Tối ưu prompt ngắn gọn
         if target_lang.lower() in ["english", "en", "us", "uk"]:
-            lang_instruction = "Write everything in English."
+            lang_instruction = "English only."
         else:
-            lang_instruction = f"""
-            IMPORTANT: Create quiz for '{target_lang}' speaker.
-            1. 'question': Instruction in {target_lang}.
-            2. 'options': English.
-            3. 'explanation': {target_lang}.
-            """
+            lang_instruction = f"Questions in {target_lang}. Options in English."
 
-        raw_prompt = get_system_prompt("generate_quiz")
+        raw_prompt = get_system_prompt_cached("generate_quiz")
         if not raw_prompt:
-            raise HTTPException(status_code=500, detail="Quiz prompt not found.")
-            
+             raw_prompt = "Generate quiz for errors: {{error_list_text}}. {{lang_instruction}}"
+
         prompt_text = raw_prompt.replace("{{error_list_text}}", error_list_text)\
                                 .replace("{{lang_instruction}}", lang_instruction)
 
         response = genai_client.models.generate_content(
-            model='gemini-3-pro-preview',
+            model='gemini-2.5-flash',
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
@@ -314,23 +336,17 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
         
         submission = sub_res.data[0]
         
-        # Nếu đã có rồi thì trả về luôn
         if submission.get('polished_text'):
             return {"polished_text": submission['polished_text']}
 
-        # 3. Gọi AI Rewrite
+        # 3. Gọi AI Rewrite (Dùng model mạnh hơn cho task này nếu cần, hoặc flash cho rẻ)
         prompt = f"""
-        Act as an IELTS Expert. Rewrite the following essay to achieve Band 9.0 Score.
-        Use C2 Vocabulary, advanced grammar structures, and academic tone.
-        Keep the original meaning.
-        Original Text:
-        "{submission['original_text']}"
-        
-        Output ONLY the rewritten text. No introduction or explanations.
+        Rewrite to IELTS Band 9.0 (C2 Vocab). Keep meaning. Output ONLY text.
+        Original: "{submission['original_text']}"
         """
         
         response = genai_client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-2.5-flash', # Dùng 1.5 Flash vẫn tốt, hoặc đổi sang 2.0-flash
             contents=prompt
         )
         polished_text = response.text.strip()
@@ -344,93 +360,127 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- THÊM VÀO PHẦN CẤU HÌNH ---
-# Bạn tự nghĩ ra một mã bí mật (VD: "bi_mat_cua_phu_le") và điền vào đây
-# Sau này nhớ điền mã này vào Dashboard Lemon Squeezy
-LEMONSQUEEZY_WEBHOOK_SECRET = "861218" 
-
-# ... (Các phần code cũ giữ nguyên) ...
-
-# --- THÊM ENDPOINT NÀY VÀO CUỐI FILE ---
+# ==========================================
+# ENDPOINT 5: WEBHOOK
+# ==========================================
 @app.post("/webhook")
 async def lemon_squeezy_webhook(request: Request, x_signature: str = Header(None)):
-    """
-    Webhook nhận thông báo từ Lemon Squeezy khi có đơn hàng thành công
-    """
     if not LEMONSQUEEZY_WEBHOOK_SECRET:
         raise HTTPException(status_code=500, detail="Server chưa cấu hình Webhook Secret")
 
-    # 1. Đọc raw body để kiểm tra chữ ký (Bảo mật)
+    # 1. Verify Signature (Giữ nguyên)
     raw_body = await request.body()
-    
-    # 2. Tạo chữ ký từ Secret của mình
     digest = hmac.new(
         LEMONSQUEEZY_WEBHOOK_SECRET.encode("utf-8"),
         raw_body,
         digestmod=hashlib.sha256
     ).hexdigest()
 
-    # 3. So sánh chữ ký (Chống giả mạo)
     if not x_signature or not hmac.compare_digest(digest, x_signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # 4. Phân tích dữ liệu JSON
+    # 2. Parse Data
     data = await request.json()
     event_name = data.get("meta", {}).get("event_name")
     
-    print(f"🔔 Webhook received: {event_name}")
+    # Lấy User ID từ custom_data (Lemon Squeezy luôn gửi kèm cái này nếu lúc mua bạn đã gắn)
+    meta_data = data.get("meta", {}).get("custom_data", {})
+    user_id = meta_data.get("user_id")
 
-    # 5. Xử lý khi có đơn hàng mới (order_created)
-    if event_name == "order_created":
-        try:
-            # Lấy thông tin custom_data (nơi chứa user_id mà Frontend gửi lên)
-            meta_data = data.get("meta", {}).get("custom_data", {})
-            user_id = meta_data.get("user_id") 
-            
-            if not user_id:
-                print("⚠️ Cảnh báo: Không tìm thấy user_id trong đơn hàng!")
-                return {"status": "ignored", "reason": "no_user_id"}
+    print(f"🔔 Webhook Event: {event_name} | User: {user_id}")
 
-            print(f"✅ Nâng cấp Pro cho User ID: {user_id}")
-
-            # 6. Cập nhật Database Supabase (Set is_pro = True)
-            # Kiểm tra xem user đã có trong bảng user_usage chưa
-            user_res = supabase.table("user_usage").select("*").eq("user_id", user_id).execute()
-        
-            if not user_res.data:
-                # Nếu chưa có thì tạo mới
-                supabase.table("user_usage").insert({
-                    "user_id": user_id, "is_pro": True, "usage_count": 0
-                }).execute()
-            else:
-                # Nếu có rồi thì update
-                supabase.table("user_usage").update({"is_pro": True}).eq("user_id", user_id).execute()
+    # ---------------------------------------------------------
+    # CASE 1: MUA MỚI HOẶC GIA HẠN THÀNH CÔNG -> UP PRO
+    # ---------------------------------------------------------
+    # order_created: Mua lần đầu
+    # subscription_created: Đăng ký mới
+    # subscription_payment_success: Gia hạn thành công tháng sau
+    if event_name in ["order_created", "subscription_created", "subscription_payment_success"]:
+        if user_id:
+            try:
+                # Upsert: Nếu chưa có thì tạo, có rồi thì update
+                # Lưu ý: Cần check xem record đã tồn tại chưa để quyết định insert hay update
+                existing = supabase.table("user_usage").select("*").eq("user_id", user_id).execute()
                 
-            return {"status": "success", "message": f"Upgraded user {user_id}"}
+                if not existing.data:
+                    supabase.table("user_usage").insert({
+                        "user_id": user_id, "is_pro": True, "usage_count": 0
+                    }).execute()
+                else:
+                    supabase.table("user_usage").update({"is_pro": True}).eq("user_id", user_id).execute()
+                
+                print(f"✅ UPGRADE SUCCESS: {user_id}")
+                return {"status": "upgraded"}
+            except Exception as e:
+                print(f"❌ Error upgrading: {str(e)}")
 
-        except Exception as e:
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=str(e))
+    # ---------------------------------------------------------
+    # CASE 2: HẾT HẠN / HỦY NGANG -> VỀ FREE (CÁI BẠN ĐANG THIẾU)
+    # ---------------------------------------------------------
+    # subscription_expired: Hết hạn (đã hết grace period)
+    # subscription_payment_failed: Gia hạn thất bại (thẻ hết tiền...)
+    elif event_name in ["subscription_expired", "subscription_payment_failed"]:
+        if user_id:
+            try:
+                supabase.table("user_usage").update({"is_pro": False}).eq("user_id", user_id).execute()
+                print(f"🔻 DOWNGRADE SUCCESS: {user_id}")
+                return {"status": "downgraded"}
+            except Exception as e:
+                print(f"❌ Error downgrading: {str(e)}")
 
-    # Các sự kiện khác (VD: subscription_cancelled) xử lý sau
-    return {"status": "ignored", "reason": "event_not_handled"}
+    # ---------------------------------------------------------
+    # CASE 3: KHÁCH BẤM HỦY (VẪN GIỮ PRO ĐẾN HẾT THÁNG)
+    # ---------------------------------------------------------
+    elif event_name == "subscription_cancelled":
+        # Ở đây chúng ta KHÔNG set is_pro = False ngay.
+        # Vì khách đã trả tiền cho cả tháng rồi.
+        # Chỉ cần log ra thôi, đợi khi nào event "subscription_expired" bắn sang thì mới cắt.
+        print(f"⚠️ User {user_id} has cancelled renewal. Access remains until expiry.")
+        return {"status": "cancelled_renewal"}
 
-# --- Dán đoạn này ngay dưới cái @app.post("/webhook") ---
+    return {"status": "ignored"}
 
 @app.get("/webhook")
 def check_webhook_get():
-    """
-    Cái bẫy để bắt lỗi 405. 
-    Nếu Lemon Squeezy báo 200 OK mà trả về message này -> Do lỗi Redirect.
-    """
     print("⚠️ CẢNH BÁO: Đang nhận được request GET (lẽ ra phải là POST)!")
     return {
         "status": "error", 
         "message": "Bạn đang gửi GET request. Hãy kiểm tra lại URL trong Lemon Squeezy, xóa dấu / ở cuối đi."
     }
+
+@app.post("/generate-portal-link")
+def generate_portal_link(req: PortalRequest):
+    try:
+        # 1. Cấu hình Header gọi Lemon Squeezy API
+        # API Key lấy từ Dashboard -> Settings -> API Keys
+        LS_API_KEY = os.getenv("LEMONSQUEEZY_API_KEY") 
+        headers = {
+            "Accept": "application/vnd.api+json",
+            "Content-Type": "application/vnd.api+json",
+            "Authorization": f"Bearer {LS_API_KEY}"
+        }
+
+        # 2. Tìm Customer ID dựa trên Email
+        # (Cách chuẩn là lưu customer_id vào DB lúc mua, nhưng tìm theo email là cách chữa cháy nhanh nhất)
+        search_url = f"https://api.lemonsqueezy.com/v1/customers?filter[email]={req.user_email}"
+        response = requests.get(search_url, headers=headers)
+        data = response.json()
+
+        if not data.get("data"):
+            raise HTTPException(status_code=404, detail="No subscription found for this email")
+
+        # Lấy khách hàng đầu tiên tìm thấy
+        customer = data["data"][0]
+        # Link portal nằm sẵn trong thuộc tính của customer
+        portal_url = customer["attributes"]["urls"]["customer_portal"]
+
+        return {"url": portal_url}
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Could not generate portal link")
+        
 if __name__ == "__main__":
     import uvicorn
-    # Lấy port từ biến môi trường Heroku, mặc định là 8000 nếu chạy local
     port = int(os.environ.get("PORT", 8000))
-    # Chạy app
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -238,114 +238,63 @@ import UserDropdown from "@/components/UserDropdown";
           </div>
         </section>
 
-        {/* --- FOOTER (Clean) --- */}
-      {/* --- PROFESSIONAL FAT FOOTER --- */}
-        <footer className="bg-slate-50 border-t border-slate-200 pt-16 pb-8 text-sm">
-          <div className="max-w-7xl mx-auto px-6">
-            
-            {/* Top Section: Grid 4 Cột */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 mb-16">
-              
-              {/* Cột 1: Brand & Tech Stack (Chiếm 2 cột trên màn hình lớn) */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="flex items-center gap-2">
-                    <div className="relative w-8 h-8">
-                      <Image src="/logo.svg" alt="Eloqua Logo" fill className="object-contain" />
-                    </div>
-                    <span className="font-bold text-xl text-slate-900 tracking-tight">Eloqua</span>
-                </div>
-                <p className="text-slate-500 leading-relaxed max-w-xs">
-                    The AI-powered writing coach that helps students and professionals achieve native-level fluency.
+        <footer className="bg-white border-t">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="xl:grid xl:grid-cols-3 xl:gap-8">
+              <div className="space-y-8 xl:col-span-1">
+                <img className="h-10" src="/logo.svg" alt="Eloqua AI" />
+                <p className="text-gray-500 text-base">
+                  Refine your writing, word by word. <br/>
+                  Powered by <strong>Google Gemini 2.5 Flash</strong> & <strong>Vertex AI</strong>.
                 </p>
-                
-                {/* --- PHẦN NỊNH GOOGLE CLOUD (Badge) --- */}
-                <div className="inline-flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-lg shadow-sm">
-                    <div className="p-1.5 bg-cyan-50 rounded-md">
-                      <Cloud size={16} className="text-cyan-600" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Infrastructure</span>
-                      <span className="text-xs font-semibold text-slate-700">Powered by Google Vertex AI & Gemini Flash</span>
-                    </div>
+                <div className="flex space-x-6">
+                  {/* Social icons nếu có (Github, Twitter/X) */}
                 </div>
               </div>
 
-              {/* Cột 2: Product */}
-              <div>
-                <h4 className="font-bold text-slate-900 mb-6">Product</h4>
-                <ul className="space-y-4 text-slate-500 font-medium">
-                  <li><Link href="/analyze" className="hover:text-cyan-600 transition-colors">Analyzer</Link></li>
-                  <li><Link href="/dashboard" className="hover:text-cyan-600 transition-colors">Dashboard</Link></li>
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">Pricing</Link></li>
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">Enterprise</Link></li>
-                </ul>
-              </div>
-
-              {/* Cột 3: Company (Quan trọng cho Trust) */}
-              <div>
-                <h4 className="font-bold text-slate-900 mb-6">Company</h4>
-                <ul className="space-y-4 text-slate-500 font-medium">
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">About Us</Link></li>
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">Careers</Link></li>
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">Blog</Link></li>
-                  <li><Link href="#" className="hover:text-cyan-600 transition-colors">Contact</Link></li>
-                </ul>
-              </div>
-
-              {/* Cột 4: Legal & Contact (Bắt buộc để xin Credit) */}
-              <div className="lg:col-span-2">
-                <h4 className="font-bold text-slate-900 mb-6">Contact & Legal</h4>
-                <ul className="space-y-4 text-slate-500">
-                  <li className="flex items-start gap-3">
-                    <MapPin size={16} className="text-slate-400 mt-1 flex-shrink-0" />
-                    <span>
-                      123 Innovation Drive, Tech Park<br/>
-                      Can Tho City, Vietnam 900000
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Mail size={16} className="text-slate-400 flex-shrink-0" />
-                    <a href="mailto:contact@eloqua.ai" className="hover:text-cyan-600 transition-colors">contact@eloqua.ai</a>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <FileText size={16} className="text-slate-400 flex-shrink-0" />
-                    <span className="text-slate-400">Business Reg: 0102xxxxxx</span>
-                  </li>
-                </ul>
+              <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                <div className="md:grid md:grid-cols-2 md:gap-8">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
+                    <ul role="list" className="mt-4 space-y-4">
+                      <li><a href="#demo" className="text-base text-gray-500 hover:text-gray-900">Live Demo</a></li>
+                      <li><a href="/pricing" className="text-base text-gray-500 hover:text-gray-900">Pricing</a></li>
+                      <li><a href="/changelog" className="text-base text-gray-500 hover:text-gray-900">Changelog</a></li>
+                    </ul>
+                  </div>
+                  <div className="mt-12 md:mt-0">
+                    <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Legal</h3>
+                    <ul role="list" className="mt-4 space-y-4">
+                      <li><a href="/privacy" className="text-base text-gray-500 hover:text-gray-900">Privacy Policy</a></li>
+                      <li><a href="/terms" className="text-base text-gray-500 hover:text-gray-900">Terms of Service</a></li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="md:grid md:grid-cols-1 md:gap-8">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Contact</h3>
+                    <ul role="list" className="mt-4 space-y-4">
+                      <li className="text-base text-gray-500">
+                        <span className="block">Ninh Kieu Dist, Can Tho City, VN</span>
+                      </li>
+                      <li>
+                        <a href="mailto:contact.eloqua@gmail.com" className="text-base text-gray-500 hover:text-indigo-600">
+                          contact@eloqua.live
+                        </a>
+                      </li>
+                      <li className="text-xs text-gray-400 mt-4">
+                        Designed by Phu Le
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Bottom Section: Copyright & Socials */}
-           <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-xs text-slate-400 font-medium flex flex-wrap justify-center gap-x-2">
-                <span>© 2026 Eloqua Inc. All rights reserved.</span>
-                
-                <span className="hidden md:inline text-slate-300">|</span>
-                
-                {/* --- SỬA Ở ĐÂY --- */}
-                <Link href="/privacy" className="hover:text-cyan-600 transition-colors cursor-pointer">
-                  Privacy Policy
-                </Link>
-                
-                <span className="text-slate-300">|</span>
-                
-                {/* --- SỬA Ở ĐÂY --- */}
-                <Link href="/terms" className="hover:text-cyan-600 transition-colors cursor-pointer">
-                  Terms of Service
-                </Link>
-              </div>
-
-              <div className="flex gap-4">
-                <Link href="#" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
-                    <Github size={16} />
-                </Link>
-                <Link href="#" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
-                    <Twitter size={16} />
-                </Link>
-                <Link href="https://www.linkedin.com/in/ph%C3%BA-l%C3%AA-905a473b0/edit/intro/" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
-                    <Linkedin size={16} />
-                </Link>
-              </div>
+            <div className="mt-12 border-t border-gray-200 pt-8">
+              <p className="text-base text-gray-400 xl:text-center">
+                &copy; 2026 Eloqua AI. All rights reserved.
+              </p>
             </div>
           </div>
         </footer>

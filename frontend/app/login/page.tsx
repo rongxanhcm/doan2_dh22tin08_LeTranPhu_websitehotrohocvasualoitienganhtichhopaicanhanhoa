@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { Loader2, Sparkles, Check, ShieldCheck, ArrowRight, Github, Cloud } from "lucide-react";
+// Thay Github bằng Mail hoặc Chrome cho trực quan
+import { Loader2, Check, ArrowRight, Cloud, Mail } from "lucide-react"; 
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,10 +16,25 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Logic đăng nhập bằng Google/Email Provider
+  const handleThirdPartyLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google', // Hoặc 'azure', 'keycloak' tùy email provider bạn dùng
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const handleAuth = async () => {
     if (!email || !password) {
-        toast.error("Please fill in all fields");
-        return;
+      toast.error("Please fill in all fields");
+      return;
     }
     setLoading(true);
     try {
@@ -42,9 +58,8 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex bg-white font-sans overflow-hidden">
       
-      {/* --- CỘT TRÁI: BRANDING (Professional & Honest) --- */}
+      {/* --- CỘT TRÁI: BRANDING --- */}
       <div className="hidden lg:flex flex-1 bg-slate-900 relative items-center justify-center p-16 overflow-hidden">
-        {/* Subtle Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,#0891b2_0%,transparent_40%)] opacity-20" />
         <div className="absolute inset-0 pointer-events-none opacity-[0.05]" 
              style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
@@ -52,9 +67,8 @@ export default function LoginPage() {
         
         <div className="relative z-10 max-w-md">
           <div className="mb-10 flex items-center gap-3">
-{/* Cũ: brightness-0 invert (Làm logo trắng bóc mất chi tiết) */}
-{/* Mới: Giữ nguyên màu Cyan nguyên bản của bạn */}
-          <Image src="/logo.svg" alt="Eloqua" width={40} height={40} className="object-contain" />             <span className="text-2xl font-bold text-white tracking-tight">Eloqua</span>
+            <Image src="/logo.svg" alt="Eloqua" width={40} height={40} className="object-contain" />
+            <span className="text-2xl font-bold text-white tracking-tight">Eloqua</span>
           </div>
           
           <h2 className="text-5xl font-bold text-white leading-tight mb-8 tracking-tight">
@@ -77,12 +91,11 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* Infrastructure Badge (Nịnh Google) */}
           <div className="inline-flex items-center gap-3 px-5 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
              <Cloud className="text-cyan-400" size={20} />
              <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Infrastructure</p>
-                <p className="text-xs font-semibold text-slate-200">Powered by Google Vertex AI & Gemini Flash</p>
+                <p className="text-xs font-semibold text-slate-200">Powered by Google Vertex AI</p>
              </div>
           </div>
         </div>
@@ -92,7 +105,6 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-24 bg-white relative">
         <div className="w-full max-w-sm">
           
-          {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2 mb-12">
             <Image src="/logo.svg" alt="Eloqua" width={32} height={32} className="object-contain" />
             <span className="font-bold text-xl tracking-tight text-slate-900">Eloqua</span>
@@ -146,12 +158,16 @@ export default function LoginPage() {
 
             <div className="relative py-2 flex items-center">
                <div className="flex-grow border-t border-slate-100"></div>
-               <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">social login</span>
+               <span className="flex-shrink mx-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">Quick Access</span>
                <div className="flex-grow border-t border-slate-100"></div>
             </div>
 
-            <button className="w-full py-3.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 text-sm">
-                <Github size={18} /> Github
+            {/* Nút đăng nhập Google / Third Party Email */}
+            <button 
+              onClick={handleThirdPartyLogin}
+              className="w-full py-3.5 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-3 text-sm"
+            >
+                <Mail size={18} className="text-red-500" /> Continue with Google
             </button>
           </div>
 
@@ -164,13 +180,6 @@ export default function LoginPage() {
               {isSignUp ? "Sign In" : "Register Now"}
             </button>
           </p>
-        </div>
-
-        {/* Footer info */}
-        <div className="absolute bottom-10 flex gap-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <span className="hover:text-slate-900 cursor-pointer">Privacy</span>
-            <span className="hover:text-slate-900 cursor-pointer">Terms</span>
-            <span className="hover:text-slate-900 cursor-pointer">Support</span>
         </div>
       </div>
     </main>

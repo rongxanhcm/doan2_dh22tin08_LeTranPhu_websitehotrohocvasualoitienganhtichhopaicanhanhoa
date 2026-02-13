@@ -9,7 +9,7 @@ import {
   Zap, Shuffle, Lightbulb, Globe, ChevronDown, 
   Sparkles, X, Check, Wand2, ArrowLeft, 
   History, PencilLine, BookOpen, Quote, Lock, 
-  LayoutDashboard, FileText, BarChart3, RotateCcw
+  LayoutDashboard, FileText, BarChart3, RotateCcw, Loader, Loader2
 } from "lucide-react";
 import toast from "react-hot-toast";
 import PricingModal from "@/components/PricingModal";
@@ -76,7 +76,8 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<any | null>(null);
   const [currentTopic, setCurrentTopic] = useState("");
   const [nativeLang, setNativeLang] = useState("English");
-  
+  // Thêm vào đầu component AnalyzePage
+const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
   const [mode, setMode] = useState<"grammar" | "vocab">("grammar"); 
   const [activeError, setActiveError] = useState<any | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -127,16 +128,30 @@ export default function AnalyzePage() {
       toast.success("Ready for a new essay!");
   };
 
+  // ... trong page.tsx
+
+ // ... trong page.tsx
+
   const handleUpgradeSuccess = async () => {
     if (!result?.submission_id) {
-        toast.error("No submission found.");
+        toast.error("Submission ID missing.");
         return;
     }    
     
-    if (result && !result.polished_text) {
-        const toastId = toast.loading("Unlocking Band 9.0 Version...");
+    // 1. BẬT CHẾ ĐỘ "ĐANG XỬ LÝ" NGAY LẬP TỨC
+    setIsUnlocking(true); // Giao diện sẽ đổi ngay sang màn hình scan
+    setIsPro(true);       // Giả lập Pro luôn
+    setShowPricingModal(false); // Tắt modal tính tiền
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    
+    let attempts = 0;
+    const maxAttempts = 10;
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // Vòng lặp Retry (như cũ)
+    while (attempts < maxAttempts) {
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${API_URL}/upgrade-submission`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -146,27 +161,40 @@ export default function AnalyzePage() {
                 })
             });
 
-            if (!res.ok) throw new Error("Unlock failed");
-            const data = await res.json();
+            if (res.ok) {
+                const data = await res.json();
+                
+                setResult((prev: any) => ({
+                    ...prev,
+                    polished_text: data.polished_text
+                }));
 
-            setResult((prev: any) => ({
-                ...prev,
-                polished_text: data.polished_text
-            }));
+                // 2. TẮT CHẾ ĐỘ XỬ LÝ -> HIỆN KẾT QUẢ
+                setIsUnlocking(false); 
+                
+                toast.success("Band 9.0 Unlocked!");
+                setMode("vocab");
+                setIsAnimating(true);
+                setTimeout(() => setIsAnimating(false), 1200);
+                return;
+            }
 
-            setIsPro(true); // Update UI instantly
-            toast.success("Unlocked!", { id: toastId });
-            setMode("vocab");
-            setIsAnimating(true);
-            setTimeout(() => setIsAnimating(false), 1200);
+            if (res.status === 403) {
+                await delay(1000); // Chờ 1s rồi thử lại
+                attempts++;
+            } else {
+                throw new Error("API Error");
+            }
 
         } catch (error) {
-            toast.error("Unlock failed.", { id: toastId });
+            await delay(1000);
+            attempts++;
         }
-    } else {
-         setIsPro(true);
-         toast.success("You are now Pro!");
     }
+
+    // Nếu thất bại
+    setIsUnlocking(false); // Trả về trạng thái cũ
+    toast.error("Activation delayed. Please refresh page.");
   };
   
   const handleAnalyze = async () => {
@@ -383,7 +411,7 @@ export default function AnalyzePage() {
               )}
             </div>
 
-            {/* Writing Area */}
+{/* Writing Area */}
             <div className="flex-1 p-8 md:p-10 overflow-y-auto hide-scrollbar relative bg-white">
               {!result ? (
                 <textarea 
@@ -396,6 +424,7 @@ export default function AnalyzePage() {
               ) : (
                 <div className="relative min-h-[400px]">
                   {mode === 'grammar' ? (
+                    /* --- GRAMMAR MODE --- */
                     <div className="text-lg md:text-xl text-slate-800 font-serif whitespace-pre-wrap leading-loose animate-fade-in-up">
                         {(() => {
                             let lastIndex = 0;
@@ -422,44 +451,92 @@ export default function AnalyzePage() {
                         })()}
                     </div>
                   ) : (
-                    <div className="relative h-full bg-white">
-                      {result.polished_text ? (
-                        <div className="relative w-full min-h-[300px]">
-                          {isAnimating && (
-                            <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
-                              {inputText}
-                            </div>
-                          )}
-                          <div 
-                            className={`text-lg md:text-xl text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}
-                          >
-                            {result.polished_text}
-                          </div>
-                          {isAnimating && <div className="animate-scan-line pointer-events-none" />}
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden">
-                             <div className="absolute inset-0 opacity-10 blur-[2px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-slate-900">
-                                {inputText}
-                            </div>
-                            
-                            <div className="z-10 bg-white p-8 rounded-2xl shadow-xl shadow-cyan-900/10 border border-slate-100 max-w-sm">
-                                <div className="mx-auto w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mb-4 text-cyan-600">
-                                    <Lock size={24} />
+                    /* --- VOCAB MODE (BAND 9.0) --- */
+                    <div className="relative h-full bg-white min-h-[400px]">
+                        
+                        {/* CASE 1: ĐANG MỞ KHÓA (SCANNING EFFECT) */}
+                        {isUnlocking ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-slate-50 rounded-xl border border-cyan-100">
+                                
+                                {/* Background Text mờ */}
+                                <div className="absolute inset-0 p-8 text-lg font-serif text-slate-300 opacity-50 blur-[1px] select-none overflow-hidden">
+                                    {inputText}
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-900 mb-2">Unlock Band 9.0 Rewrite</h3>
-                                <p className="text-slate-500 mb-6 text-sm leading-relaxed">
-                                    See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Native Phrasing</b>.
-                                </p>
-                                <button 
-                                    onClick={() => setShowPricingModal(true)}
-                                    className="w-full py-3 bg-slate-900 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Sparkles size={16} /> Upgrade to Pro
-                                </button>
+
+                                {/* Scan Line Animation */}
+                                <div className="absolute top-0 left-0 w-full h-1 bg-cyan-400 shadow-[0_0_20px_5px_rgba(34,211,238,0.6)] animate-[scan-line-vertical_2s_infinite_linear] z-10" />
+                                <style jsx>{`
+                                    @keyframes scan-line-vertical {
+                                        0% { top: 0%; opacity: 0; }
+                                        10% { opacity: 1; }
+                                        90% { opacity: 1; }
+                                        100% { top: 100%; opacity: 0; }
+                                    }
+                                `}</style>
+
+                                {/* Loading Card */}
+                                <div className="relative z-20 bg-white p-8 rounded-2xl shadow-2xl shadow-cyan-900/10 border border-white flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-cyan-100 rounded-full animate-ping opacity-75" />
+                                        <div className="relative bg-cyan-50 p-4 rounded-full text-cyan-600">
+                                            <Wand2 size={32} className="animate-pulse" />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="text-center space-y-1">
+                                        <h3 className="text-xl font-bold text-slate-800">Unlocking Band 9.0...</h3>
+                                        <div className="flex flex-col gap-1 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                                            <span className="flex items-center gap-2 text-emerald-500 justify-center">
+                                                <Check size={12}/> Payment Verified
+                                            </span>
+                                            <span className="flex items-center gap-2 text-cyan-600 animate-pulse justify-center">
+                                                <Loader2 size={12} className="animate-spin"/> Rewriting Essay
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                      )}
+
+                        /* CASE 2: ĐÃ CÓ KẾT QUẢ (HIỆN TEXT XỊN) */
+                        ) : isPro && result.polished_text ? (
+                            <div className="relative w-full min-h-[300px]">
+                                {isAnimating && (
+                                    <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
+                                        {inputText}
+                                    </div>
+                                )}
+                                <div 
+                                    className={`text-lg md:text-xl text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}
+                                >
+                                    {result.polished_text}
+                                </div>
+                                {isAnimating && <div className="animate-scan-line pointer-events-none" />}
+                            </div>
+
+                        /* CASE 3: BỊ KHÓA (LOCK SCREEN) */
+                        ) : (
+                            <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden group">
+                                <div className="absolute inset-0 opacity-10 blur-[2px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-slate-900 group-hover:blur-[1px] transition-all duration-500">
+                                    {inputText}
+                                </div>
+                                
+                                <div className="z-10 bg-white p-8 rounded-2xl shadow-xl shadow-cyan-900/5 border border-slate-100 max-w-sm hover:shadow-cyan-900/10 transition-all hover:-translate-y-1">
+                                    <div className="mx-auto w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mb-4 text-cyan-600">
+                                        <Lock size={24} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Unlock Band 9.0 Rewrite</h3>
+                                    <p className="text-slate-500 mb-6 text-sm leading-relaxed">
+                                        See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Native Phrasing</b>.
+                                    </p>
+                                    <button 
+                                        onClick={() => setShowPricingModal(true)}
+                                        className="w-full py-3 bg-slate-900 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles size={16} /> Upgrade to Pro
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                   )}
                 </div>
