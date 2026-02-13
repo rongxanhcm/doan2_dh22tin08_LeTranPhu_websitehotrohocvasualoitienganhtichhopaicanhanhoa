@@ -347,7 +347,7 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
 # --- THÊM VÀO PHẦN CẤU HÌNH ---
 # Bạn tự nghĩ ra một mã bí mật (VD: "bi_mat_cua_phu_le") và điền vào đây
 # Sau này nhớ điền mã này vào Dashboard Lemon Squeezy
-LEMONSQUEEZY_WEBHOOK_SECRET = "bi_mat_cua_phu_le" 
+LEMONSQUEEZY_WEBHOOK_SECRET = "861218" 
 
 # ... (Các phần code cũ giữ nguyên) ...
 
