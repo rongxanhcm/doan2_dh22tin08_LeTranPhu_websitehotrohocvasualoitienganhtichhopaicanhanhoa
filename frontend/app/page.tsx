@@ -316,13 +316,23 @@ import UserDropdown from "@/components/UserDropdown";
             </div>
 
             {/* Bottom Section: Copyright & Socials */}
-            <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-xs text-slate-400 font-medium">
-                © 2026 Eloqua Inc. All rights reserved. 
-                <span className="mx-2 text-slate-300">|</span> 
-                <Link href="#" className="hover:text-slate-600">Privacy Policy</Link>
-                <span className="mx-2 text-slate-300">|</span> 
-                <Link href="#" className="hover:text-slate-600">Terms of Service</Link>
+           <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-xs text-slate-400 font-medium flex flex-wrap justify-center gap-x-2">
+                <span>© 2026 Eloqua Inc. All rights reserved.</span>
+                
+                <span className="hidden md:inline text-slate-300">|</span>
+                
+                {/* --- SỬA Ở ĐÂY --- */}
+                <Link href="/privacy" className="hover:text-cyan-600 transition-colors cursor-pointer">
+                  Privacy Policy
+                </Link>
+                
+                <span className="text-slate-300">|</span>
+                
+                {/* --- SỬA Ở ĐÂY --- */}
+                <Link href="/terms" className="hover:text-cyan-600 transition-colors cursor-pointer">
+                  Terms of Service
+                </Link>
               </div>
 
               <div className="flex gap-4">
@@ -332,7 +342,7 @@ import UserDropdown from "@/components/UserDropdown";
                 <Link href="#" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
                     <Twitter size={16} />
                 </Link>
-                <Link href="#" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
+                <Link href="https://www.linkedin.com/in/ph%C3%BA-l%C3%AA-905a473b0/edit/intro/" className="p-2 bg-white border border-slate-200 rounded-full text-slate-400 hover:text-cyan-600 hover:border-cyan-200 transition-all">
                     <Linkedin size={16} />
                 </Link>
               </div>
