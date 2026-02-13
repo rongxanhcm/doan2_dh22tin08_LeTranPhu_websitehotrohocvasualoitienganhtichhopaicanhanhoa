@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Zap, X, Shield, Star, Loader2, Sparkles, ArrowRight, FileText, Globe } from "lucide-react";
+import { Check, Zap, X, Shield, Loader2, Sparkles, ArrowRight, FileText, Globe } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import Image from "next/image";
-import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
+
+// --- CẤU HÌNH LINK THANH TOÁN ---
+// 1. Link Monthly (Đã lọc từ text bạn gửi)
+const CHECKOUT_URL_MONTHLY = "https://eloqua.lemonsqueezy.com/checkout/buy/76ea9484-fa92-43c9-ac90-ef9c22e2beab";
+
+// 2. Link Yearly (⚠️ BẠN CẦN THAY MÃ THẬT VÀO ĐÂY NẾU ĐÃ CÓ)
+// Hiện tại mình để tạm placeholder, nếu khách chọn Yearly sẽ lỗi 404
+const CHECKOUT_URL_YEARLY = "https://eloqua.lemonsqueezy.com/checkout/buy/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -13,56 +20,47 @@ interface PricingModalProps {
   onSuccess?: () => void;
 }
 
-export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModalProps) {
+export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
   if (!isOpen) return null;
 
-  const handleMockUpgrade = async () => {
-      setIsLoading(true);
-      try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-              toast.error("Please login to upgrade.");
-              return;
-          }
-
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          const res = await fetch(`${API_URL}/debug/upgrade-pro`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ user_id: user.id })
-          });
-
-          if (!res.ok) throw new Error("Upgrade failed");
-
-          // Fireworks effect
-          const duration = 3 * 1000;
-          const animationEnd = Date.now() + duration;
-          const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 200 };
-          const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-          const interval: any = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-            const particleCount = 50 * (timeLeft / duration);
-            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-          }, 250);
-
-          toast.success("Welcome to Eloqua Pro! 💎");
-          
-          if (onSuccess) {
-              await onSuccess(); 
-          }
-          onClose(); 
-      } catch (error) {
-          toast.error("Transaction failed.");
-      } finally {
-          setIsLoading(false);
+  const handleCheckout = async () => {
+    setIsLoading(true);
+    try {
+      // 1. Lấy thông tin User hiện tại
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please login to upgrade.");
+        setIsLoading(false);
+        return;
       }
+
+      // 2. Chọn link dựa trên gói khách chọn (Tháng hoặc Năm)
+      const baseUrl = billingCycle === 'monthly' ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
+
+      // 3. Kiểm tra nếu chưa thay link Yearly
+      if (baseUrl.includes("xxxxxxxx")) {
+        toast.error("Yearly plan is coming soon. Please choose Monthly.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 4. Tạo URL thanh toán có gắn User ID (Quan trọng để Webhook nhận diện)
+      // Cấu trúc: ?checkout[custom][user_id]=USER_ID
+      const checkoutUrl = `${baseUrl}?checkout[custom][user_id]=${user.id}`;
+
+      // 5. Chuyển hướng sang Lemon Squeezy
+      window.location.href = checkoutUrl;
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const comparisonFeatures = [
@@ -175,7 +173,7 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
 
                 <div className="space-y-6">
                     <button 
-                        onClick={handleMockUpgrade}
+                        onClick={handleCheckout} // <--- Đã đổi thành hàm mới
                         disabled={isLoading}
                         className="group w-full py-5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-cyan-900/20 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 overflow-hidden relative"
                     >

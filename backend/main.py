@@ -3,7 +3,9 @@ import traceback
 import json
 from datetime import datetime
 from typing import List, Optional, Union # [FIX] Đã thêm Union
-
+import hmac
+import hashlib
+from fastapi import Request, Header
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -342,6 +344,76 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- THÊM VÀO PHẦN CẤU HÌNH ---
+# Bạn tự nghĩ ra một mã bí mật (VD: "bi_mat_cua_phu_le") và điền vào đây
+# Sau này nhớ điền mã này vào Dashboard Lemon Squeezy
+LEMONSQUEEZY_WEBHOOK_SECRET = "bi_mat_cua_phu_le" 
+
+# ... (Các phần code cũ giữ nguyên) ...
+
+# --- THÊM ENDPOINT NÀY VÀO CUỐI FILE ---
+@app.post("/webhook")
+async def lemon_squeezy_webhook(request: Request, x_signature: str = Header(None)):
+    """
+    Webhook nhận thông báo từ Lemon Squeezy khi có đơn hàng thành công
+    """
+    if not LEMONSQUEEZY_WEBHOOK_SECRET:
+        raise HTTPException(status_code=500, detail="Server chưa cấu hình Webhook Secret")
+
+    # 1. Đọc raw body để kiểm tra chữ ký (Bảo mật)
+    raw_body = await request.body()
+    
+    # 2. Tạo chữ ký từ Secret của mình
+    digest = hmac.new(
+        LEMONSQUEEZY_WEBHOOK_SECRET.encode("utf-8"),
+        raw_body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+
+    # 3. So sánh chữ ký (Chống giả mạo)
+    if not x_signature or not hmac.compare_digest(digest, x_signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    # 4. Phân tích dữ liệu JSON
+    data = await request.json()
+    event_name = data.get("meta", {}).get("event_name")
+    
+    print(f"🔔 Webhook received: {event_name}")
+
+    # 5. Xử lý khi có đơn hàng mới (order_created)
+    if event_name == "order_created":
+        try:
+            # Lấy thông tin custom_data (nơi chứa user_id mà Frontend gửi lên)
+            meta_data = data.get("meta", {}).get("custom_data", {})
+            user_id = meta_data.get("user_id") 
+            
+            if not user_id:
+                print("⚠️ Cảnh báo: Không tìm thấy user_id trong đơn hàng!")
+                return {"status": "ignored", "reason": "no_user_id"}
+
+            print(f"✅ Nâng cấp Pro cho User ID: {user_id}")
+
+            # 6. Cập nhật Database Supabase (Set is_pro = True)
+            # Kiểm tra xem user đã có trong bảng user_usage chưa
+            user_res = supabase.table("user_usage").select("*").eq("user_id", user_id).execute()
+        
+            if not user_res.data:
+                # Nếu chưa có thì tạo mới
+                supabase.table("user_usage").insert({
+                    "user_id": user_id, "is_pro": True, "usage_count": 0
+                }).execute()
+            else:
+                # Nếu có rồi thì update
+                supabase.table("user_usage").update({"is_pro": True}).eq("user_id", user_id).execute()
+                
+            return {"status": "success", "message": f"Upgraded user {user_id}"}
+
+        except Exception as e:
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Các sự kiện khác (VD: subscription_cancelled) xử lý sau
+    return {"status": "ignored", "reason": "event_not_handled"}
 if __name__ == "__main__":
     import uvicorn
     # Lấy port từ biến môi trường Heroku, mặc định là 8000 nếu chạy local
