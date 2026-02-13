@@ -18,7 +18,7 @@ interface PricingModalProps {
   onSuccess?: () => void;
 }
 
-export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
+export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModalProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
@@ -26,24 +26,25 @@ export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
   if (!isOpen) return null;
 
 const handleCheckout = async () => {
-    setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please login to upgrade.");
-        setIsLoading(false);
-        return;
-      }
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please login to upgrade.");
+        setIsLoading(false);
+        return;
+      }
 
-      const baseUrl = billingCycle === 'monthly' ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
+      const baseUrl = billingCycle === 'monthly' ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
 
       // --- ĐOẠN SỬA LỖI Ở ĐÂY ---
       // Kiểm tra xem link gốc đã có '?' chưa. Nếu có rồi thì dùng '&', chưa có thì dùng '?'
       const separator = baseUrl.includes("?") ? "&" : "?";
       
-      // Nối chuỗi đúng chuẩn
-      const checkoutUrl = `${baseUrl}${separator}checkout[custom][user_id]=${user.id}`;
+      // Nối chuỗi đúng chuẩn + thêm return URL để TRỞ LẠI sau thanh toán
+      const returnUrl = `${window.location.origin}/analyze?payment_success=true`;
+      const checkoutUrl = `${baseUrl}${separator}checkout[custom][user_id]=${user.id}&checkout[custom][return_url]=${encodeURIComponent(returnUrl)}`;
 
       console.log("Redirecting to:", checkoutUrl); // Log ra để kiểm tra
       window.location.href = checkoutUrl;
