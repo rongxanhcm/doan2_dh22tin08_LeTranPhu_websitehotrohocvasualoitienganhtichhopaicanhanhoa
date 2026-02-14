@@ -371,6 +371,22 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Hidden Report for PDF Export */}
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <DashboardReport 
+            ref={reportRef}
+            userEmail={userEmail}
+            stats={{
+              totalEssays: stats.totalEssays,
+              avgScore: stats.avgScore,
+              highestScore: stats.highestScore
+            }}
+            recentSubs={stats.recentActivity}
+            chartData={stats.chartData}
+            language="en"
+          />
+        </div>
+
         {/* --- RECENT ACTIVITY --- */}
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">

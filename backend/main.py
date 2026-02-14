@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from google import genai
 from google.genai import types
-
+from pydantic import BaseModel, Field  # <--- Thêm Field vào đây
 # Load biến môi trường
 load_dotenv()
 
@@ -58,13 +58,13 @@ def get_system_prompt_cached(key: str):
         print(f"⚠️ Lỗi lấy prompt từ DB: {str(e)}")
         return None
 
-# --- MODELS ---
 class ErrorDetail(BaseModel):
     error_type: str
     quote: str
     severity: str
     explanation: str
-    suggestion: str
+    # 👇 SỬA DÒNG NÀY: Thêm mô tả để AI không bị "ngu"
+    suggestion: str = Field(description="The replacement text ONLY. No explanation. Example: 'likes'")
 
 # [FIX] Tách schema để tiết kiệm token
 class BaseEssayAssessment(BaseModel):

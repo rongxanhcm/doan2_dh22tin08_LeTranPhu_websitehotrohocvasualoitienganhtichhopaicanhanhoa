@@ -142,17 +142,6 @@ import UserDropdown from "@/components/UserDropdown";
                 {user ? "View Progress" : "View Demo"}
               </Link>
             </div>
-            
-            <div className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-sm text-slate-500">
-                <div className="flex -space-x-2">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold">
-                        {String.fromCharCode(64 + i)}
-                      </div> 
-                    ))}
-                </div>
-                <p>Join 2,000+ students already improving</p>
-            </div>
           </div>
 
           {/* Right Visual: Mockup (Giữ nguyên) */}
@@ -245,7 +234,7 @@ import UserDropdown from "@/components/UserDropdown";
                 <img className="h-10" src="/logo.svg" alt="Eloqua AI" />
                 <p className="text-gray-500 text-base">
                   Refine your writing, word by word. <br/>
-                  Powered by <strong>Google Gemini 2.5 Flash</strong> & <strong>Vertex AI</strong>.
+                  Powered by <strong>Google Gemini</strong> & <strong>Vertex AI</strong>.
                 </p>
                 <div className="flex space-x-6">
                   {/* Social icons nếu có (Github, Twitter/X) */}
@@ -258,7 +247,6 @@ import UserDropdown from "@/components/UserDropdown";
                     <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
                     <ul role="list" className="mt-4 space-y-4">
                       <li><a href="#demo" className="text-base text-gray-500 hover:text-gray-900">Live Demo</a></li>
-                      <li><a href="/pricing" className="text-base text-gray-500 hover:text-gray-900">Pricing</a></li>
                       <li><a href="/changelog" className="text-base text-gray-500 hover:text-gray-900">Changelog</a></li>
                     </ul>
                   </div>
@@ -279,7 +267,7 @@ import UserDropdown from "@/components/UserDropdown";
                         <span className="block">Ninh Kieu Dist, Can Tho City, VN</span>
                       </li>
                       <li>
-                        <a href="mailto:contact.eloqua@gmail.com" className="text-base text-gray-500 hover:text-indigo-600">
+                        <a href="mailto:contact@eloqua.live" className="text-base text-gray-500 hover:text-indigo-600">
                           contact@eloqua.live
                         </a>
                       </li>
