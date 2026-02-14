@@ -1,81 +1,450 @@
-📂 PROJECT REPORT: COREFIX
-AI-Powered IELTS Writing Assistant (Trợ lý Luyện viết IELTS thông minh sử dụng AI)
-TỔNG QUAN (OVERVIEW)
-CoreFix là một ứng dụng web giáo dục (EdTech) giúp người học IELTS Writing cải thiện kỹ năng viết thông qua việc chấm điểm, sửa lỗi ngữ pháp và giải thích chi tiết bằng công nghệ AI.
+<div align="center">
+  <img src="frontend/icon.svg" alt="Eloqua Logo" width="120" />
+  
+  # Eloqua
+  
+  ### AI-Powered IELTS Writing Assistant
+  
+  *Intelligent feedback, personalized learning, measurable progress*
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat&logo=next.js)](https://nextjs.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+  [![Python](https://img.shields.io/badge/Python-3.11-blue?style=flat&logo=python)](https://www.python.org/)
+  [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+  
+</div>
 
-Khác với các công cụ kiểm tra ngữ pháp thông thường, CoreFix tập trung vào trải nghiệm học tập (Learning Experience): không chỉ chỉ ra lỗi sai, hệ thống còn cung cấp bài học ngữ pháp (Grammar Rules), bài tập trắc nghiệm (Quiz) được cá nhân hóa dựa trên chính lỗi sai của người dùng, và theo dõi tiến độ qua Dashboard trực quan.
+---
 
-Mục tiêu: Giúp người dùng hiểu tại sao sai và sửa triệt để lỗi đó.
-CÔNG NGHỆ SỬ DỤNG (TECH STACK)
+## 📋 Table of Contents
 
-Dự án được xây dựng theo mô hình Modern Full-stack, tách biệt Frontend và Backend để tối ưu hiệu năng và khả năng mở rộng.Đối tượng: Người học tiếng Anh, đặc biệt là luyện thi IELTS.
-Thành phần,Công nghệ,Vai trò
-Frontend,Next.js 14 (App Router),"Framework React hiện đại, tối ưu SEO và UX."
-,Tailwind CSS,"Styling giao diện nhanh, đẹp, Responsive."
-,Lucide React,Bộ icon nhẹ và thống nhất.
-,Recharts,Vẽ biểu đồ thống kê trực quan.
-Backend,Python (FastAPI),"Xử lý API tốc độ cao, dễ dàng tích hợp AI."
-,Pydantic,Validate dữ liệu đầu vào/đầu ra nghiêm ngặt.
-Database,Supabase (PostgreSQL),"Lưu trữ User, Bài viết (Submissions), và Lỗi (Errors)."
-AI Core,Google Gemini 1.5 Flash,"Mô hình ngôn ngữ xử lý sửa lỗi, giải thích và tạo Quiz."
-Auth,Supabase Auth,Quản lý đăng nhập/đăng ký bảo mật.
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [Database Schema](#database-schema)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
 
-TÍNH NĂNG CHI TIẾT (KEY FEATURES)
-Hệ thống được chia làm 4 phân hệ chính:
+---
 
-A. Phân tích & Sửa bài (Core Feature)
-Deep Analysis: AI phân tích bài viết, chấm điểm IELTS (ước lượng) và đưa ra nhận xét tổng quan.
+## 🎯 Overview
 
-Visual Highlighting (Nổi bật):
+**Eloqua** is a modern EdTech platform that helps IELTS Writing learners improve their skills through AI-powered essay analysis, real-time error detection, personalized grammar lessons, and progress tracking.
 
-Các lỗi sai trong bài gốc được tô đỏ/gạch chân trực tiếp tại vị trí chính xác.
+Unlike traditional grammar checkers, Eloqua focuses on **learning outcomes**:
+- ✅ Not just finding errors, but **explaining why** they're wrong
+- ✅ Generating **personalized quizzes** based on your actual mistakes
+- ✅ Tracking progress with **visual analytics**
+- ✅ Providing **actionable learning paths**
 
-Tooltip thông minh: Rê chuột vào lỗi sẽ hiện ra tên lỗi và cách sửa ngắn gọn.
+**Target Audience:** IELTS test takers, English learners, students preparing for academic writing exams
 
-Bilingual Feedback: Hỗ trợ song ngữ Anh - Việt. Người dùng có thể chuyển đổi ngôn ngữ để đọc giải thích dễ hiểu hơn.
+---
 
-Topic Generator: Hệ thống tự động gợi ý các chủ đề viết ngắn gọn, kích thích tư duy (Random Topic Pool), kèm nút "Change Topic".
+## ✨ Features
 
-B. Học tập & Ôn luyện (Learning System)
-Grammar Knowledge Base (Hard-coded):
+### 🔍 **Deep Essay Analysis**
+- **AI-Powered Scoring**: Estimate IELTS band scores (1.0 - 9.0)
+- **Visual Error Highlighting**: Errors highlighted directly in your text with tooltips
+- **Bilingual Feedback**: Switch between English and Vietnamese explanations
+- **Corrected Output**: See your essay with all errors fixed
+- **Band 9.0 Rewrite** (Pro): Get a polished, examiner-level version
 
-Tích hợp sẵn kho kiến thức ngữ pháp chuẩn chỉnh (Sổ tay ngữ pháp).
+### 📚 **Personalized Learning System**
+- **Grammar Knowledge Base**: Comprehensive grammar rules with examples
+- **Interactive Lessons**: Click any error type to learn the underlying rule
+- **AI-Generated Quizzes**: Practice exercises created from your actual mistakes
+- **Real-time Practice**: Fill-in-the-blank questions to reinforce learning
 
-Khi người dùng gặp lỗi (ví dụ: Subject-Verb Agreement), hệ thống cung cấp bài học lý thuyết, công thức, và ví dụ Sai/Đúng cụ thể ngay trên Dashboard.
+### 📊 **Progress Analytics Dashboard**
+- **Performance Overview**: Total essays, average score, highest score
+- **Error Frequency Analysis**: Bar charts showing your most common mistakes
+- **Priority Error Tracking**: Automatic detection of critical weaknesses
+- **Submission History**: Review all past essays and track improvement
+- **Score Trajectory Chart**: Visualize your progress over time
 
-Personalized Quiz:
+### 🎨 **Premium Features (Pro)**
+- **Unlimited Daily Analysis** (Free: 2/day)
+- **Band 9.0 Polished Rewrites**
+- **Professional PDF Reports** with branding
+- **Priority AI Processing**
+- **Advanced Analytics**
 
-Dựa trên các lỗi người dùng vừa mắc phải, AI tự động tạo ra bộ câu hỏi trắc nghiệm (Fill-in-the-blank).
+### 🔒 **Security & System Safety**
+- **Daily Quota Limits**: Prevent spam and protect API resources
+- **Input Validation**: Minimum word count enforcement
+- **Supabase Authentication**: Secure login with Google OAuth
+- **Rate Limiting**: Database-level quota management
 
-Giúp người dùng thực hành sửa lỗi ngay lập tức (Learn by fixing).
+---
 
-C. Theo dõi Tiến độ (Analytics Dashboard)
-Overview Stats: Thống kê tổng số bài viết, điểm trung bình.
+## 🛠️ Tech Stack
 
-Critical Issues Tracker: Tự động phát hiện "Lỗi nghiêm trọng nhất" (Top Priority) mà người dùng hay mắc phải trong tuần.
+### **Frontend**
+| Technology | Purpose |
+|-----------|---------|
+| **Next.js 14** (App Router) | React framework with server components & optimized routing |
+| **TypeScript** | Type-safe development |
+| **Tailwind CSS** | Utility-first styling with custom cyan theme |
+| **Lucide React** | Consistent icon library |
+| **html2canvas + jsPDF** | PDF report generation |
+| **React Hot Toast** | Elegant notifications |
 
-Progress Visualization: Biểu đồ thanh (Bar chart) thể hiện tần suất các loại lỗi, giúp người dùng biết mình yếu ở mảng nào (Thì, Mạo từ, hay Từ vựng...).
+### **Backend**
+| Technology | Purpose |
+|-----------|---------|
+| **FastAPI** | High-performance Python API framework |
+| **Pydantic** | Data validation and settings management |
+| **Google Gemini 1.5 Flash** | AI model for essay analysis & quiz generation |
+| **Python 3.11+** | Modern async/await support |
+| **Uvicorn** | ASGI server |
 
-History Log: Lưu lại toàn bộ lịch sử bài viết để xem lại bất cứ lúc nào.
+### **Database & Auth**
+| Technology | Purpose |
+|-----------|---------|
+| **Supabase (PostgreSQL)** | User data, submissions, errors, grammar rules |
+| **Supabase Auth** | Authentication & user management |
+| **Row Level Security (RLS)** | Data access control |
 
-D. Bảo mật & An toàn hệ thống (System Safety)
-Daily Quota: Giới hạn mỗi người dùng chỉ được chấm 3 bài/ngày để ngăn chặn spam và bảo vệ tài nguyên API.
+### **Payment & Deployment**
+| Technology | Purpose |
+|-----------|---------|
+| **LemonSqueezy** | Payment processing & subscriptions |
+| **Vercel** (Frontend) | Edge network deployment |
+| **Railway/Render** (Backend) | Python API hosting |
 
-Input Validation:
+---
 
-Chặn các bài viết quá ngắn (< 20 từ).
+## 📦 Prerequisites
 
-Hiển thị bộ đếm từ (Word Counter) realtime.
+Before you begin, ensure you have:
 
-Error Handling: Hệ thống thông báo rõ ràng khi Server quá tải, hết lượt dùng hoặc mất kết nối.
+- **Node.js** 18.x or higher
+- **Python** 3.11 or higher
+- **npm** or **yarn** package manager
+- **pip** for Python packages
+- **Git** for version control
+- **Supabase Account** (free tier available)
+- **Google Gemini API Key** (free tier available)
 
-ĐIỂM NHẤN KỸ THUẬT (TECHNICAL HIGHLIGHTS)
-Đây là những phần "ăn điểm" về mặt kỹ thuật lập trình:
+---
 
-String Manipulation: Thuật toán cắt chuỗi và chèn thẻ HTML (Span) để highlight chính xác từng từ bị lỗi dựa trên dữ liệu quote từ Backend.
+## 🚀 Installation
 
-Prompt Engineering: Kỹ thuật viết Prompt ép AI trả về dữ liệu chuẩn JSON (Structured Output) và xử lý đa ngôn ngữ (Việt/Anh) linh hoạt.
+### **1. Clone the Repository**
 
-System Design: Thiết kế cơ chế Quota (Rate Limiting) đơn giản nhưng hiệu quả bằng cách query đếm record trong Database theo mốc thời gian.
-KẾT LUẬN
-CoreFix đã hoàn thiện ở mức độ MVP (Minimum Viable Product) chất lượng cao, sẵn sàng để triển khai thực tế. Sản phẩm giải quyết tốt nỗi đau của người học Writing là "Viết xong không biết sai ở đâu và tại sao sai", đồng thời cung cấp lộ trình cải thiện rõ ràng.
+```bash
+git clone https://github.com/yourusername/eloqua.git
+cd eloqua
+```
+
+### **2. Frontend Setup**
+
+```bash
+cd frontend
+npm install
+# or
+yarn install
+
+# Copy environment file
+cp .env.example .env.local
+
+# Edit .env.local with your credentials
+# Then start development server
+npm run dev
+```
+
+Frontend will run on `http://localhost:3000`
+
+### **3. Backend Setup**
+
+```bash
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your API keys
+# Then start server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Backend will run on `http://localhost:8000`
+
+---
+
+## 🔐 Environment Variables
+
+### **Frontend (`frontend/.env.local`)**
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### **Backend (`backend/.env`)**
+
+```env
+# Google AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# Supabase
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_service_role_key
+
+# Payment (Optional for development)
+LEMONSQUEEZY_WEBHOOK_SECRET=your_webhook_secret
+```
+
+### **Getting API Keys**
+
+1. **Supabase**: 
+   - Create project at [supabase.com](https://supabase.com)
+   - Find keys in Project Settings → API
+
+2. **Google Gemini**: 
+   - Get API key at [ai.google.dev](https://ai.google.dev)
+
+3. **LemonSqueezy** (for payments):
+   - Sign up at [lemonsqueezy.com](https://lemonsqueezy.com)
+   - Configure webhook in store settings
+
+---
+
+## 📁 Project Structure
+
+```
+eloqua/
+├── frontend/                # Next.js application
+│   ├── app/                # App Router pages
+│   │   ├── analyze/       # Essay submission page
+│   │   ├── dashboard/     # User analytics
+│   │   ├── history/       # Submission history
+│   │   ├── admin/         # Admin panel
+│   │   └── ...
+│   ├── components/        # Reusable React components
+│   │   ├── DashboardReport.tsx
+│   │   ├── GrammarLessonModal.tsx
+│   │   ├── PricingModal.tsx
+│   │   └── ...
+│   ├── lib/              # Utilities & helpers
+│   │   ├── supabaseClient.ts
+│   │   ├── grammarRules.ts
+│   │   └── errorMapping.ts
+│   └── public/           # Static assets
+│
+├── backend/              # FastAPI application
+│   ├── main.py          # API routes & endpoints
+│   ├── requirements.txt # Python dependencies
+│   └── .env             # Environment variables
+│
+└── README.md            # This file
+```
+
+---
+
+## 🌐 API Documentation
+
+### **Base URL**: `http://localhost:8000`
+
+### **Endpoints**
+
+#### **POST** `/analyze`
+Analyze an essay and return detailed feedback.
+
+**Request Body:**
+```json
+{
+  "text": "Your essay text here...",
+  "user_id": "uuid-string",
+  "language": "vi",
+  "native_language": "English"
+}
+```
+
+**Response:**
+```json
+{
+  "score": 7.5,
+  "general_feedback": "Overall strong essay with minor grammatical issues...",
+  "core_errors": [
+    {
+      "error_type": "Subject-Verb Agreement",
+      "quote": "he go",
+      "severity": "high",
+      "explanation": "Subject 'he' requires verb 'goes'",
+      "suggestion": "he goes"
+    }
+  ],
+  "corrected_text": "Fully corrected version...",
+  "polished_text": "Band 9.0 version (Pro only)"
+}
+```
+
+#### **POST** `/generate-quiz`
+Generate personalized quiz from errors.
+
+**Request Body:**
+```json
+{
+  "errors": [
+    {
+      "id": 1,
+      "error_type": "Past Tense",
+      "quote": "he go yesterday"
+    }
+  ],
+  "language": "vi"
+}
+```
+
+#### **GET** `/check-quota/{user_id}`
+Check remaining daily analysis quota.
+
+#### **POST** `/webhook/lemonsqueezy`
+Handle payment webhooks (Pro subscriptions).
+
+---
+
+## 🗄️ Database Schema
+
+### **Tables**
+
+#### **`submissions`**
+```sql
+id          UUID PRIMARY KEY
+user_id     UUID REFERENCES auth.users
+text        TEXT
+score       DECIMAL
+created_at  TIMESTAMP
+general_feedback TEXT
+corrected_text   TEXT
+polished_text    TEXT (nullable)
+```
+
+#### **`analysis_results`**
+```sql
+id             UUID PRIMARY KEY
+submission_id  UUID REFERENCES submissions
+error_type     VARCHAR
+quote          TEXT
+severity       VARCHAR
+explanation    TEXT
+suggestion     TEXT
+is_resolved    BOOLEAN DEFAULT false
+```
+
+#### **`user_usage`**
+```sql
+user_id         UUID PRIMARY KEY
+is_pro          BOOLEAN DEFAULT false
+usage_count     INTEGER DEFAULT 0
+last_reset_date DATE
+```
+
+#### **`grammar_rules`**
+```sql
+id           SERIAL PRIMARY KEY
+error_key    VARCHAR UNIQUE
+title        VARCHAR
+definition   TEXT
+rule         TEXT
+bad_example  TEXT
+good_example TEXT
+tip          TEXT
+```
+
+---
+
+## 🚀 Deployment
+
+### **Frontend (Vercel)**
+
+```bash
+cd frontend
+vercel --prod
+```
+
+### **Backend (Railway/Render)**
+
+1. Create new project
+2. Connect GitHub repository
+3. Set environment variables
+4. Deploy from `backend/` directory
+5. Use start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+### **Database (Supabase)**
+
+- Already hosted on Supabase cloud
+- Run migrations via Supabase dashboard SQL editor
+- Enable Row Level Security (RLS) policies
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### **Code Style**
+- Frontend: ESLint + Prettier
+- Backend: Black + isort
+- Commit messages: Conventional Commits
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 💬 Support
+
+- **Documentation**: [docs.eloqua.com](https://docs.eloqua.com) (coming soon)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/eloqua/issues)
+- **Email**: support@eloqua.com
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini** for powerful AI capabilities
+- **Supabase** for excellent backend infrastructure
+- **Next.js Team** for the amazing framework
+- **IELTS Learners** for inspiring this project
+
+---
+
+<div align="center">
+  
+  **Built with ❤️ for IELTS learners worldwide**
+  
+  [Website](https://eloqua.com) • [Documentation](https://docs.eloqua.com) • [Twitter](https://twitter.com/eloqua)
+  
+</div>
