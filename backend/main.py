@@ -167,8 +167,10 @@ def analyze_essay(input: EssayInput):
         if target_lang.lower() in ["english", "en", "us", "uk"]:
             lang_instruction = "Output JSON in English."
         else:
-            lang_instruction = f"Explain and suggest in {target_lang}. Keep 'error_type' in English."
-
+            lang_instruction = (
+                f"CRITICAL RULE: Write 'general_feedback' AND 'explanation' COMPLETELY in {target_lang}. "
+                f"Keep 'error_type' in English."
+        )   
         # [FIX] Dynamic Schema Check
     # [FIX] Dynamic Schema Check & Length Constraint
         if is_pro:
@@ -465,7 +467,8 @@ def generate_portal_link(req: PortalRequest):
         search_url = f"https://api.lemonsqueezy.com/v1/customers?filter[email]={req.user_email}"
         response = requests.get(search_url, headers=headers)
         data = response.json()
-
+        print(f"DEBUG LEMON: Email={req.user_email}")
+        print(f"DEBUG LEMON: Response={data}")
         if not data.get("data"):
             raise HTTPException(status_code=404, detail="No subscription found for this email")
 
