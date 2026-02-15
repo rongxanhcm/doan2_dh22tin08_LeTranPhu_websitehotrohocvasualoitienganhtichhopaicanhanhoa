@@ -468,25 +468,32 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
             
             {/* Toolbar */}
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-b from-slate-50/50 to-white backdrop-blur-sm">
-              <div className="flex items-center gap-3">
+              <div className="flex items-end gap-3">
                  <div className="relative group">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-cyan-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-cyan-300 shadow-sm hover:shadow-md">
-                        <Globe size={16} className="text-cyan-500" />
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-black uppercase text-slate-600 tracking-wide flex items-center gap-2">
+                            <Globe size={14} className="text-cyan-500" />
+                            AI Feedback Language
+                            <span className="text-cyan-600 font-bold" title="This language is used for AI feedback, not for the app interface"></span>
+                        </label>
+                        <p className="text-xs text-slate-500 font-medium -mt-1">Choose the language for AI analysis feedback</p>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-cyan-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-cyan-300 shadow-sm hover:shadow-md mt-2">
                         <select 
                             value={nativeLang} 
                             onChange={(e) => setNativeLang(e.target.value)}
-                            className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer appearance-none pr-4"
+                            className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer appearance-none pr-4 flex-1"
                         >
                             {SUPPORTED_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
                         </select>
-                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-cyan-500 transition-colors"/>
+                        <ChevronDown size={14} className="text-slate-400 pointer-events-none group-hover:text-cyan-500 transition-colors"/>
                     </div>
                  </div>
                  
                  <div className={`text-xs font-black px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${wordCount >= MIN_WORDS ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
                     <span className="flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${wordCount >= MIN_WORDS ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                      {wordCount} Words
+                      {wordCount}/20 Words
                     </span>
                  </div>
               </div>
