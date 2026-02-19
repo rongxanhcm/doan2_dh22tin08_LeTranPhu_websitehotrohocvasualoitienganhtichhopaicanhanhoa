@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext"; // Import này
 import { Toaster } from "react-hot-toast"; // <--- [MỚI 1] Import
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -19,6 +20,15 @@ export const metadata: Metadata = {
   icons: {
     icon: "/logo.svg", // Trỏ trực tiếp đến tên file mới
   },
+  // --- THÊM PHẦN NÀY CHO TÍNH NĂNG "CHUYỂN NHÀ" TÀNG HÌNH ---
+  robots: {
+    index: false,
+    follow: false,
+  },
+  alternates: {
+    canonical: "https://wrytt.tech",
+  },
+  // --------------------------------------------------------
 };
 
 export default function RootLayout({
