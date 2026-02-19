@@ -31,7 +31,19 @@ import UserDropdown from "@/components/UserDropdown";
   );
 
   // --- MAIN COMPONENT ---
-
+// Chèn component này vào trên cùng của Layout hoặc Header của web cũ
+export default function RebrandNotice() {
+  return (
+    <div className="bg-blue-600 px-4 py-3 text-white sm:flex sm:items-center sm:justify-center sm:px-6 lg:px-8">
+      <p className="text-center text-sm font-medium sm:text-left">
+        <strong>Important Update:</strong> To ensure global trademark compliance, our product is officially rebranding to{" "}
+        <a href="https://wrytt.tech" className="underline font-bold hover:text-blue-200">
+          Wrytt
+        </a>. This legacy URL remains active for review purposes.
+      </p>
+    </div>
+  );
+}
   export default function LandingPage() {
     const [user, setUser] = useState<any>(null); // Nên define interface User chuẩn từ Supabase
     const [loading, setLoading] = useState(true);
