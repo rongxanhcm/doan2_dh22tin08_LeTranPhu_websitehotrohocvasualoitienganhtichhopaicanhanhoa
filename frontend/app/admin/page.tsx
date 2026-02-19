@@ -101,11 +101,11 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+        <div className="h-8 bg-slate-200 rounded-xl w-1/4"></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           {[1,2,3].map(i => <div key={i} className="h-32 bg-slate-200 rounded-2xl"></div>)}
+           {[1,2,3].map(i => <div key={i} className="h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl"></div>)}
         </div>
-        <div className="h-64 bg-slate-200 rounded-2xl"></div>
+        <div className="h-64 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl"></div>
       </div>
     );
   }
@@ -113,12 +113,12 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* HEADER */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Overview</h1>
           <p className="text-slate-500 font-medium">Welcome back, Admin.</p>
         </div>
-        <div className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+        <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-emerald-200 shadow-sm">
             <ShieldCheck size={14}/> System Operational
         </div>
       </div>
@@ -126,43 +126,43 @@ export default function AdminDashboard() {
       {/* 1. STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Users */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:-translate-y-1 transition-transform group">
+        <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-500/20 transition-all group">
           <div className="flex justify-between items-start mb-4">
-             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+             <div className="p-3 bg-gradient-to-br from-cyan-50 to-cyan-100 text-cyan-600 rounded-xl group-hover:from-cyan-500 group-hover:to-cyan-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-cyan-500/30">
                 <Users size={24}/>
              </div>
              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Users</span>
           </div>
           <h3 className="text-4xl font-black text-slate-800">{stats.totalUsers}</h3>
-          <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
+          <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
              Active accounts <ArrowUpRight size={14} className="text-emerald-500"/>
           </p>
         </div>
 
         {/* Total Essays */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:-translate-y-1 transition-transform group">
+        <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/20 transition-all group">
           <div className="flex justify-between items-start mb-4">
-             <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+             <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 rounded-xl group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-blue-500/30">
                 <FileText size={24}/>
              </div>
              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Essays Analyzed</span>
           </div>
           <h3 className="text-4xl font-black text-slate-800">{stats.totalEssays}</h3>
-          <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
-             Processing requests <Activity size={14} className="text-indigo-500"/>
+          <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
+             Processing requests <Activity size={14} className="text-blue-500"/>
           </p>
         </div>
 
         {/* Avg Score */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:-translate-y-1 transition-transform group">
+        <div className="bg-white p-6 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/20 transition-all group">
           <div className="flex justify-between items-start mb-4">
-             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+             <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 rounded-xl group-hover:from-emerald-500 group-hover:to-emerald-600 group-hover:text-white transition-all shadow-sm group-hover:shadow-lg group-hover:shadow-emerald-500/30">
                 <TrendingUp size={24}/>
              </div>
              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Avg. Score</span>
           </div>
           <h3 className="text-4xl font-black text-slate-800">{stats.avgScore}</h3>
-          <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
+          <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
              Overall performance
           </p>
         </div>
@@ -171,10 +171,10 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* 2. MAIN CHART */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50">
              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <Calendar className="text-slate-400" size={20}/> Submissions (Last 7 Days)
+                    <Calendar className="text-cyan-500" size={20}/> Submissions (Last 7 Days)
                 </h3>
              </div>
              <div className="h-72 w-full">
@@ -199,10 +199,10 @@ export default function AdminDashboard() {
                     />
                     <Bar 
                         dataKey="count" 
-                        fill="#4f46e5" 
-                        radius={[6, 6, 0, 0]} 
+                        fill="#06b6d4" 
+                        radius={[8, 8, 0, 0]} 
                         barSize={40} 
-                        activeBar={{ fill: '#4338ca' }}
+                        activeBar={{ fill: '#0891b2' }}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -210,17 +210,19 @@ export default function AdminDashboard() {
           </div>
 
           {/* 3. RECENT ACTIVITY LIST */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-             <h3 className="text-lg font-bold text-slate-800 mb-4">Recent Activity</h3>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 flex flex-col">
+             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Activity className="text-cyan-500" size={20}/> Recent Activity
+             </h3>
              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                 {stats.recentSubmissions.length === 0 ? (
                     <p className="text-slate-400 text-sm text-center py-10">No recent submissions.</p>
                 ) : (
                     stats.recentSubmissions.map((sub) => (
-                        <div key={sub.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100">
+                        <div key={sub.id} className="flex items-center justify-between p-3 hover:bg-gradient-to-r hover:from-slate-50 hover:to-cyan-50/30 rounded-xl transition-all border border-transparent hover:border-cyan-100">
                             <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                                    sub.score >= 6.0 ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
+                                    sub.score >= 6.0 ? "bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700" : "bg-gradient-to-br from-cyan-100 to-cyan-200 text-cyan-700"
                                 }`}>
                                     {sub.score}
                                 </div>

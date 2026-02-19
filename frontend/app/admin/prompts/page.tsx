@@ -58,7 +58,7 @@ export default function PromptsManager() {
     } else {
       // Cập nhật lại list local
       setPrompts(prompts.map(p => p.key === selectedKey ? { ...p, content: editContent } : p));
-      toast.success("Sửa Prompt thành công!");
+      toast.success("Prompt updated successfully!");
     }
     setSaving(false);
   };
@@ -67,34 +67,34 @@ export default function PromptsManager() {
 
   return (
     <div className="h-[calc(100vh-100px)] flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
         <div>
-           <h1 className="text-3xl font-bold text-slate-900">System Prompts</h1>
-           <p className="text-slate-500">Edit how AI behaves. Changes apply immediately.</p>
+           <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Prompts</h1>
+           <p className="text-slate-500 font-medium">Edit how AI behaves. Changes apply immediately.</p>
         </div>
         <button 
             onClick={fetchPrompts} 
-            className="p-2 text-slate-500 hover:bg-white rounded-lg transition-colors"
+            className="p-2 text-slate-500 hover:bg-white rounded-lg transition-colors border border-slate-200 shadow-sm self-start sm:self-auto"
             title="Refresh"
         >
             <RefreshCw size={20} />
         </button>
       </div>
 
-      <div className="flex gap-6 flex-1 min-h-0">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         
         {/* LIST CỘT TRÁI */}
-        <div className="w-1/3 bg-white rounded-2xl border border-slate-200 overflow-y-auto shadow-sm">
+        <div className="lg:w-1/3 bg-white rounded-2xl border border-slate-200 overflow-y-auto shadow-lg shadow-slate-200/50 max-h-[300px] lg:max-h-none">
             {loading ? (
-                <div className="p-4 text-center text-slate-400">Loading prompts...</div>
+                <div className="p-4 text-center text-slate-500 font-medium">Loading prompts...</div>
             ) : (
                 <div className="divide-y divide-slate-100">
                     {prompts.map((p) => (
                         <button
                             key={p.key}
                             onClick={() => selectPrompt(p)}
-                            className={`w-full text-left p-4 hover:bg-slate-50 transition-colors ${
-                                selectedKey === p.key ? "bg-indigo-50 border-l-4 border-indigo-500" : "border-l-4 border-transparent"
+                            className={`w-full text-left p-4 hover:bg-gradient-to-r hover:from-slate-50 hover:to-cyan-50/30 transition-all ${
+                                selectedKey === p.key ? "bg-gradient-to-r from-cyan-50 to-cyan-100 border-l-4 border-cyan-500 shadow-sm" : "border-l-4 border-transparent"
                             }`}
                         >
                             <div className="font-bold text-slate-800 font-mono text-sm">{p.key}</div>
@@ -106,20 +106,20 @@ export default function PromptsManager() {
         </div>
 
         {/* EDITOR CỘT PHẢI */}
-        <div className="w-2/3 flex flex-col gap-4">
+        <div className="lg:w-2/3 flex flex-col gap-4 flex-1">
             {selectedPrompt ? (
                 <>
-                    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col relative">
-                         <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
-                            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Prompt Content Editor</span>
-                            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 flex-1 flex flex-col relative min-h-[400px]">
+                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                            <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Prompt Content Editor</span>
+                            <span className="text-xs text-slate-500 bg-gradient-to-r from-slate-100 to-cyan-50 px-2 py-1 rounded border border-slate-200">
                                 Supports placeholders like {"{{input_text}}"}
                             </span>
                          </div>
                          <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="flex-1 w-full resize-none outline-none font-mono text-sm leading-relaxed text-slate-700"
+                            className="flex-1 w-full resize-none outline-none font-mono text-sm leading-relaxed text-slate-700 mb-16"
                             spellCheck={false}
                          />
                          
@@ -128,7 +128,7 @@ export default function PromptsManager() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all disabled:opacity-50"
+                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:-translate-y-1 transition-all disabled:opacity-50"
                             >
                                 {saving ? <RefreshCw className="animate-spin" size={20}/> : <Save size={20}/>}
                                 {saving ? "Saving..." : "Save Changes"}
@@ -136,11 +136,11 @@ export default function PromptsManager() {
                          </div>
                     </div>
 
-                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-100 flex gap-3 text-amber-800 text-sm">
+                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 p-4 rounded-xl border border-amber-200 flex gap-3 text-amber-800 text-sm shadow-sm">
                         <AlertCircle size={20} className="shrink-0"/>
                         <p>
-                            <strong>Warning:</strong> Changing prompts affects all users immediately. 
-                            Ensure you keep the JSON structure and required placeholders (e.g. <code>{`{{input_text}}`}</code>) intact.
+                            <strong className="font-bold">Warning:</strong> Changing prompts affects all users immediately. 
+                            Ensure you keep the JSON structure and required placeholders (e.g. <code className="bg-amber-200/50 px-1 rounded">{`{{input_text}}`}</code>) intact.
                         </p>
                     </div>
                 </>

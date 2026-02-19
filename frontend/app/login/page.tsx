@@ -13,6 +13,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -45,13 +48,46 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Welcome back to Eloqua");
+        toast.success("Welcome back to Wrytt");
         router.push("/dashboard");
       }
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: forgotEmail,
+          redirect_url: `${window.location.origin}/update-password`,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "Could not send reset email");
+      }
+
+      toast.success("Password reset email sent. Please check your inbox.");
+      setShowForgot(false);
+      setForgotEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -67,8 +103,7 @@ export default function LoginPage() {
         
         <div className="relative z-10 max-w-md">
           <div className="mb-10 flex items-center gap-3">
-            <Image src="/logo.svg" alt="Eloqua" width={40} height={40} className="object-contain" />
-            <span className="text-2xl font-bold text-white tracking-tight">Eloqua</span>
+            <Image src="/logo.svg" alt="Wrytt" width={64} height={64} className="w-auto h-12" />
           </div>
           
           <h2 className="text-5xl font-bold text-white leading-tight mb-8 tracking-tight">
@@ -106,8 +141,8 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           
           <div className="lg:hidden flex items-center gap-2 mb-12">
-            <Image src="/logo.svg" alt="Eloqua" width={32} height={32} className="object-contain" />
-            <span className="font-bold text-xl tracking-tight text-slate-900">Eloqua</span>
+            <Image src="/logo.svg" alt="Wrytt" width={40} height={40} className="object-contain" />
+            <span className="font-bold text-xl tracking-tight text-slate-900">Wrytt</span>
           </div>
 
           <div className="mb-10">
@@ -135,7 +170,16 @@ export default function LoginPage() {
               <div className="flex justify-between items-center ml-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Password</label>
                 {!isSignUp && (
-                  <button className="text-[10px] font-bold text-cyan-600 hover:text-cyan-700">Forgot?</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotEmail(email);
+                      setShowForgot(true);
+                    }}
+                    className="text-[10px] font-bold text-cyan-600 hover:text-cyan-700"
+                  >
+                    Forgot?
+                  </button>
                 )}
               </div>
               <input
@@ -172,7 +216,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center mt-10 text-sm text-slate-500">
-            {isSignUp ? "Have an account?" : "New to Eloqua?"}{" "}
+            {isSignUp ? "Have an account?" : "New to Wrytt?"}{" "}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
               className="text-cyan-600 font-bold hover:underline underline-offset-4"
@@ -182,6 +226,55 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-bold text-slate-900">Reset password</h4>
+              <button
+                type="button"
+                onClick={() => setShowForgot(false)}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-slate-500">
+              Enter your email and we will send you a reset link.
+            </p>
+            <div className="mt-5 space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all text-sm font-medium"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowForgot(false)}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-600 transition-all"
+              >
+                {forgotLoading ? <Loader2 className="animate-spin" size={16} /> : "Send reset link"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

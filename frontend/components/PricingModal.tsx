@@ -7,8 +7,8 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 
 // --- CẤU HÌNH LINK THANH TOÁN ---
-const CHECKOUT_URL_MONTHLY = "https://eloqua.lemonsqueezy.com/checkout/buy/e94485d4-5dd0-489d-aeb6-8182ccea5311";
-const CHECKOUT_URL_YEARLY = "https://eloqua.lemonsqueezy.com/checkout/buy/7cae4736-2ee6-4ce6-854a-e89b299f3c1e";
+const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/e94485d4-5dd0-489d-aeb6-8182ccea5311";
+const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/7cae4736-2ee6-4ce6-854a-e89b299f3c1e";
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -225,8 +225,8 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
         <div className="flex-[1.2] p-10 md:p-14 bg-white overflow-y-auto custom-scrollbar">
             <div className="mb-12">
                 <div className="flex items-center gap-2 mb-6">
-                    <Image src="/logo.svg" alt="Eloqua" width={28} height={28} />
-                    <span className="font-bold text-lg tracking-tight">Eloqua <span className="text-cyan-600">Pro</span></span>
+                    <Image src="/logo.svg" alt="Wrytt" width={36} height={36} />
+                    <span className="font-bold text-lg tracking-tight">Wrytt <span className="text-cyan-600">Pro</span></span>
                 </div>
                 
                 <h2 className="text-4xl font-bold text-slate-900 leading-tight tracking-tight">

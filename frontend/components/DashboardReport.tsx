@@ -26,7 +26,7 @@ const TRANSLATIONS: any = {
     chart_title: "Score Trajectory",
     table_title: "Recent Submissions",
     no_feedback: "No feedback available",
-    footer: "AI-Powered Writing Analysis • Eloqua Pro",
+    footer: "AI-Powered Writing Analysis • Wrytt Pro",
     date_label: "Date",
     score_label: "Band Score",
     feedback_label: "Feedback"
@@ -41,7 +41,7 @@ const TRANSLATIONS: any = {
     chart_title: "Quỹ Đạo Điểm Số",
     table_title: "Bài Nộp Gần Đây",
     no_feedback: "Chưa có nhận xét",
-    footer: "Phân Tích Bài Viết AI • Eloqua Pro",
+    footer: "Phân Tích Bài Viết AI • Wrytt Pro",
     date_label: "Ngày",
     score_label: "Band Score",
     feedback_label: "Nhận xét"
@@ -139,7 +139,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                     color: "#0891b2",
                     marginBottom: "4px"
                   }}>
-                    ELOQUA PRO
+                    WRYTT PRO
                   </div>
                   <div style={{ 
                     fontSize: "11px", 
@@ -462,7 +462,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
               fontWeight: 900,
               letterSpacing: "0.08em"
             }}>
-              ELOQUA
+              WRYTT
             </span>
           </div>
         </div>

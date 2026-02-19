@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         {/* Content */}
         <div className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-cyan-600 hover:prose-a:text-cyan-700">
           <p>
-            At <strong>Eloqua</strong> ("we," "our," or "us"), we respect your privacy and are committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, and safeguard your data when you use our website and AI writing services.
+            At <strong>Wrytt</strong> ("we," "our," or "us"), we respect your privacy and are committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, and safeguard your data when you use our website and AI writing services.
           </p>
 
           <h3>1. Information We Collect</h3>
@@ -47,14 +47,14 @@ export default function PrivacyPage() {
 
           <h3>4. Your Rights</h3>
           <p>
-            You have the right to access, correct, or delete your personal data at any time. You can manage your account settings directly in the dashboard or contact us at <a href="mailto:privacy@eloqua.ai">privacy@eloqua.ai</a>.
+            You have the right to access, correct, or delete your personal data at any time. You can manage your account settings directly in the dashboard or contact us at <a href="mailto:privacy@wrytt.ai">privacy@wrytt.ai</a>.
           </p>
         </div>
 
         {/* Footer of Policy */}
         <div className="mt-16 pt-8 border-t border-slate-200">
             <p className="text-slate-500 text-sm">
-                Questions about this policy? Contact us at <a href="mailto:privacy@eloqua.ai" className="text-cyan-600 font-medium">privacy@eloqua.ai</a>
+                Questions about this policy? Contact us at <a href="mailto:privacy@wrytt.ai" className="text-cyan-600 font-medium">privacy@wrytt.ai</a>
             </p>
         </div>
       </div>

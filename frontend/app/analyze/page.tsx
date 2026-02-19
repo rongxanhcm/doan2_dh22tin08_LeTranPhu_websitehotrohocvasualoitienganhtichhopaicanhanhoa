@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { translateError } from "@/lib/errorMapping";
 import { 
   Zap, Shuffle, Lightbulb, Globe, ChevronDown, 
   Sparkles, X, Check, Wand2, ArrowLeft, 
@@ -16,8 +15,7 @@ import PricingModal from "@/components/PricingModal";
 import UserDropdown from "@/components/UserDropdown";
 import GrammarLessonModal from "@/components/GrammarLessonModal"; // Nhớ import cái này
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
-
-// --- REFINED ANIMATIONS (CYAN THEME) ---
+import FingerprintJS from '@fingerprintjs/fingerprintjs';// --- REFINED ANIMATIONS (CYAN THEME) ---
 const enhancedStyles = `
   @keyframes clip-reveal {
     0% { clip-path: inset(0 100% 0 0); }
@@ -153,6 +151,10 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Navbar scroll state
+  const [showNavbar, setShowNavbar] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   const router = useRouter();
   const supabase = createClient();
   const resultRef = useRef<HTMLDivElement>(null); // Để scroll tự động
@@ -161,17 +163,55 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
 
   useEffect(() => {
+    const storedLanguage = typeof window !== "undefined" ? localStorage.getItem("default_language") : null;
+    if (storedLanguage) {
+        setNativeLang(storedLanguage);
+    }
+
     const checkUser = async () => { 
         const { data: { user } } = await supabase.auth.getUser(); 
         if(user) {
             setUser(user);
-            const { data } = await supabase.from('user_usage').select('is_pro').eq('user_id', user.id).single();
-            if(data) setIsPro(data.is_pro);
+            const { data } = await supabase.from('user_usage').select('is_pro, default_language').eq('user_id', user.id).single();
+            if(data) {
+                setIsPro(data.is_pro);
+                // Load default language preference
+                if(data.default_language) {
+                    setNativeLang(data.default_language);
+                    try {
+                        localStorage.setItem("default_language", data.default_language);
+                    } catch (error) {
+                        // Ignore localStorage failures (private mode, blocked storage, etc.)
+                    }
+                }
+            }
         }
     };
     checkUser();
     randomizeTopic();
   }, []);
+
+  // Navbar scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        setShowNavbar(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Scrolling down & past threshold - hide quickly
+        setShowNavbar(false);
+      } else if (currentScrollY < lastScrollY - 50) {
+        // Scrolling up significantly (at least 50px) - show navbar
+        setShowNavbar(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const randomizeTopic = () => setCurrentTopic(SHORT_TOPICS[Math.floor(Math.random() * SHORT_TOPICS.length)]);
 
@@ -267,10 +307,14 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
     setMode("grammar");
 
     try {
+        // --- 2. LẤY FINGERPRINT (ID DUY NHẤT CỦA MÁY) ---
+      const fp = await FingerprintJS.load();
+      const fpResult = await fp.get();
+      const visitorId = fpResult.visitorId
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const response = await fetch(`${API_URL}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Visitor-ID": visitorId }, // Gửi Visitor ID lên server
         body: JSON.stringify({ 
             text: inputText, 
             user_id: user?.id || null, 
@@ -281,9 +325,14 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
 
       if (!response.ok) {
         const errData = await response.json();
-        if (response.status === 403 || (errData.detail && errData.detail.includes("limit"))) {
-            setShowPricingModal(true);
-            toast.error("Daily limit reached! Upgrade to continue.");
+        if (response.status === 403) {            
+            if (!user) {
+                toast.error("Trial limit reached. Sign in to continue.");
+            } else {
+                toast.error("Daily free limit reached. Upgrade to Pro for unlimited access.");
+                setShowPricingModal(true); // Tự động bật Modal bắt Login/Mua Pro
+
+            }
             return;
         }
         throw new Error(errData.detail || "Analysis failed");
@@ -349,21 +398,21 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
       <GrammarLessonModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        rule={selectedRule} 
+        rule={selectedRule}
       />
 
       {/* --- NAVBAR --- */}
-<nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-  <div className="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+<nav className={`sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 transition-transform duration-200 ${showNavbar ? 'translate-y-0' : '-translate-y-full'}`}>
+  <div className="max-w-[1800px] mx-auto px-8 py-3 flex justify-between items-center">
     <div className="flex items-center gap-6">
       <div 
         onClick={() => router.push("/")} // Logo về Home
         className="flex items-center gap-2 cursor-pointer group"
       >
-          <div className="relative w-8 h-8">
-              <Image src="/logo.svg" alt="Eloqua Logo" width={32} height={32} className="object-contain" priority />
+          <div className="relative w-10 h-10">
+              <Image src="/logo.svg" alt="Wrytt Logo" width={40} height={40} className="object-contain" priority />
           </div>
-          <span className="font-bold text-xl text-slate-900 tracking-tight group-hover:text-cyan-600 transition-colors">Eloqua</span>
+          <span className="font-bold text-xl text-slate-900 tracking-tight group-hover:text-cyan-600 transition-colors">Wrytt</span>
       </div>
       
       {/* Vạch ngăn cách dọc */}
@@ -411,10 +460,10 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
       </nav>
 
       {/* --- MAIN LAYOUT --- */}
-      <div className="max-w-7xl mx-auto p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 relative z-10">
         
         {/* --- LEFT COLUMN: EDITOR (8 Cols) --- */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-5">
           
           {/* 1. Prompt Card */}
           <div className="bg-gradient-to-br from-white to-cyan-50/30 p-6 rounded-2xl border border-cyan-100 shadow-lg shadow-cyan-500/5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-500/10 transition-all duration-300 card-hover-lift relative overflow-hidden">
@@ -436,34 +485,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
             </button>
           </div>
 
-          {/* 2. EXAMINER FEEDBACK CARD */}
-          {result && (
-            <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border-l-4 border-cyan-500 shadow-xl shadow-cyan-500/10 p-7 animate-fade-in-up relative overflow-hidden group hover:shadow-2xl hover:shadow-cyan-500/15 transition-all duration-300">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 via-cyan-500 to-cyan-600" />
-                <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-cyan-100 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                
-                <div className="flex items-center gap-3 mb-5 relative z-10">
-                    <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-xl shadow-lg shadow-cyan-500/20">
-                        <Quote size={22} />
-                    </div>
-                    <div>
-                      <h3 className="font-black text-xl text-slate-800">Examiner's Feedback</h3>
-                      <p className="text-xs text-cyan-600 font-bold uppercase tracking-wide">AI-Generated Insights</p>
-                    </div>
-                </div>
-                
-                {/* Phần nội dung Feedback rộng rãi, dễ đọc */}
-                <div className="text-slate-700 leading-8 font-serif text-base bg-gradient-to-br from-slate-50 to-white p-6 rounded-xl border border-slate-200/50 shadow-inner relative z-10">
-                    {result.general_feedback.split('\n').map((line: string, i: number) => (
-                        <p key={i} className={`mb-3 last:mb-0 ${line.startsWith('**') ? 'font-bold text-slate-900 mt-3 text-lg' : ''} animate-slide-in`} style={{animationDelay: `${i * 0.05}s`}}>
-                            {line.replace(/\*\*/g, '')}
-                        </p>
-                    ))}
-                </div>
-            </div>
-          )}
-
-          {/* 3. Main Editor Card */}
+          {/* 2. Main Editor Card */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/60 flex flex-col min-h-[680px] overflow-hidden relative hover:shadow-slate-200/80 transition-shadow duration-300">
             
             {/* Toolbar */}
@@ -518,14 +540,14 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
               )}
             </div>
 
-{/* Writing Area */}
+            {/* Writing Area */}
             <div className="flex-1 p-8 md:p-10 overflow-y-auto hide-scrollbar relative bg-white">
               {!result ? (
                 <textarea 
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Start writing your essay here..."
-                  className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
+                  className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 focus:outline-none outline-none resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
                   spellCheck={false}
                 />
               ) : (
@@ -694,7 +716,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
         </div>
 
         {/* --- RIGHT COLUMN: SIDEBAR (4 Cols) --- */}
-        <div className="lg:col-span-4 space-y-6" ref={resultRef}>
+        <div className="lg:col-span-4 space-y-5" ref={resultRef}>
             {!result ? (
                 // Empty State
                 <div className="h-full min-h-[400px] bg-gradient-to-br from-white via-slate-50/30 to-cyan-50/20 p-10 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-cyan-300 transition-all duration-300">
@@ -714,6 +736,29 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                 </div>
             ) : (
                 <div className="space-y-5 animate-fade-in-up">
+                    
+                    {/* AI Feedback Card - Moved to top of sidebar */}
+                    <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border border-cyan-200 shadow-lg shadow-cyan-500/10 p-6 relative overflow-hidden group hover:shadow-xl hover:shadow-cyan-500/15 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-100 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                        
+                        <div className="flex items-center gap-2.5 mb-4 relative z-10">
+                            <div className="p-2 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md shadow-cyan-500/20">
+                                <Quote size={18} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-base text-slate-800">AI Feedback</h3>
+                              <p className="text-xs text-cyan-600 font-bold">Examiner Insights</p>
+                            </div>
+                        </div>
+                        
+                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-4 rounded-xl border border-slate-200/50 relative z-10 max-h-[300px] overflow-y-auto hide-scrollbar">
+                            {result.general_feedback.split('\n').map((line: string, i: number) => (
+                                <p key={i} className={`mb-2 last:mb-0 ${line.startsWith('**') ? 'font-bold text-slate-900 mt-2' : ''}`}>
+                                    {line.replace(/\*\*/g, '')}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
                     
                     {/* Score Card */}
                     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8 rounded-2xl shadow-2xl shadow-slate-900/20 border-2 border-slate-700 relative overflow-hidden flex flex-col items-center justify-center min-h-[180px] group hover:shadow-slate-900/30 transition-all duration-300">
@@ -737,8 +782,8 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                          </div>
                     </div>
 
-                    {/* Context Action */}
-                    <div className="min-h-[200px]">
+                    {/* Error Interaction Area */}
+                    <div>
                         {mode === 'vocab' ? (
                             <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-7 rounded-2xl shadow-2xl shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all duration-300">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
@@ -747,7 +792,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                                         <Sparkles size={18} className="text-yellow-300 animate-pulse"/>
                                         <span className="text-xs font-black uppercase tracking-widest">Elite Phrasing</span>
                                     </div>
-                                    <h3 className="text-xl font-black mb-3 drop-shadow-sm">Refined by Eloqua AI</h3>
+                                    <h3 className="text-xl font-black mb-3 drop-shadow-sm">Refined by Wrytt AI</h3>
                                     <p className="text-sm text-cyan-50 leading-relaxed font-medium">
                                         Your essay has been rewritten to meet strict <b className="text-white">academic standards</b>. Compare the changes to learn.
                                     </p>
@@ -759,7 +804,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-5">
                                         <span className="px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
-                                            {translateError(activeError.error_type, 'en')}
+                                            {activeError.error_type}
                                         </span>
                                         <button onClick={() => setActiveError(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><X size={18}/></button>
                                     </div>
@@ -815,7 +860,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                                         className={`w-full text-left p-4 rounded-xl text-xs transition-all duration-200 border-2 shadow-sm hover:shadow-md ${activeError === e ? 'bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-cyan-300 text-cyan-900 shadow-cyan-100' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-200 text-slate-600'}`}
                                     >
                                         <div className="font-bold truncate mb-1.5 text-sm">"{e.quote}"</div>
-                                        <div className={`text-[10px] uppercase tracking-wider font-black ${activeError === e ? 'text-cyan-600' : 'text-slate-400'}`}>{translateError(e.error_type, 'en')}</div>
+                                        <div className={`text-[10px] uppercase tracking-wider font-black ${activeError === e ? 'text-cyan-600' : 'text-slate-400'}`}>{e.error_type}</div>
                                     </button>
                                 ))
                              ) : (

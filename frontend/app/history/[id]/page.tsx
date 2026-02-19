@@ -8,8 +8,6 @@ import {
   Sparkles, AlertTriangle, BookOpen, ChevronRight,
   Wand2, Lock, Lightbulb, Shield, BarChart3, CheckCircle, Zap
 } from "lucide-react"; 
-import { translateError } from "@/lib/errorMapping";
-import QuizView from "@/components/QuizView";
 import { HistorySkeleton } from "@/components/Skeleton";
 import HighlightText from "@/components/HighlightText";
 import toast from "react-hot-toast";
@@ -57,12 +55,11 @@ const enhancedStyles = `
 export default function HistoryDetail() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
-  const [isReviewing, setIsReviewing] = useState(false); 
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [viewMode, setViewMode] = useState<"corrected" | "polished">("corrected");
   
   const [user, setUser] = useState<any>(null);
-  const [isPro, setIsPro] = useState(false); // [MỚI] State check quyền Pro
+  const [isPro, setIsPro] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -130,23 +127,52 @@ export default function HistoryDetail() {
   const handleUpgradeSuccess = async () => {
     if (!data?.id || !user?.id) return;
     const toastId = toast.loading("Generating Band 9.0 version...");
+    
     try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${API_URL}/upgrade-submission`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ submission_id: data.id, user_id: user.id })
-        });
+        let attempts = 0;
+        const maxAttempts = 10;
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-        if (!res.ok) throw new Error("Generation failed");
-        const resData = await res.json();
+        // Vòng lặp Retry (như analyze page)
+        while (attempts < maxAttempts) {
+            try {
+                const res = await fetch(`${API_URL}/upgrade-submission`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ submission_id: data.id, user_id: user.id })
+                });
 
-        setData((prev: any) => ({ ...prev, polished_text: resData.polished_text }));
-        setIsPro(true); // Đảm bảo state Pro được cập nhật nếu vừa mua xong
-        toast.success("Essay Upgraded Successfully!", { id: toastId });
-        handleSwitchMode("polished");
-    } catch (error) {
-        toast.error("Could not generate text. Please try again.", { id: toastId });
+                if (res.ok) {
+                    const resData = await res.json();
+                    setData((prev: any) => ({ ...prev, polished_text: resData.polished_text }));
+                    setIsPro(true); // Đảm bảo state Pro được cập nhật nếu vừa mua xong
+                    toast.success("Essay Upgraded Successfully!", { id: toastId });
+                    handleSwitchMode("polished");
+                    setIsAnimating(true);
+                    setTimeout(() => setIsAnimating(false), 1200);
+                    return;
+                }
+
+                if (res.status === 403) {
+                    await delay(1000); // Chờ 1s rồi thử lại
+                    attempts++;
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || "Generation failed");
+                }
+
+            } catch (error) {
+                await delay(1000);
+                attempts++;
+            }
+        }
+
+        // Nếu thất bại
+        throw new Error("Generation delayed. Please refresh page.");
+
+    } catch (error: any) {
+        toast.error(error.message || "Could not generate text. Please try again.", { id: toastId });
     }
   };
 
@@ -164,7 +190,11 @@ export default function HistoryDetail() {
            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
 
-      <GrammarLessonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} rule={selectedRule} />
+      <GrammarLessonModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        rule={selectedRule}
+      />
 
       <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
@@ -320,24 +350,7 @@ export default function HistoryDetail() {
         <hr className="border-slate-200 my-8" />
         <section className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
              {/* ... Diagnostics Area giữ nguyên ... */}
-             {isReviewing ? (
-                // ...
-                <div className="bg-white p-8 rounded-2xl border border-cyan-100 shadow-xl shadow-cyan-900/5">
-                    <div className="flex items-center gap-2 mb-8 text-cyan-700 bg-cyan-50 px-4 py-2 rounded-xl w-fit border border-cyan-100">
-                        <BookOpen size={20} />
-                        <span className="font-bold uppercase tracking-widest text-xs">Practice Mode</span>
-                        <span className="text-cyan-400 text-xs font-medium">| {unresolvedErrors.length} issues remaining</span>
-                    </div>
-                    <QuizView 
-                        errors={unresolvedErrors}
-                        language={data.target_language || "English"}
-                        onSuccess={() => { setIsReviewing(false); fetchDetail(); }}
-                        onCancel={() => setIsReviewing(false)}
-                    />
-                </div>
-            ) : (
-                 // ... Diagnostics Report UI (Copy từ code cũ) ...
-                 <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                     {/* ... (Phần UI này giữ nguyên như code trước) ... */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                         <div>
@@ -357,16 +370,7 @@ export default function HistoryDetail() {
                                 )}
                             </p>
                         </div>
-                        
-                        {unresolvedErrors.length > 0 && (
-                            <button 
-                                onClick={() => setIsReviewing(true)}
-                                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl font-bold shadow-xl shadow-red-600/20 transition-all flex items-center gap-3 active:scale-95 animate-pulse hover:animate-none"
-                            >
-                                <Zap size={20} fill="currentColor" className="text-yellow-300"/>
-                                Fix Remaining Issues
-                            </button>
-                        )}
+
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -386,7 +390,7 @@ export default function HistoryDetail() {
                                 <div className="flex justify-between items-start mb-4 relative z-10">
                                     <div className="space-y-1">
                                         <span className={`block font-black text-xs uppercase tracking-tighter ${err.is_resolved ? "text-emerald-600" : "text-red-600"}`}>
-                                            {translateError(err.error_type, 'en')}
+                                            {err.error_type}
                                         </span>
                                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{err.error_type}</span>
                                     </div>
@@ -427,7 +431,7 @@ export default function HistoryDetail() {
                         ))}
                     </div>
                  </div>
-            )}
+
         </section>
       </div>
       

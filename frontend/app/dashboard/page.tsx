@@ -7,9 +7,8 @@ import Image from "next/image";
 import { 
   TrendingUp, AlertTriangle, FileText, 
   ArrowRight, CheckCircle, Target, BookOpen, Download,
-  Sparkles, Zap, Award, History, LayoutGrid, Calendar, Lock
+  Sparkles, Zap, Award, History, LayoutGrid, Calendar, Lock, Check, 
 } from "lucide-react";
-import { translateError } from "@/lib/errorMapping";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
@@ -22,10 +21,12 @@ import toast from "react-hot-toast";
 import DashboardReport from "@/components/DashboardReport";
 
 const FREE_DAILY_LIMIT = 2;
+const FOCUS_LOCK_ESSAYS = 4;
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("User");
+  const [userId, setUserId] = useState<string | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
   const [showPricingModal, setShowPricingModal] = useState(false);
@@ -37,15 +38,28 @@ export default function Dashboard() {
     topErrors: [] as { name: string; originalName: string; count: number }[],
     recentActivity: [] as any[],
     priorityError: null as any, 
-    resolutionRate: 0,
-    unresolvedCount: 0,
+    masteryCounts: {} as Record<string, { total: number, passed: number, recentAttempts: any[], masteryLevel: string }>,
     chartData: [] as { date: string; score: number }[]
   });
   
   const [selectedRule, setSelectedRule] = useState<GrammarRule | null>(null);
+  const [selectedError, setSelectedError] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userLanguage, setUserLanguage] = useState("English");
   const reportRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  
+  // Quiz states for Mastery Goal box
+  const [quizActive, setQuizActive] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizError, setQuizError] = useState(false);
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [quizResults, setQuizResults] = useState<Record<number, boolean>>({});
+  const [showQuizResult, setShowQuizResult] = useState(false);
+  const [quizSaving, setQuizSaving] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
@@ -54,10 +68,114 @@ export default function Dashboard() {
       window.location.reload(); 
   };
 
-  const handleOpenLesson = async (errorType: string) => {
+  const handleOpenLesson = async (errorType: string, error?: any) => {
     const rule = await fetchRuleByKey(errorType);
     setSelectedRule(rule);
+    setSelectedError(error || null);
     setIsModalOpen(true);
+  };
+
+  const handleStartQuiz = async (errorType: string, quote: string, errorId?: number) => {
+    if (!errorType || !quote) return;
+    
+    setQuizLoading(true);
+    setQuizError(false);
+    setQuizActive(true);
+    // Set selectedError so handleCompleteQuiz can access it
+    setSelectedError({ id: errorId, type: errorType, quote: quote });
+    
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/generate-quiz-single`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error_type: errorType,
+          quote: quote,
+          native_language: userLanguage
+        })
+      });
+
+      if (!res.ok) throw new Error("Failed to generate quiz");
+
+      const data = await res.json();
+      if (data.questions && data.questions.length > 0) {
+        setQuizQuestions(data.questions);
+        setCurrentQuizIndex(0);
+        setSelectedAnswer(null);
+        setIsAnswered(false);
+        setQuizResults({});
+        setShowQuizResult(false);
+      } else {
+        throw new Error("No questions generated");
+      }
+    } catch (err) {
+      console.error(err);
+      setQuizError(true);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  const handleAnswerSelect = (optionIndex: number) => {
+    if (isAnswered) return;
+    setSelectedAnswer(optionIndex);
+    setIsAnswered(true);
+    
+    const isCorrect = optionIndex === quizQuestions[currentQuizIndex].correct_answer_index;
+    setQuizResults(prev => ({ ...prev, [currentQuizIndex]: isCorrect }));
+  };
+
+  const handleNextQuizQuestion = () => {
+    if (currentQuizIndex < quizQuestions.length - 1) {
+      setCurrentQuizIndex(currentQuizIndex + 1);
+      setSelectedAnswer(null);
+      setIsAnswered(false);
+    } else {
+      setShowQuizResult(true);
+    }
+  };
+
+  const handleCompleteQuiz = async () => {
+    if (!selectedError || !userId) {
+      toast.error("Please sign in to save progress.");
+      return;
+    }
+    
+    const correctCount = Object.values(quizResults).filter(v => v === true).length;
+    const passedQuiz = correctCount >= 6; // 60% passing score (6 out of 10)
+    const score = correctCount; // 0-10 score
+
+    setQuizSaving(true);
+    try {
+      // Save quiz attempt to new table
+      const { error } = await supabase
+        .from("quiz_attempts")
+        .insert({
+          user_id: userId,
+          error_type: selectedError.type,
+          quiz_date: new Date().toISOString(),
+          score: score,
+          passed: passedQuiz
+        });
+
+      if (error) throw error;
+      
+      if (passedQuiz) {
+        toast.success("Excellent! Quiz passed. Keep practicing!", { icon: "✓" });
+      } else {
+        toast.error("Keep practicing! Try again.", { icon: "📚" });
+      }
+      
+      // Refresh dashboard data
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (err) {
+      console.error("Error saving quiz attempt:", err);
+      toast.error("Error saving progress");
+      setQuizSaving(false);
+    }
   };
 
   const handleExportPDF = async () => {
@@ -77,7 +195,7 @@ export default function Dashboard() {
         const pdf = new jsPDF("p", "mm", "a4");
         const pdfWidth = pdf.internal.pageSize.getWidth();
         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdf.internal.pageSize.getHeight());
-        pdf.save(`Eloqua_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+        pdf.save(`Wrytt_Report_${new Date().toISOString().slice(0,10)}.pdf`);
         toast.success("Report downloaded!", { id: toastId });
       } catch (error) {
         toast.error("Export failed", { id: toastId });
@@ -86,11 +204,25 @@ export default function Dashboard() {
       }
   };
 
+  // Helper function to calculate mastery level
+  const getMasteryLevel = (attempts: any[]): string => {
+    if (attempts.length === 0) return "Learning";
+    
+    const recentAttempts = attempts.slice(0, 3); // Last 3 attempts
+    const recentPassed = recentAttempts.filter(a => a.passed).length;
+    const avgScore = recentAttempts.reduce((sum, a) => sum + a.score, 0) / recentAttempts.length;
+    
+    if (avgScore >= 8 && recentPassed >= 2) return "Mastered";
+    if (avgScore >= 6 && recentPassed >= 1) return "Practicing";
+    return "Learning";
+  };
+
   useEffect(() => {     
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
       setUserEmail(user.email || "User");
+      setUserId(user.id);
 
       const { data: usageData } = await supabase
         .from("user_usage")
@@ -100,6 +232,7 @@ export default function Dashboard() {
 
       if (usageData) {
           setIsPro(usageData.is_pro);
+          setUserLanguage(usageData.default_language || "English");
           const today = new Date();
           const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           setUsageCount(String(usageData.last_reset_date) === todayStr ? usageData.usage_count : 0);
@@ -119,8 +252,15 @@ export default function Dashboard() {
       const submissionIds = submissions.map(s => s.id);
       const { data: errors } = await supabase
         .from("analysis_results")
-        .select("error_type, is_resolved, submission_id")
+        .select("id, error_type, submission_id, quote")
         .in("submission_id", submissionIds);
+
+      // Fetch quiz attempts for this user
+      const { data: quizAttempts } = await supabase
+        .from("quiz_attempts")
+        .select("error_type, score, passed, quiz_date")
+        .eq("user_id", user.id)
+        .order("quiz_date", { ascending: false });
 
       const totalScore = submissions.reduce((acc, curr) => acc + (curr.score || 0), 0);
       const avgScore = (totalScore / submissions.length).toFixed(1);
@@ -134,38 +274,113 @@ export default function Dashboard() {
 
       const topErrors = Object.entries(errorCounts)
         .map(([name, count]) => ({ 
-            name: translateError(name, 'en'),
+            name: name,
             originalName: name,
             count 
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5);
 
-      const errorStats: Record<string, { total: number, resolved: number, latestUnresolvedId: string | null }> = {};
+      // Calculate mastery for each error type based on quiz attempts
+      const masteryCounts: Record<string, { total: number, passed: number, recentAttempts: any[], masteryLevel: string }> = {};
       errors?.forEach((err) => {
         const type = err.error_type.trim();
-        if (!errorStats[type]) errorStats[type] = { total: 0, resolved: 0, latestUnresolvedId: null };
-        errorStats[type].total += 1;
-        if (err.is_resolved) errorStats[type].resolved += 1;
-        else if (!errorStats[type].latestUnresolvedId) errorStats[type].latestUnresolvedId = err.submission_id;
+        if (!masteryCounts[type]) masteryCounts[type] = { total: 0, passed: 0, recentAttempts: [], masteryLevel: "Learning" };
+        masteryCounts[type].total += 1;
       });
 
-      let maxUnresolved = -1;
-      let priorityErrObj: any = null;
-      Object.entries(errorStats).forEach(([type, stat]) => {
-          const unresolvedCount = stat.total - stat.resolved;
-          if (unresolvedCount > maxUnresolved && unresolvedCount > 0) {
-              maxUnresolved = unresolvedCount;
-              priorityErrObj = {
-                  type: type, 
-                  displayType: translateError(type, 'en'),
-                  total: stat.total,
-                  resolved: stat.resolved,
-                  unresolved: unresolvedCount,
-                  targetId: stat.latestUnresolvedId
-              };
-          }
+      // Populate quiz attempt data
+      quizAttempts?.forEach((attempt) => {
+        const type = attempt.error_type.trim();
+        if (masteryCounts[type]) {
+          masteryCounts[type].recentAttempts.push(attempt);
+        }
       });
+
+      // Calculate mastery level for each error
+      Object.entries(masteryCounts).forEach(([type, stat]) => {
+        stat.passed = stat.recentAttempts.filter(a => a.passed).length;
+        stat.masteryLevel = getMasteryLevel(stat.recentAttempts);
+      });
+
+      // Choose priority error: unmastered error with most occurrences
+      let priorityErrObj: any = null;
+      let maxCount = 0;
+      
+      Object.entries(errorCounts).forEach(([errorType, count]) => {
+        const masteryData = masteryCounts[errorType];
+        if (masteryData && masteryData.masteryLevel !== "Mastered" && count > maxCount) {
+          maxCount = count;
+          const errorDetail = errors?.find(e => e.error_type.trim() === errorType);
+          priorityErrObj = {
+            id: errorDetail?.id,
+            type: errorType,
+            displayType: errorType,
+            total: masteryData.total,
+            quote: errorDetail?.quote || "",
+            masteryLevel: masteryData.masteryLevel,
+            recentAttempts: masteryData.recentAttempts.slice(0, 3)
+          };
+        }
+      });
+
+      const buildPriorityFromType = (errorType: string) => {
+        const masteryData = masteryCounts[errorType];
+        if (!masteryData) return null;
+        const errorDetail = errors?.find(e => e.error_type.trim() === errorType);
+        return {
+          id: errorDetail?.id,
+          type: errorType,
+          displayType: errorType,
+          total: masteryData.total,
+          quote: errorDetail?.quote || "",
+          masteryLevel: masteryData.masteryLevel,
+          recentAttempts: masteryData.recentAttempts.slice(0, 3)
+        };
+      };
+
+      // Hybrid focus: lock target for a fixed essay window
+      if (typeof window !== "undefined") {
+        const lockKey = `mastery_focus_lock_${user.id}`;
+        const currentEssayCount = submissions.length;
+        let lockedType: string | null = null;
+        let lockValid = false;
+
+        try {
+          const raw = localStorage.getItem(lockKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            lockedType = parsed?.errorType || null;
+            lockValid = Number.isFinite(parsed?.lockUntilCount)
+              && currentEssayCount < parsed.lockUntilCount;
+          }
+        } catch {
+          localStorage.removeItem(lockKey);
+        }
+
+        let lockedPriority = null;
+        if (lockValid && lockedType) {
+          const fromLock = buildPriorityFromType(lockedType);
+          if (fromLock && fromLock.masteryLevel !== "Mastered") {
+            lockedPriority = fromLock;
+          } else {
+            localStorage.removeItem(lockKey);
+          }
+        }
+
+        if (lockedPriority) {
+          priorityErrObj = lockedPriority;
+        } else if (priorityErrObj) {
+          localStorage.setItem(
+            lockKey,
+            JSON.stringify({
+              errorType: priorityErrObj.type,
+              lockedAtCount: currentEssayCount,
+              lockUntilCount: currentEssayCount + FOCUS_LOCK_ESSAYS
+            })
+          );
+        }
+      }
 
       setStats({
         totalEssays: submissions.length,
@@ -174,8 +389,7 @@ export default function Dashboard() {
         topErrors,
         recentActivity: submissions.slice(0, 5),
         priorityError: priorityErrObj,
-        resolutionRate: priorityErrObj ? Math.round((priorityErrObj.resolved / priorityErrObj.total) * 100) : 0,
-        unresolvedCount: maxUnresolved,
+        masteryCounts,
         chartData: submissions.slice(0, 7).reverse().map(s => ({
           date: new Date(s.created_at).toLocaleDateString('en-US', {day: '2-digit', month: '2-digit'}),
           score: s.score || 0
@@ -197,7 +411,20 @@ export default function Dashboard() {
       </div>
 
       <PricingModal isOpen={showPricingModal} onClose={() => setShowPricingModal(false) } onSuccess={handleUpgradeSuccess}/>
-      <GrammarLessonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} rule={selectedRule} />
+      <GrammarLessonModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        rule={selectedRule}
+        errorId={selectedError?.id}
+        errorType={selectedError?.type}
+        quote={selectedError?.quote}
+        language={userLanguage}
+        onMarkedResolved={() => {
+          setIsModalOpen(false);
+          // Refresh dashboard data
+          window.location.reload();
+        }}
+      />
 
       <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
@@ -206,8 +433,8 @@ export default function Dashboard() {
           
           {/* LEFT: Branding & Welcome */}
           <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/")}>
-               <Image src="/logo.svg" alt="Logo" fill className="object-contain" />
+            <div className="relative w-14 h-14 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push("/")}> 
+               <Image src="/logo.svg" alt="Logo" fill className="w-auto h-12" />
                
             </div>
             <div>
@@ -329,39 +556,281 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* AI PATH FOCUS */}
-          <div className="lg:col-span-4 bg-slate-50 p-8 rounded-2xl border border-slate-200 relative overflow-hidden">
-             <div className="flex items-center gap-3 mb-8">
+          {/* AI PATH FOCUS - MASTERY GOAL WITH INLINE QUIZ */}
+          <div className="lg:col-span-4 bg-slate-50 p-8 rounded-2xl border border-slate-200 relative overflow-visible">
+             <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-white rounded-lg border border-slate-200 text-cyan-600 shadow-sm">
                       <Target size={20}/> 
                   </div>
-                  <h3 className="font-bold text-slate-900 uppercase text-sm tracking-widest">Mastery Goal</h3>
+                  <div>
+                    <h3 className="font-bold text-slate-900 uppercase text-sm tracking-widest">Mastery Goal</h3>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Master grammar one rule at a time</p>
+                  </div>
              </div>
 
               {stats.priorityError ? (
-                <div className="space-y-6">
-                    <div className="p-4 bg-white rounded-xl border border-slate-200">
-                        <div className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mb-1">Focus Area</div>
-                        <h4 className="font-bold text-lg text-slate-900">{stats.priorityError.displayType}</h4>
-                    </div>
+                <>
+                  {!quizActive ? (
+                    // Regular View
+                    <div className="space-y-5">
+                        {/* Focus Area with explanation */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">📍 Focus Area</div>
+                              <div className="group relative">
+                                <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
+                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
+                                  This is your most common error. Master this first, then we'll focus on the next one!
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-4 bg-white rounded-xl border border-slate-200">
+                                <h4 className="font-bold text-lg text-slate-900">{stats.priorityError.displayType}</h4>
+                                <p className="text-[10px] text-slate-400 mt-1">Appears in {stats.priorityError.total} essays</p>
+                                <p className="text-[10px] text-slate-400 mt-1">Focus locks for {FOCUS_LOCK_ESSAYS} essays unless mastered.</p>
+                            </div>
+                        </div>
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-bold uppercase text-slate-500">
-                            <span>Resolution Progress</span>
-                            <span>{stats.resolutionRate}%</span>
+                        {/* Mastery Level with progression visual */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">📊 Progression</div>
+                              <div className="group relative">
+                                <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
+                                <div className="absolute bottom-full right-0 mb-2 w-56 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
+                                  <strong>🌱 Learning:</strong> Just starting<br/>
+                                  <strong>📚 Practicing:</strong> Making progress<br/>
+                                  <strong>🏆 Mastered:</strong> Consistent excellence
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="font-bold text-lg text-indigo-900">
+                                      {stats.priorityError.masteryLevel === "Mastered" && "🏆 Mastered"}
+                                      {stats.priorityError.masteryLevel === "Practicing" && "📚 Practicing"}
+                                      {stats.priorityError.masteryLevel === "Learning" && "🌱 Learning"}
+                                    </div>
+                                </div>
+                                {/* Visual progression bar */}
+                                <div className="flex gap-1.5">
+                                    <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Learning" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                                    <div className={`flex-1 h-1.5 rounded-full ${["Practicing", "Mastered"].includes(stats.priorityError.masteryLevel) ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                                    <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Mastered" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                                </div>
+                                <p className="text-[10px] text-indigo-700 mt-2 leading-relaxed">
+                                  Last 3 quizzes. Mastered: avg 80%+ and 2+ passes.
+                                </p>
+                            </div>
                         </div>
-                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                            <div className="bg-cyan-600 h-full transition-all duration-1000" style={{ width: `${stats.resolutionRate}%` }} />
-                        </div>
+
+                        {/* Recent Quiz Attempts */}
+                        {stats.priorityError.recentAttempts && stats.priorityError.recentAttempts.length > 0 && (
+                          <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="text-[10px] font-bold uppercase text-slate-500">📈 Your Performance</div>
+                                <div className="group relative">
+                                  <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
+                                  <div className="absolute bottom-full right-0 mb-2 w-44 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
+                                    Last 3 attempts. 60%+ to progress.
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                  {stats.priorityError.recentAttempts.map((attempt: any, idx: number) => (
+                                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                                          <div className="flex items-center gap-3">
+                                              <span className={`text-lg ${attempt.passed ? "✅" : "❌"}`}></span>
+                                              <div>
+                                                <span className="text-xs text-slate-600 font-bold block">
+                                                    {Math.round((attempt.score / 10) * 100)}% 
+                                                    <span className="text-[10px] text-slate-400 ml-1">({attempt.score}/10 correct)</span>
+                                                </span>
+                                              </div>
+                                          </div>
+                                          <span className="text-[10px] text-slate-400">
+                                              {new Date(attempt.quiz_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                          </span>
+                                      </div>
+                                  ))}
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-2 px-1">60%+ moves to Practicing. Mastered needs consistency.</p>
+                          </div>
+                        )}
+
+                        {stats.priorityError.recentAttempts.length === 0 && (
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-[10px] text-blue-900 font-medium">
+                              📝 <strong>First time?</strong> Take a quiz to start tracking your progress!
+                            </p>
+                          </div>
+                        )}
+                        
+                        <button 
+                            onClick={() => handleStartQuiz(stats.priorityError.type, stats.priorityError.quote, stats.priorityError.id)}
+                            disabled={quizLoading}
+                            className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {quizLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Generating Quiz...
+                              </>
+                            ) : (
+                              <>
+                                <Zap size={16} /> Practice Now
+                              </>
+                            )}
+                        </button>
                     </div>
-                    
-                    <button 
-                        onClick={() => handleOpenLesson(stats.priorityError.type)}
-                        className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2"
-                    >
-                        <Sparkles size={16} /> Learn this Rule
-                    </button>
-                </div>
+                  ) : quizLoading ? (
+                    // Loading State
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="w-12 h-12 border-4 border-slate-200 border-t-cyan-500 rounded-full animate-spin" />
+                        <p className="text-sm font-bold text-slate-500 text-center">Generating Practice Questions...</p>
+                    </div>
+                  ) : quizError ? (
+                    // Error State
+                    <div className="space-y-4 text-center">
+                        <AlertTriangle size={40} className="text-red-500 mx-auto" />
+                        <p className="text-sm font-bold text-slate-900">Quiz Generation Failed</p>
+                        <button 
+                            onClick={() => setQuizActive(false)}
+                            className="w-full py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all text-sm"
+                        >
+                            Back
+                        </button>
+                    </div>
+                  ) : showQuizResult ? (
+                    // Results Screen
+                    (() => {
+                      const correctCount = Object.values(quizResults).filter(v => v === true).length;
+                      const passed = correctCount >= 6;
+                      const percentage = Math.round((correctCount / quizQuestions.length) * 100);
+                      return (
+                        <div className={`p-6 rounded-xl text-center space-y-4 ${passed ? "bg-emerald-50" : "bg-blue-50"}`}>
+                            <div className={`text-4xl font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>
+                              {percentage}%
+                            </div>
+                            <h3 className={`text-lg font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>
+                              {passed ? "Excellent! 🎉" : "Good effort!"}
+                            </h3>
+                            <p className="text-sm text-slate-600">
+                              {correctCount} out of {quizQuestions.length} correct
+                            </p>
+                            {!passed && (
+                              <p className="text-xs text-slate-500">
+                                Need {6 - correctCount} more to pass (60% = 6/10)
+                              </p>
+                            )}
+                            <div className="space-y-2 pt-2">
+                              <button
+                                onClick={handleCompleteQuiz}
+                                disabled={quizSaving}
+                                className={`w-full py-3 font-black rounded-lg text-white transition-all ${
+                                  passed
+                                    ? "bg-emerald-600 hover:bg-emerald-700"
+                                    : "bg-blue-600 hover:bg-blue-700"
+                                } disabled:opacity-50`}
+                              >
+                                {quizSaving ? "Saving..." : passed ? "Save Progress ✓" : "Try Again"}
+                              </button>
+                              <button 
+                                onClick={() => setQuizActive(false)}
+                                disabled={quizSaving}
+                                className="w-full py-2 bg-slate-200 text-slate-900 font-bold rounded-lg hover:bg-slate-300 transition-all disabled:opacity-50"
+                              >
+                                Back
+                              </button>
+                            </div>
+                        </div>
+                      );
+                    })()
+                  ) : quizQuestions.length > 0 ? (
+                    // Quiz Question Display
+                    (() => {
+                      const currentQuestion = quizQuestions[currentQuizIndex];
+                      const isCorrect = selectedAnswer === currentQuestion.correct_answer_index;
+                      const progressPercent = ((currentQuizIndex + 1) / quizQuestions.length) * 100;
+                      return (
+                        <div className="space-y-6">
+                            {/* Progress */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                                    <span>Q{currentQuizIndex + 1} of {quizQuestions.length}</span>
+                                    <span>{Math.round(progressPercent)}%</span>
+                                </div>
+                                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full transition-all" style={{ width: `${progressPercent}%` }} />
+                                </div>
+                            </div>
+
+                            {/* Question */}
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-slate-900 text-sm leading-snug">{currentQuestion.question}</h4>
+                                
+                                {/* Options */}
+                                <div className="space-y-2">
+                                  {currentQuestion.options.map((option: string, idx: number) => {
+                                    const isSelected = selectedAnswer === idx;
+                                    const isCorrectAnswer = idx === currentQuestion.correct_answer_index;
+                                    let bgColor = "bg-white border-slate-200 hover:border-slate-300";
+                                    
+                                    if (isAnswered) {
+                                      if (isCorrectAnswer) {
+                                        bgColor = "bg-emerald-50 border-emerald-500 border-2";
+                                      } else if (isSelected && !isCorrect) {
+                                        bgColor = "bg-red-50 border-red-500 border-2";
+                                      }
+                                    }
+
+                                    return (
+                                      <button
+                                        key={idx}
+                                        onClick={() => handleAnswerSelect(idx)}
+                                        disabled={isAnswered}
+                                        className={`w-full p-3 text-left rounded-lg border text-sm transition-all font-medium text-slate-900 ${bgColor} ${
+                                          isAnswered ? "cursor-default" : "cursor-pointer hover:bg-slate-50"
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                            isSelected ? (isCorrect ? "border-emerald-500 bg-emerald-500" : "border-red-500 bg-red-500") : "border-slate-300"
+                                          }`}>
+                                            {isSelected && <Check size={10} className="text-white" />}
+                                          </div>
+                                          <span className="text-xs">{option}</span>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                
+                                {/* Explanation */}
+                                {isAnswered && (
+                                  <div className={`p-3 rounded-lg text-xs ${isCorrect ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
+                                    <p className={`font-medium ${isCorrect ? "text-emerald-900" : "text-red-900"}`}>
+                                      <span className="font-bold">{isCorrect ? "✓ " : ""}</span>
+                                      {currentQuestion.explanation}
+                                    </p>
+                                  </div>
+                                )}
+                            </div>
+
+                            {/* Next Button */}
+                            {isAnswered && (
+                              <button
+                                onClick={handleNextQuizQuestion}
+                                className="w-full py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all text-sm"
+                              >
+                                {currentQuizIndex < quizQuestions.length - 1 ? "Next" : "Results"}
+                              </button>
+                            )}
+                        </div>
+                      );
+                    })()
+                  ) : null}
+                </>
               ) : (
                 <div className="text-center py-10">
                     <CheckCircle size={40} className="text-cyan-500 mx-auto mb-4 opacity-50"/>
@@ -383,7 +852,6 @@ export default function Dashboard() {
             }}
             recentSubs={stats.recentActivity}
             chartData={stats.chartData}
-            language="en"
           />
         </div>
 

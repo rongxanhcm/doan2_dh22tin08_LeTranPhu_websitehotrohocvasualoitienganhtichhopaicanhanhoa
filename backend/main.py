@@ -16,15 +16,16 @@ from supabase import create_client, Client
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field  # <--- Thêm Field vào đây
+import redis
 # Load biến môi trường
 load_dotenv()
-
+r = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True)
 # --- CẤU HÌNH ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Secret Webhook (Thay bằng mã thực tế của bạn)
-LEMONSQUEEZY_WEBHOOK_SECRET = "861218" 
+LEMONSQUEEZY_WEBHOOK_SECRET = "861218"
 
 # Khởi tạo Clients
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
@@ -94,6 +95,12 @@ class BatchQuizRequest(BaseModel):
     errors: List[ErrorItem]
     language: str = "vi"
 
+class SingleErrorQuizRequest(BaseModel):
+    error_type: str
+    quote: str
+    language: str = "vi"
+    native_language: str = "English"  # AI feedback language
+
 class QuizQuestion(BaseModel):
     id: int
     question: str
@@ -114,11 +121,19 @@ class UpgradeSubmissionRequest(BaseModel):
 
 class PortalRequest(BaseModel):
     user_email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+    # URL trang frontend để user nhập pass mới (phải khớp với Redirect URLs ở Bước 1)
+    redirect_url: str = "http://localhost:3000/update-password" 
+
+class UpdatePasswordRequest(BaseModel):
+    new_password: str
 # ==========================================
 # ENDPOINT 1: ANALYZE ESSAY (ĐÃ TỐI ƯU)
 # ==========================================
 @app.post("/analyze")
-def analyze_essay(input: EssayInput):
+def analyze_essay(input: EssayInput, request: Request):
     try:
         # 1. VALIDATION
         word_count = len(input.text.strip().split())
@@ -128,7 +143,9 @@ def analyze_essay(input: EssayInput):
         # 2. CHECK QUOTA & QUYỀN
         is_pro = False
         usage_count = 0
+        visitor_id = request.headers.get("X-Visitor-Id")
         
+        # --- LUỒNG 1: USER ĐÃ LOGIN (Giữ nguyên gốc của ông) ---
         if input.user_id:
             usage_res = supabase.table("user_usage").select("*").eq("user_id", input.user_id).execute()
             usage_data = None
@@ -144,7 +161,6 @@ def analyze_essay(input: EssayInput):
             else:
                 usage_data = usage_res.data[0]
 
-            # Logic Reset ngày mới
             last_date_str = str(usage_data.get('last_reset_date'))
             today_str = datetime.now().strftime('%Y-%m-%d')
             
@@ -155,147 +171,169 @@ def analyze_essay(input: EssayInput):
                 usage_count = usage_data.get('usage_count', 0)
 
             is_pro = usage_data.get('is_pro', False)
-
             limit = PRO_DAILY_LIMIT if is_pro else FREE_DAILY_LIMIT
             if usage_count >= limit:
-                 raise HTTPException(status_code=403, detail=f"Daily limit reached ({limit}/{limit}). Upgrade to Pro for more!")
+                raise HTTPException(status_code=403, detail=f"Daily limit reached. Upgrade to Pro for more!")
 
-        # 3. CHUẨN BỊ PROMPT & SCHEMA (TỐI ƯU HÓA)
-        target_lang = input.native_language.strip()
-        
-        # [NEW] Instruction ngắn gọn hơn để tiết kiệm Input Token
-        if target_lang.lower() in ["english", "en", "us", "uk"]:
-            lang_instruction = "Output JSON in English."
+        # --- LUỒNG 2: GUEST (Dùng bảng riêng guest_usage) ---
         else:
-            lang_instruction = (
-                f"CRITICAL RULE: Write 'general_feedback' AND 'explanation' COMPLETELY in {target_lang}. "
-                f"Keep 'error_type' in English."
-        )   
-        # [FIX] Dynamic Schema Check
-    # [FIX] Dynamic Schema Check & Length Constraint
-        if is_pro:
-            # Code CŨ (Gây dài dòng):
-            # polish_instruction = ', "polished_text": "<Rewrite the essay to Band 9.0 Level (C2 Vocab)>"'
+            if not visitor_id:
+                raise HTTPException(status_code=400, detail="Missing device identifier.")
             
-            # Code MỚI (Ép độ dài):
-            polish_instruction = (
-                ', "polished_text": "<Rewrite to Band 9.0 (C2 Vocab). '
-                'CRITICAL: Keep word count similar to original (max +10%). '
-                'Focus on upgrading vocabulary and grammar structures ONLY. '
-                'Do NOT expand ideas or add new sentences.>"'
-            )
-            target_schema = ProEssayAssessment
-        else:
-            # Free: Không có instruction
-            polish_instruction = ""
-            target_schema = BaseEssayAssessment
+            guest_res = supabase.table("guest_usage").select("*").eq("visitor_id", visitor_id).execute()
+            
+            if guest_res.data:
+                # Nếu tìm thấy visitor_id trong bảng guest -> Chặn luôn (1 bài vĩnh viễn)
+                raise HTTPException(status_code=403, detail="Guest limit reached. Please login to continue!")
+            
+            is_pro = False # Guest mặc định không bao giờ có Pro
 
-        # [NEW] Dùng Cached Prompt
+        # 3. CHUẨN BỊ PROMPT & SCHEMA (Phần này chung)
+        target_lang = input.native_language.strip()
+        lang_instruction = "Output JSON in English." if target_lang.lower() in ["english", "en", "us", "uk"] else \
+            f"CRITICAL RULE: Write 'general_feedback' AND 'explanation' COMPLETELY in {target_lang}. Keep 'error_type' in English."
+        
+        # Vì Guest không bao giờ là Pro nên polish_instruction sẽ luôn trống cho Guest
+        polish_instruction = (
+            ', "polished_text": "<Rewrite to Band 9.0 (C2 Vocab). '
+            'CRITICAL: Keep word count similar to original (max +10%). '
+            'Focus on upgrading vocabulary and grammar structures ONLY. '
+            'Do NOT expand ideas or add new sentences.>"'
+        ) if is_pro else ""
+        
+        target_schema = ProEssayAssessment if is_pro else BaseEssayAssessment
+
         raw_prompt = get_system_prompt_cached("analyze_essay")
-        if not raw_prompt:
-            # Fallback nếu DB lỗi (Optional)
-            raw_prompt = "Analyze this essay: {{input_text}}. {{lang_instruction}}. {{polish_instruction}}"
-            # raise HTTPException(status_code=500, detail="System prompt not found.")
-
         prompt_text = raw_prompt.replace("{{lang_instruction}}", lang_instruction)\
                                 .replace("{{polish_instruction}}", polish_instruction)\
                                 .replace("{{input_text}}", input.text)
 
-        # 4. GỌI GEMINI (Dùng model Flash 1.5 cho rẻ)
+        # 4. GỌI GEMINI
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash', # [TIẾT KIỆM] Dùng 1.5 thay vì 2.5
+            model='gemini-2.5-flash', 
             contents=prompt_text,
-            config=types.GenerateContentConfig(
-                response_mime_type='application/json',
-                response_schema=target_schema # [FIX] Schema động
-            )
+            config=types.GenerateContentConfig(response_mime_type='application/json', response_schema=target_schema)
         )
         result = response.parsed
-
-        # 5. CHUẨN BỊ KẾT QUẢ
         response_data = result.model_dump()
 
-        # 6. LƯU DATABASE
+        # 5. LƯU QUOTA (Tách biệt)
         if input.user_id:
             supabase.table("user_usage").update({"usage_count": usage_count + 1}).eq("user_id", input.user_id).execute()
+        else:
+            # Lưu vào bảng guest_usage
+            supabase.table("guest_usage").insert({"visitor_id": visitor_id, "usage_count": 1}).execute()
 
-            try:
-                # [FIX] Dùng getattr để lấy polished_text an toàn (vì Free ko có trường này)
-                polished_content = getattr(result, 'polished_text', None)
-
-                sub_data = {
-                    "user_id": input.user_id,
-                    "original_text": input.text,
-                    "corrected_text": result.corrected_text,
-                    "score": result.score,
-                    "general_feedback": result.general_feedback,
-                    "target_language": input.native_language,
-                    "polished_text": polished_content
-                }
+        # 6. LƯU SUBMISSION
+       # 6. LƯU SUBMISSION VÀ KẾT QUẢ PHÂN TÍCH
+        # Khởi tạo biến trước để tránh lỗi "UnboundLocalError"
+        sub_res = None 
+        
+        try:
+            # Clean data: Đảm bảo user_id là None nếu rỗng
+            final_user_id = input.user_id if input.user_id else None
+            
+            # Nếu là Guest (user_id=None) thì lấy visitor_id, ngược lại là None
+            final_visitor_id = visitor_id if not final_user_id else None
+            
+            polished_content = getattr(result, 'polished_text', None)
+            
+            sub_data = {
+                "user_id": final_user_id,         # UUID hoặc None
+                "visitor_id": final_visitor_id,   # Fingerprint hoặc None
+                "original_text": input.text,
+                "corrected_text": result.corrected_text,
+                "score": result.score,
+                "general_feedback": result.general_feedback,
+                "target_language": input.native_language,
+                "polished_text": polished_content
+            }
+            
+            # --- QUAN TRỌNG: GỌI INSERT ---
+            # Lưu ý: Nếu vẫn không lưu được, 99% là do Key Supabase bị RLS chặn
+            sub_res = supabase.table("submissions").insert(sub_data).execute()
+            
+            if sub_res and sub_res.data:
+                submission_id = sub_res.data[0]['id']
+                response_data['submission_id'] = submission_id
                 
-                sub_res = supabase.table("submissions").insert(sub_data).execute()
+                err_data = [{
+                    "submission_id": submission_id,
+                    "error_type": e.error_type,
+                    "severity": e.severity,
+                    "explanation": e.explanation,
+                    "suggestion": e.suggestion,
+                    "quote": e.quote
+                } for e in result.core_errors]
                 
-                if sub_res.data:
-                    submission_id = sub_res.data[0]['id']
-                    response_data['submission_id'] = submission_id
-                    
-                    err_data = [{
-                        "submission_id": submission_id,
-                        "error_type": e.error_type,
-                        "severity": e.severity,
-                        "explanation": e.explanation,
-                        "suggestion": e.suggestion,
-                        "quote": e.quote
-                    } for e in result.core_errors]
-                    
-                    if err_data:
-                        supabase.table("analysis_results").insert(err_data).execute()
+                if err_data:
+                    supabase.table("analysis_results").insert(err_data).execute()
+            else:
+                print(f"⚠️ Cảnh báo: Insert thành công nhưng không trả về data (Có thể do RLS). Data: {sub_res.data}")
                         
-            except Exception as db_err:
-                print(f"⚠️ DB Error: {db_err}")
+        except Exception as db_err:
+            print(f"⚠️ Lỗi lưu Database: {db_err}")
+            # Không raise lỗi ở đây để user vẫn nhận được kết quả chấm bài JSON
 
         return response_data
 
-    except HTTPException as he:
-        raise he
+    except HTTPException as he: raise he
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
-# ENDPOINT 2: BATCH QUIZ
+# ENDPOINT 2: BATCH QUIZ(REMOVED)
 # ==========================================
-@app.post("/generate-batch-quiz")
-def generate_batch_quiz(input: BatchQuizRequest):
+
+# ==========================================
+# ENDPOINT 2B: GENERATE SINGLE ERROR QUIZ (10 Questions)
+# ==========================================
+@app.post("/generate-quiz-single")
+def generate_quiz_single(input: SingleErrorQuizRequest):
     try:
-        error_list_text = ""
-        for err in input.errors:
-            error_list_text += f"- {err.error_type}: '{err.quote}'\n"
-
-        target_lang = input.language.strip()
+        # Question language (from settings/user preference)
+        question_lang = input.language.strip()
+        # AI feedback language (explanation)
+        feedback_lang = input.native_language.strip()
         
-        # Tối ưu prompt ngắn gọn
-        if target_lang.lower() in ["english", "en", "us", "uk"]:
-            lang_instruction = "English only."
+        # Determine language instruction
+        if feedback_lang.lower() in ["english", "en", "us", "uk"]:
+            lang_instruction = f"All output (question instruction, options, explanation) in English."
         else:
-            lang_instruction = f"Questions in {target_lang}. Options in English."
+            lang_instruction = f"Question instruction in {feedback_lang}. Options in ENGLISH. Explanation in {feedback_lang}."
 
+        # Get system prompt for single error quiz (or fallback)
         raw_prompt = get_system_prompt_cached("generate_quiz")
         if not raw_prompt:
-             raw_prompt = "Generate quiz for errors: {{error_list_text}}. {{lang_instruction}}"
+            raw_prompt = """Generate exactly 10 practice questions for the following error:
+- Error Type: {{error_type}}
+- User's Mistake: '{{quote}}'
 
-        prompt_text = raw_prompt.replace("{{error_list_text}}", error_list_text)\
+Create 10 diverse, progressively challenging questions that test understanding of this specific error type.
+{{lang_instruction}}
+
+Return as JSON with array of questions, each having: id, question, options (4 strings), correct_answer_index (0-3), explanation."""
+
+        prompt_text = raw_prompt.replace("{{error_type}}", input.error_type)\
+                                .replace("{{quote}}", input.quote)\
                                 .replace("{{lang_instruction}}", lang_instruction)
 
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-2.5-flash-lite',
             contents=prompt_text,
             config=types.GenerateContentConfig(
                 response_mime_type='application/json',
                 response_schema=BatchQuizResponse
             )
         )
-        return response.parsed
+        
+        result = response.parsed
+        # Ensure we have exactly 10 questions (cap if more, or add if less - though shouldn't happen)
+        if len(result.questions) > 10:
+            result.questions = result.questions[:10]
+        
+        return result
 
     except Exception as e:
         traceback.print_exc()
@@ -483,6 +521,46 @@ def generate_portal_link(req: PortalRequest):
         print(e)
         raise HTTPException(status_code=500, detail="Could not generate portal link")
         
+@app.post("/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    try:
+        # Supabase sẽ gửi email chứa link reset password cho user
+        # Khi bấm link, user sẽ được redirect về req.redirect_url kèm theo access_token
+        res = supabase.auth.reset_password_email(
+            req.email, 
+            options={"redirect_to": req.redirect_url}
+        )
+        return {"message": "Password reset email sent. Please check your inbox."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Cần thêm Header để lấy Token xác thực user
+@app.post("/auth/update-password")
+def update_password(req: UpdatePasswordRequest, authorization: str = Header(None)):
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing Access Token")
+
+        # Token thường có dạng "Bearer <token>", ta cần lấy phần <token>
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+
+        auth_url = f"{SUPABASE_URL}/auth/v1/user"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "apikey": SUPABASE_KEY,
+            "Content-Type": "application/json",
+        }
+
+        response = requests.put(auth_url, headers=headers, json={"password": req.new_password})
+        if response.status_code >= 400:
+            detail = response.json().get("msg") if response.headers.get("content-type", "").startswith("application/json") else None
+            raise HTTPException(status_code=400, detail=detail or "Could not update password. Token might be expired.")
+
+        return {"message": "Password updated successfully"}
+
+    except Exception as e:
+        print(f"Error updating password: {e}")
+        raise HTTPException(status_code=400, detail="Could not update password. Token might be expired.")
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
