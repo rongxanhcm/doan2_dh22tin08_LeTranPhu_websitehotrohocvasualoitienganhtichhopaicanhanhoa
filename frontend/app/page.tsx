@@ -33,7 +33,7 @@ const RebrandNotice = () => (
     <div className="fixed top-0 inset-x-0 z-[100] bg-slate-900 px-4 py-2.5 text-white flex items-center justify-center">
       <p className="text-center text-xs sm:text-sm font-medium">
         <strong>Important Update:</strong> To ensure global trademark compliance, our product is officially rebranding to{" "}
-        <a href="https://wrytt.tech" target="_blank" rel="noopener noreferrer" className="underline text-cyan-400 font-bold hover:text-cyan-300">
+        <a href="https://wrytt.me" target="_blank" rel="noopener noreferrer" className="underline text-cyan-400 font-bold hover:text-cyan-300">
           Wrytt
         </a>. This legacy URL remains active for review purposes.
       </p>
