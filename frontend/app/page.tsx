@@ -284,7 +284,7 @@ import UserDropdown from "@/components/UserDropdown";
                         </a>
                       </li>
                       <li className="text-xs text-gray-400 mt-4">
-                        Designed by Phu Le
+                        Designed by Phu Le 
                       </li>
                     </ul>
                   </div>
