@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     follow: false,
   },
   alternates: {
-    canonical: "https://wrytt.tech",
+    canonical: "https://wrytt.me",
   },
   // --------------------------------------------------------
 };
