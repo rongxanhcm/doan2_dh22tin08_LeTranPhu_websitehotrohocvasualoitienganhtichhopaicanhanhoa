@@ -279,8 +279,8 @@ import UserDropdown from "@/components/UserDropdown";
                         <span className="block">Ninh Kieu Dist, Can Tho City, VN</span>
                       </li>
                       <li>
-                        <a href="mailto:contact@wrytt.live" className="text-base text-gray-500 hover:text-indigo-600">
-                          contact@wrytt.live
+                        <a href="mailto:contact@wrytt.me" className="text-base text-gray-500 hover:text-indigo-600">
+                          contact@wrytt.me
                         </a>
                       </li>
                       <li className="text-xs text-gray-400 mt-4">
