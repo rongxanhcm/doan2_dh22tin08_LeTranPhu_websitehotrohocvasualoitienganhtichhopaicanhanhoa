@@ -29,21 +29,17 @@ import UserDropdown from "@/components/UserDropdown";
       <p className="text-slate-500 leading-relaxed text-sm">{desc}</p>
     </div>
   );
-
-  // --- MAIN COMPONENT ---
-// Chèn component này vào trên cùng của Layout hoặc Header của web cũ
-export default function RebrandNotice() {
-  return (
-    <div className="bg-blue-600 px-4 py-3 text-white sm:flex sm:items-center sm:justify-center sm:px-6 lg:px-8">
-      <p className="text-center text-sm font-medium sm:text-left">
+const RebrandNotice = () => (
+    <div className="fixed top-0 inset-x-0 z-[100] bg-slate-900 px-4 py-2.5 text-white flex items-center justify-center">
+      <p className="text-center text-xs sm:text-sm font-medium">
         <strong>Important Update:</strong> To ensure global trademark compliance, our product is officially rebranding to{" "}
-        <a href="https://wrytt.tech" className="underline font-bold hover:text-blue-200">
+        <a href="https://wrytt.tech" target="_blank" rel="noopener noreferrer" className="underline text-cyan-400 font-bold hover:text-cyan-300">
           Wrytt
         </a>. This legacy URL remains active for review purposes.
       </p>
     </div>
   );
-}
+  // --- MAIN COMPONENT ---
   export default function LandingPage() {
     const [user, setUser] = useState<any>(null); // Nên define interface User chuẩn từ Supabase
     const [loading, setLoading] = useState(true);
@@ -72,13 +68,13 @@ export default function RebrandNotice() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-cyan-100 selection:text-cyan-900 overflow-x-hidden">
-      
+      <RebrandNotice />
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
 
       {/* --- NAVBAR (Updated) --- */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-3' : 'bg-transparent py-5'}`}>
+      <nav className={`fixed inset-x-0 z-50 transition-all duration-300 ${isScrolled ? 'top-10 bg-white/80 backdrop-blur-md border-b border-slate-200 py-3' : 'top-10 bg-transparent py-5'}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
             <div className="relative w-8 h-8">
