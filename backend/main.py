@@ -25,17 +25,24 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Secret Webhook (Thay bằng mã thực tế của bạn)
-LEMONSQUEEZY_WEBHOOK_SECRET = "861218"
-
+LEMONSQUEEZY_WEBHOOK_SECRET = os.getenv("LEMONSQUEEZY_WEBHOOK_SECRET")
 # Khởi tạo Clients
 genai_client = genai.Client(api_key=GEMINI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
+# Danh sách các domain được phép gọi API của bạn
+# Hãy thay bằng domain thật của bạn khi launch
+origins = [
+    "http://localhost:3000",          # Cho phép lúc bạn test ở máy tính
+    "https://www.wrytt.me", # Tên miền thật của frontend
+    "https://wrytt.com"    # Tên miền không có www
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, # Thay ["*"] bằng biến origins ở trên
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -378,26 +385,7 @@ Return as JSON with array of questions, each having: id, question, options (4 st
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
-# ENDPOINT 3: DEBUG UPGRADE
-# ==========================================
-@app.post("/debug/upgrade-pro")
-def debug_upgrade_pro(req: UpgradeRequest):
-    try:
-        user_res = supabase.table("user_usage").select("*").eq("user_id", req.user_id).execute()
-        
-        if not user_res.data:
-            supabase.table("user_usage").insert({
-                "user_id": req.user_id, "is_pro": True, "usage_count": 0
-            }).execute()
-        else:
-            supabase.table("user_usage").update({"is_pro": True}).eq("user_id", req.user_id).execute()
-            
-        return {"message": "Upgrade successful!", "status": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ==========================================
-# ENDPOINT 4: RETROACTIVE UPGRADE (Fix bài cũ)
+# ENDPOINT 3: RETROACTIVE UPGRADE (Fix bài cũ)
 # ==========================================
 @app.post("/upgrade-submission")
 def upgrade_submission(req: UpgradeSubmissionRequest):
