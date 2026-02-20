@@ -30,8 +30,8 @@ import UserDropdown from "@/components/UserDropdown";
     </div>
   );
 
-  const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/76ea9484-fa92-43c9-ac90-ef9c22e2beab?enabled=1304553";
-  const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/2b2a245a-5675-47b4-bd64-ccd3aedd8e01?enabled=1304546";
+  const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/e94485d4-5dd0-489d-aeb6-8182ccea5311?enabled=1304684";
+  const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/7cae4736-2ee6-4ce6-854a-e89b299f3c1e?enabled=1304691";
 
   // --- MAIN COMPONENT ---
 

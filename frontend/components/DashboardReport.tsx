@@ -59,14 +59,14 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
     });
 
     const getScoreColor = (score: number) => {
-      if (score >= 7.5) return "#0891b2"; // cyan-600
-      if (score >= 6.5) return "#0ea5e9"; // sky-500
+      if (score >= 7.5) return "#1F7883"; // brand dark
+      if (score >= 6.5) return "#378F96"; // brand primary
       return "#64748b"; // slate-500
     };
 
     const getScoreBg = (score: number) => {
-      if (score >= 7.5) return "#ecfeff"; // cyan-50
-      if (score >= 6.5) return "#f0f9ff"; // sky-50
+      if (score >= 7.5) return "#e6f3f4"; // brand light
+      if (score >= 6.5) return "#f0f8f9"; // brand lighter
       return "#f8fafc"; // slate-50
     };
 
@@ -79,7 +79,9 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
             width: "210mm",
             minHeight: "297mm",
             padding: "48px",
-            fontFamily: "system-ui, -apple-system, sans-serif",
+            fontFamily: "Segoe UI, Arial, sans-serif",
+            fontSize: "12px",
+            lineHeight: 1.35,
             position: "relative",
             boxSizing: "border-box"
         }}
@@ -115,34 +117,26 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                   alignItems: "center", 
                   justifyContent: "center"
                 }}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g clipPath="url(#clip0_1_2)">
-                      <path d="M37.856 0H10.144C4.54162 0 0 4.54162 0 10.144V37.856C0 43.4584 4.54162 48 10.144 48H37.856C43.4584 48 48 43.4584 48 37.856V10.144C48 4.54162 43.4584 0 37.856 0Z" fill="url(#paint0_linear_1_2)"/>
-                      <path d="M31.704 31.328L32.504 32.928C32.2053 33.568 31.7893 34.208 31.256 34.848C30.7227 35.4667 30.168 36.0213 29.592 36.512L19.448 35.68L18.072 36.512C17.176 36.192 16.4827 35.712 15.992 35.072L17.24 25.248L16.856 13.6L17.784 12.96C18.0187 13.0027 18.3493 13.1307 18.776 13.344C19.224 13.536 19.64 13.7493 20.024 13.984L29.432 12.96C30.0293 13.3227 30.552 13.7387 31 14.208C31.4693 14.6773 31.9067 15.2 32.312 15.776L31.864 17.504L20.792 17.216L20.6 23.392L27.8 22.336C28.4827 22.6987 29.048 23.072 29.496 23.456C29.9653 23.84 30.36 24.3093 30.68 24.864L30.2 26.72L20.536 26.4V32.672L31.704 31.328Z" fill="white"/>
-                    </g>
-                    <defs>
-                      <linearGradient id="paint0_linear_1_2" x1="6.40458" y1="3.60783" x2="44.1127" y2="44.5808" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#24F7BC"/>
-                        <stop offset="1" stopColor="#24C4FC"/>
-                      </linearGradient>
-                      <clipPath id="clip0_1_2">
-                        <rect width="48" height="48" fill="white"/>
-                      </clipPath>
-                    </defs>
-                  </svg>
+                  <img
+                    src="/logo.svg"
+                    alt="Wrytt Logo"
+                    width={48}
+                    height={48}
+                    style={{ display: "block" }}
+                  />
                 </div>
                 <div>
                   <div style={{ 
-                    fontSize: "9px", 
+                    fontSize: "10px", 
                     fontWeight: 900, 
                     letterSpacing: "0.15em", 
-                    color: "#0891b2",
+                    color: "#378F96",
                     marginBottom: "4px"
                   }}>
                     WRYTT PRO
                   </div>
                   <div style={{ 
-                    fontSize: "11px", 
+                    fontSize: "12px", 
                     fontWeight: 700, 
                     letterSpacing: "0.05em", 
                     color: "#64748b"
@@ -163,7 +157,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
               <p style={{ 
                 color: "#64748b", 
                 fontWeight: 600, 
-                fontSize: "16px", 
+                fontSize: "17px", 
                 margin: 0 
               }}>
                 {t.subtitle}
@@ -171,7 +165,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
             </div>
             <div style={{ textAlign: "right" }}>
               <p style={{ 
-                fontSize: "15px", 
+                fontSize: "16px", 
                 fontWeight: 700, 
                 color: "#0f172a", 
                 margin: "0 0 6px 0" 
@@ -179,7 +173,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                 {userEmail.split('@')[0]}
               </p>
               <p style={{ 
-                fontSize: "11px", 
+                fontSize: "12px", 
                 color: "#94a3b8", 
                 fontWeight: 600,
                 letterSpacing: "0.02em"
@@ -201,8 +195,8 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
         }}>
           {[
             { label: t.total_essays, value: stats.totalEssays, icon: <FileText size={18}/>, color: "#64748b" },
-            { label: t.avg_score, value: stats.avgScore, icon: <TrendingUp size={18}/>, color: "#0891b2", isScore: true },
-            { label: t.highest_score, value: stats.highestScore, icon: <Award size={18}/>, color: "#0891b2", isScore: true }
+            { label: t.avg_score, value: stats.avgScore, icon: <TrendingUp size={18}/>, color: "#378F96", isScore: true },
+            { label: t.highest_score, value: stats.highestScore, icon: <Award size={18}/>, color: "#378F96", isScore: true }
           ].map((card, idx) => (
             <div key={idx} style={{ 
               backgroundColor: "#ffffff", 
@@ -214,19 +208,19 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
               <div style={{ 
                 width: "40px",
                 height: "40px",
-                backgroundColor: idx === 0 ? "#f8fafc" : "#ecfeff",
+                backgroundColor: idx === 0 ? "#f8fafc" : "#f0f8f9",
                 borderRadius: "10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: "16px",
-                border: `1px solid ${idx === 0 ? "#e2e8f0" : "#cffafe"}`,
+                border: `1px solid ${idx === 0 ? "#e2e8f0" : "#d6eaec"}`,
                 color: card.color
               }}>
                 {card.icon}
               </div>
               <p style={{ 
-                fontSize: "9px", 
+                fontSize: "10px", 
                 fontWeight: 900, 
                 letterSpacing: "0.1em", 
                 color: "#94a3b8",
@@ -249,7 +243,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                   <span style={{ 
                     color: "#94a3b8", 
                     fontWeight: 700, 
-                    fontSize: "12px" 
+                    fontSize: "13px" 
                   }}>
                     / 9.0
                   </span>
@@ -275,10 +269,10 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
             gap: "8px",
             marginBottom: "32px"
           }}>
-            <Zap size={16} color="#0891b2" />
+            <Zap size={16} color="#378F96" />
             <h2 style={{ 
               color: "#ffffff", 
-              fontSize: "11px", 
+              fontSize: "12px", 
               fontWeight: 900, 
               letterSpacing: "0.1em",
               textTransform: "uppercase",
@@ -317,12 +311,12 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                     width: "100%",
                     maxWidth: "36px",
                     background: d.score >= 7 
-                      ? "linear-gradient(to top, #0891b2, #06b6d4)" 
+                      ? "linear-gradient(to top, #1F7883, #378F96)" 
                       : "linear-gradient(to top, #475569, #64748b)",
                     borderRadius: "8px 8px 4px 4px",
                     position: "relative",
                     boxShadow: d.score >= 7 
-                      ? "0 4px 12px rgba(8, 145, 178, 0.3)"
+                      ? "0 4px 12px rgba(55, 143, 150, 0.3)"
                       : "0 2px 6px rgba(71, 85, 105, 0.2)"
                   }}>
                     <div style={{ 
@@ -330,7 +324,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                       top: "-28px", 
                       left: "50%", 
                       transform: "translateX(-50%)", 
-                      fontSize: "12px", 
+                      fontSize: "13px", 
                       fontWeight: 900, 
                       color: "#ffffff",
                       whiteSpace: "nowrap"
@@ -340,7 +334,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                   </div>
                 </div>
                 <span style={{ 
-                  fontSize: "9px", 
+                  fontSize: "10px", 
                   fontWeight: 700, 
                   color: "#64748b",
                   letterSpacing: "0.03em"
@@ -355,7 +349,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
         {/* RECENT SUBMISSIONS */}
         <div style={{ position: "relative", zIndex: 1 }}>
           <h2 style={{ 
-            fontSize: "11px", 
+            fontSize: "12px", 
             fontWeight: 900, 
             color: "#94a3b8", 
             letterSpacing: "0.1em", 
@@ -382,8 +376,8 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                 <div key={i} style={{ 
                   display: "flex", 
                   flexDirection: "column",
-                  gap: "12px", 
-                  padding: "20px 24px", 
+                  gap: "8px", 
+                  padding: "16px 20px", 
                   borderRadius: "12px", 
                   border: "1px solid #e2e8f0",
                   backgroundColor: "#ffffff",
@@ -395,10 +389,11 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                     justifyContent: "space-between"
                   }}>
                     <div style={{ 
-                      fontSize: "11px", 
+                      fontSize: "9px", 
                       fontWeight: 800, 
                       color: "#64748b", 
-                      letterSpacing: "0.02em"
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase"
                     }}>
                       {new Date(sub.created_at).toLocaleDateString(dateLocale, { 
                         day: '2-digit', 
@@ -410,12 +405,12 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                     <div style={{
                       backgroundColor: scoreBg,
                       color: scoreColor,
-                      fontSize: "14px",
+                      fontSize: "11px",
                       fontWeight: 900,
-                      padding: "6px 14px",
+                      padding: "4px 10px",
                       borderRadius: "8px",
                       border: `1px solid ${scoreColor}20`,
-                      minWidth: "60px",
+                      minWidth: "52px",
                       textAlign: "center"
                     }}>
                       {sub.score.toFixed(1)}
@@ -424,10 +419,10 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
                   
                   <div>
                     <p style={{ 
-                      fontSize: "11px", 
+                      fontSize: "13px", 
                       color: "#475569", 
                       margin: 0,
-                      lineHeight: "1.7"
+                      lineHeight: "1.75"
                     }}>
                       {sub.general_feedback || t.no_feedback}
                     </p>
@@ -449,7 +444,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
           display: "flex", 
           justifyContent: "space-between", 
           alignItems: "center",
-          fontSize: "9px", 
+          fontSize: "10px", 
           fontWeight: 700, 
           color: "#94a3b8",
           letterSpacing: "0.05em"
@@ -458,7 +453,7 @@ const DashboardReport = forwardRef<HTMLDivElement, ReportProps>(
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span>POWERED BY</span>
             <span style={{ 
-              color: "#0891b2", 
+              color: "#378F96", 
               fontWeight: 900,
               letterSpacing: "0.08em"
             }}>
