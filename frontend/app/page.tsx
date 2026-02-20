@@ -30,6 +30,9 @@ import UserDropdown from "@/components/UserDropdown";
     </div>
   );
 
+  const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/76ea9484-fa92-43c9-ac90-ef9c22e2beab?enabled=1304553";
+  const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/2b2a245a-5675-47b4-bd64-ccd3aedd8e01?enabled=1304546";
+
   // --- MAIN COMPONENT ---
 
   export default function LandingPage() {
@@ -37,6 +40,7 @@ import UserDropdown from "@/components/UserDropdown";
     const [loading, setLoading] = useState(true);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isPro, setIsPro] = useState(false);
+    const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
     const supabase = createClient();
     const router = useRouter();
 
@@ -57,6 +61,51 @@ import UserDropdown from "@/components/UserDropdown";
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!document.getElementById("lemon-js")) {
+      const script = document.createElement("script");
+      script.id = "lemon-js";
+      script.src = "https://assets.lemonsqueezy.com/lemon.js";
+      script.defer = true;
+      script.onload = () => {
+        const lemon = window as unknown as { createLemonSqueezy?: () => void };
+        if (lemon.createLemonSqueezy) lemon.createLemonSqueezy();
+      };
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const handleProCheckout = async () => {
+    if (isPro) {
+      toast.success("You already have Pro.");
+      return;
+    }
+
+    if (loading) return;
+
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      toast.error("Please login to upgrade.");
+      router.push("/login");
+      return;
+    }
+
+    const baseUrl = billingCycle === "monthly" ? CHECKOUT_URL_MONTHLY : CHECKOUT_URL_YEARLY;
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    const checkoutUrl = `${baseUrl}${separator}checkout[custom][user_id]=${currentUser.id}&embed=1`;
+
+    const lemon = window as unknown as { createLemonSqueezy?: () => void; LemonSqueezy?: { Url: { Open: (url: string) => void } } };
+    if (!lemon.LemonSqueezy && lemon.createLemonSqueezy) lemon.createLemonSqueezy();
+
+    setTimeout(() => {
+      if (lemon.LemonSqueezy) {
+        lemon.LemonSqueezy.Url.Open(checkoutUrl);
+      } else {
+        window.location.href = checkoutUrl;
+      }
+    }, 300);
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-cyan-100 selection:text-cyan-900 overflow-x-hidden">
@@ -130,7 +179,7 @@ import UserDropdown from "@/components/UserDropdown";
             </h1>
             
             <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Wrytt isn't just a spellchecker. It's an AI-powered writing coach that helps you reach <span className="font-semibold text-slate-900">IELTS Band 8.0+</span> standards using Vertex AI technology.
+              Wrytt is an AI-powered writing coach that doesn't just catch mistakes—it helps you <span className="font-semibold text-slate-900">master academic writing</span>. Get detailed feedback, practice with intelligent quizzes, and track your progress from Band 5.0 to Band 9.0+.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -189,52 +238,229 @@ import UserDropdown from "@/components/UserDropdown";
         <section className="py-24 bg-slate-50 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16 max-w-2xl mx-auto">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Science-backed grading</h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Master writing, not just fix it</h2>
               <p className="text-slate-500">
-                We reverse-engineered the official band descriptors to give you feedback that actually moves the needle.
+                AI-powered analysis combined with adaptive learning to turn weaknesses into strengths.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FeatureCard 
                   icon={Zap}
-                  title="Instant Feedback"
-                  desc="Get a detailed breakdown of your grammar and vocabulary mistakes in less than 5 seconds."
-              />
-              <FeatureCard 
-                  icon={Fingerprint}
-                  title="Personalized Style"
-                  desc="The AI learns your writing voice and suggests improvements that sound like you, but smarter."
-                  className="md:col-span-2 bg-gradient-to-br from-white to-teal-50/50 border-teal-100"
+                  title="Instant Band Score"
+                  desc="Get accurate IELTS Band estimation with detailed breakdown of your Lexical Range, Coherence & Cohesion."
               />
               <FeatureCard 
                   icon={BookOpen}
-                  title="Academic Vocab"
-                  desc="Replace weak verbs with C1/C2 alternatives instantly."
-                  className="md:col-span-2"
+                  title="AI-Powered Quiz System"
+                  desc="Practice with 10-question quizzes targetting your specific errors. Free users get 6/day, Pro unlimited."
+                  className="md:col-span-2 bg-gradient-to-br from-white to-teal-50/50 border-teal-100"
               />
               <FeatureCard 
                   icon={BarChart3}
-                  title="Score Prediction"
-                  desc="Accurate band score estimation for Task 1 & Task 2."
+                  title="Mastery Tracking"
+                  desc="Track progress through Learning → Practicing → Mastered. Smart focus system locks priority errors."
+                  className="md:col-span-2"
+              />
+              <FeatureCard 
+                  icon={Sparkles}
+                  title="Band 9.0 Rewrites"
+                  desc="See how AI transforms your essay with C2 vocabulary and elite phrasing. Pro-only feature."
+              />
+              <FeatureCard 
+                  icon={BarChart3}
+                  title="Progress Reports"
+                  desc="Download PDF reports tracking your improvement, error patterns, and mastery journey."
+              />
+              <FeatureCard 
+                  icon={Fingerprint}
+                  title="Contextual Feedback"
+                  desc="Every correction comes with explanation & lesson links so you actually learn, not just fix."
               />
             </div>
           </div>
         </section>
 
-        {/* --- CTA SECTION (Minimalist) --- */}
+        {/* --- HOW IT WORKS SECTION --- */}
+        <section className="py-24 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16 max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Your learning journey</h2>
+              <p className="text-slate-500">
+                Analyze → Learn → Practice → Master. Repeat with next error.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[
+                { step: "1", title: "Submit Essay", desc: "Paste your writing and get instant AI analysis" },
+                { step: "2", title: "Get Feedback", desc: "Every error with explanation + lesson link" },
+                { step: "3", title: "Practice Quiz", desc: "10 targeted questions on your weaknesses" },
+                { step: "4", title: "Track Mastery", desc: "Watch errors move from Learning → Mastered" }
+              ].map((item, i) => (
+                <div key={i} className="relative">
+                  <div className="p-6 rounded-2xl bg-white border-2 border-teal-100 hover:border-teal-400 transition-all">
+                    <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold mb-4">
+                      {item.step}
+                    </div>
+                    <h3 className="font-bold text-slate-900 mb-2">{item.title}</h3>
+                    <p className="text-sm text-slate-500">{item.desc}</p>
+                  </div>
+                  {i < 3 && (
+                    <div className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10">
+                      <ChevronRight size={24} className="text-teal-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --- PRICING COMPARISON PREVIEW --- */}
+        <section className="py-24 bg-slate-50 border-t border-slate-200 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12 max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Simple, transparent pricing</h2>
+              <p className="text-slate-500 mb-8">
+                Free plan gets you started. Pro unlocks unlimited practice & elite features.
+              </p>
+              
+              {/* Billing Toggle */}
+              <div className="flex bg-white p-1.5 rounded-xl w-fit mx-auto border border-slate-200 shadow-sm">
+                <button 
+                  onClick={() => setBillingCycle('monthly')}
+                  className={`flex-1 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${billingCycle === 'monthly' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Monthly
+                </button>
+                <button 
+                  onClick={() => setBillingCycle('yearly')}
+                  className={`flex-1 px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all relative ${billingCycle === 'yearly' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                  Yearly
+                  {billingCycle === 'yearly' && (
+                    <span className="absolute -top-3 -right-1 bg-emerald-500 text-white text-[8px] px-2 py-0.5 rounded-full font-black">SAVE 45%</span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {[
+                { 
+                  name: "Free", 
+                  price: "$0", 
+                  subtext: "Perfect for beginners",
+                  badge: "ALWAYS FREE",
+                  badgeColor: "bg-blue-500",
+                  features: [
+                    { text: "2 essays per day", icon: true },
+                    { text: "6 practice quizzes per day", icon: true },
+                    { text: "Complete error analysis", icon: true },
+                    { text: "Lesson access", icon: true },
+                    { text: "Mastery tracking", icon: true },
+                    { text: "Band 9.0 rewrites", icon: false },
+                    { text: "PDF reports", icon: false },
+                  ],
+                  cta: "Get Started",
+                  highlight: false
+                },
+                { 
+                  name: "Pro", 
+                  monthlyPrice: "$9",
+                  yearlyPrice: "$59",
+                  monthlyTotal: "$9/mo",
+                  yearlyTotal: "$5/mo (billed yearly)",
+                  subtext: "For serious learners",
+                  features: [
+                    { text: "50 essays per day", icon: true },
+                    { text: "Unlimited quizzes", icon: true },
+                    { text: "Complete error analysis", icon: true },
+                    { text: "Lesson access", icon: true },
+                    { text: "Mastery tracking", icon: true },
+                    { text: "Band 9.0 rewrites", icon: true },
+                    { text: "PDF progress reports", icon: true },
+                    
+                  ],
+                  badge: "MOST POPULAR",
+                  badgeColor: "bg-emerald-500",
+                  cta: "Upgrade to Pro",
+                  highlight: true
+                }
+              ].map((plan, i) => (
+                <div key={i} className={`rounded-2xl p-8 border-2 transition-all h-full flex flex-col relative ${plan.highlight ? 'bg-gradient-to-br from-teal-600 to-teal-500 text-white border-teal-500 shadow-lg shadow-teal-600/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                  {plan.badge && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <div className={`px-4 py-1 ${plan.badgeColor} text-white text-xs font-black rounded-full shadow-lg`}>
+                        {plan.badge}
+                      </div>
+                    </div>
+                  )}
+                  <h3 className={`text-2xl font-bold mb-2 ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
+                  {plan.subtext && (
+                    <p className={`text-xs font-semibold mb-5 ${plan.highlight ? 'text-teal-100' : 'text-slate-500'}`}>{plan.subtext}</p>
+                  )}
+                  <div className="mb-8">
+                    {plan.price !== undefined ? (
+                      <div>
+                        <span className={`text-4xl font-bold ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>{plan.price}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className={`text-4xl font-bold ${plan.highlight ? 'text-white' : 'text-slate-900'}`}>
+                          ${billingCycle === 'monthly' ? plan.monthlyPrice?.replace('$', '') : plan.yearlyPrice?.replace('$', '')}
+                        </span>
+                        <p className={`text-sm mt-2 font-semibold ${plan.highlight ? 'text-teal-100' : 'text-slate-600'}`}>
+                          {billingCycle === 'monthly' ? plan.monthlyTotal : plan.yearlyTotal}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <ul className={`space-y-3 mb-8 pb-8 border-b ${plan.highlight ? 'border-teal-400' : 'border-slate-100'}`}>
+                    {plan.features.map((feature: any, j: number) => (
+                      <li key={j} className={`flex items-center gap-2 text-sm ${feature.icon ? (plan.highlight ? 'text-white' : 'text-slate-700') : (plan.highlight ? 'text-teal-200' : 'text-slate-400')}`}>
+                        {feature.icon ? (
+                          <Check size={16} className={plan.highlight ? 'text-teal-100 flex-shrink-0' : 'text-teal-600 flex-shrink-0'} />
+                        ) : (
+                          <X size={16} className={plan.highlight ? 'text-teal-300/50 flex-shrink-0' : 'text-slate-300 flex-shrink-0'} />
+                        )}
+                        <span>{typeof feature === 'string' ? feature : feature.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {plan.highlight ? (
+                    <button
+                      type="button"
+                      onClick={handleProCheckout}
+                      className="w-full py-3 rounded-lg font-bold transition-all mt-auto block text-center bg-white text-teal-600 hover:bg-gray-50 shadow-lg"
+                    >
+                      {plan.cta}
+                    </button>
+                  ) : (
+                    <Link href="/analyze" className="w-full py-3 rounded-lg font-bold transition-all mt-auto block text-center bg-slate-100 text-slate-900 hover:bg-slate-200">
+                      {plan.cta}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
         <section className="py-32 px-6">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
-              Ready to write your best essay?
+              Stop hoping for Band 7.0. Start earning it.
             </h2>
             <p className="text-xl text-slate-500">
-              Join thousands of students aiming for Band 7.0+. No login required — start analyzing instantly.
+              With daily practice quizzes, smart error tracking, and detailed feedback—you'll improve faster than you ever thought possible.
             </p>
-            <div className="flex justify-center pt-4">
-              <Link href="/analyze" className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-slate-900 font-pj rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 hover:bg-teal-600">
-                  Start Analyzing Free
-                  <div className="absolute -inset-3 rounded-xl bg-teal-100 opacity-0 group-hover:opacity-100 transition duration-200 -z-10 blur-lg"></div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Link href="/analyze" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-all hover:scale-[1.02] shadow-lg shadow-teal-600/30">
+                Start Free (No login) <ArrowRight size={18} />
+              </Link>
+              <Link href="/#pricing" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-teal-400 hover:bg-teal-50 transition-all">
+                View Pro Benefits
               </Link>
             </div>
           </div>
@@ -293,7 +519,7 @@ import UserDropdown from "@/components/UserDropdown";
             </div>
             <div className="mt-12 border-t border-gray-200 pt-8">
               <p className="text-base text-gray-400 xl:text-center">
-                &copy; Academic Project
+                &copy; 2026 Wrytt. All rights reserved.
               </p>
             </div>
           </div>

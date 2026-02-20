@@ -44,6 +44,7 @@ app.add_middleware(
 # --- CONSTANTS ---
 FREE_DAILY_LIMIT = 2   
 PRO_DAILY_LIMIT = 50   
+FREE_DAILY_QUIZ_LIMIT = 6
 MIN_WORD_COUNT = 15
 
 # --- [NEW] HELPER FUNCTION WITH CACHE ---
@@ -290,8 +291,39 @@ def analyze_essay(input: EssayInput, request: Request):
 # ENDPOINT 2B: GENERATE SINGLE ERROR QUIZ (10 Questions)
 # ==========================================
 @app.post("/generate-quiz-single")
-def generate_quiz_single(input: SingleErrorQuizRequest):
+def generate_quiz_single(input: SingleErrorQuizRequest, request: Request):
     try:
+        # Get user_id from request headers (if available)
+        user_id = request.headers.get("X-User-Id")
+        is_pro = False
+        
+        # Check quiz limit for free users
+        if user_id:
+            usage_res = supabase.table("user_usage").select("*").eq("user_id", user_id).execute()
+            if usage_res.data:
+                usage_data = usage_res.data[0]
+                is_pro = usage_data.get('is_pro', False)
+                
+                # Only enforce limit for free users
+                if not is_pro:
+                    # Check if it's a new day
+                    last_reset = usage_data.get('last_quiz_reset_date')
+                    today_str = datetime.now().strftime('%Y-%m-%d')
+                    
+                    if last_reset != today_str:
+                        # Reset quiz count for new day
+                        supabase.table("user_usage").update({
+                            "quiz_count": 0,
+                            "last_quiz_reset_date": today_str
+                        }).eq("user_id", user_id).execute()
+                        quiz_count = 0
+                    else:
+                        quiz_count = usage_data.get('quiz_count', 0)
+                    
+                    # Check if user has exceeded daily quiz limit
+                    if quiz_count >= FREE_DAILY_QUIZ_LIMIT:
+                        raise HTTPException(status_code=429, detail=f"Daily quiz limit reached ({FREE_DAILY_QUIZ_LIMIT}/day). Upgrade to Pro for unlimited quizzes!")
+        
         # Question language (from settings/user preference)
         question_lang = input.language.strip()
         # AI feedback language (explanation)
@@ -332,6 +364,12 @@ Return as JSON with array of questions, each having: id, question, options (4 st
         # Ensure we have exactly 10 questions (cap if more, or add if less - though shouldn't happen)
         if len(result.questions) > 10:
             result.questions = result.questions[:10]
+        
+        # Increment quiz count after successful generation (only for logged-in free users)
+        if user_id and not is_pro:
+            supabase.table("user_usage").update({
+                "quiz_count": usage_data.get('quiz_count', 0) + 1
+            }).eq("user_id", user_id).execute()
         
         return result
 

@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import DashboardReport from "@/components/DashboardReport";
 
 const FREE_DAILY_LIMIT = 2;
+const FREE_DAILY_QUIZ_LIMIT = 6;
 const FOCUS_LOCK_ESSAYS = 4;
 
 export default function Dashboard() {
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
+  const [quizCount, setQuizCount] = useState(0);
   const [showPricingModal, setShowPricingModal] = useState(false);
 
   const [stats, setStats] = useState({
@@ -78,6 +80,13 @@ export default function Dashboard() {
   const handleStartQuiz = async (errorType: string, quote: string, errorId?: number) => {
     if (!errorType || !quote) return;
     
+    // Check quiz limit for free users
+    if (!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT) {
+      toast.error(`Daily quiz limit reached (${FREE_DAILY_QUIZ_LIMIT}/day). Upgrade to Pro for unlimited!`, { icon: "🔒" });
+      setShowPricingModal(true);
+      return;
+    }
+    
     setQuizLoading(true);
     setQuizError(false);
     setQuizActive(true);
@@ -88,7 +97,10 @@ export default function Dashboard() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await fetch(`${API_URL}/generate-quiz-single`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-User-Id": userId || ""
+        },
         body: JSON.stringify({
           error_type: errorType,
           quote: quote,
@@ -96,7 +108,16 @@ export default function Dashboard() {
         })
       });
 
-      if (!res.ok) throw new Error("Failed to generate quiz");
+      if (!res.ok) {
+        const errData = await res.json();
+        if (res.status === 429) {
+          toast.error("Daily quiz limit reached. Upgrade to Pro!", { icon: "🔒" });
+          setShowPricingModal(true);
+        } else {
+          throw new Error(errData.detail || "Failed to generate quiz");
+        }
+        return;
+      }
 
       const data = await res.json();
       if (data.questions && data.questions.length > 0) {
@@ -106,6 +127,8 @@ export default function Dashboard() {
         setIsAnswered(false);
         setQuizResults({});
         setShowQuizResult(false);
+        // Increment quiz count after successful generation
+        setQuizCount(quizCount + 1);
       } else {
         throw new Error("No questions generated");
       }
@@ -164,10 +187,11 @@ export default function Dashboard() {
       if (passedQuiz) {
         toast.success("Excellent! Quiz passed. Keep practicing!", { icon: "✓" });
       } else {
-        toast.error("Keep practicing! Try again.", { icon: "📚" });
+        toast.success("Progress saved! Keep practicing.", { icon: "📚" });
       }
       
-      // Refresh dashboard data
+      // Close quiz and refresh dashboard data
+      setQuizActive(false);
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -236,6 +260,7 @@ export default function Dashboard() {
           const today = new Date();
           const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           setUsageCount(String(usageData.last_reset_date) === todayStr ? usageData.usage_count : 0);
+          setQuizCount(String(usageData.last_quiz_reset_date) === todayStr ? usageData.quiz_count : 0);
       }
 
       const { data: submissions } = await supabase
@@ -668,7 +693,7 @@ export default function Dashboard() {
                         
                         <button 
                             onClick={() => handleStartQuiz(stats.priorityError.type, stats.priorityError.quote, stats.priorityError.id)}
-                            disabled={quizLoading}
+                            disabled={quizLoading || (!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT)}
                             className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             {quizLoading ? (
@@ -676,12 +701,24 @@ export default function Dashboard() {
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                 Generating Quiz...
                               </>
+                            ) : !isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT ? (
+                              <>
+                                <Lock size={16} /> Quiz Limit Reached
+                              </>
                             ) : (
                               <>
                                 <Zap size={16} /> Practice Now
                               </>
                             )}
                         </button>
+
+                        {!isPro && (
+                          <div className="p-3 bg-slate-100 rounded-lg">
+                            <p className="text-[10px] text-slate-600 font-bold text-center">
+                              Daily Quizzes: <span className={quizCount >= FREE_DAILY_QUIZ_LIMIT ? "text-red-600" : "text-cyan-600"}>{quizCount}/{FREE_DAILY_QUIZ_LIMIT}</span>
+                            </p>
+                          </div>
+                        )}
                     </div>
                   ) : quizLoading ? (
                     // Loading State
@@ -723,24 +760,17 @@ export default function Dashboard() {
                                 Need {6 - correctCount} more to pass (60% = 6/10)
                               </p>
                             )}
-                            <div className="space-y-2 pt-2">
+                            <div className="pt-4">
                               <button
                                 onClick={handleCompleteQuiz}
                                 disabled={quizSaving}
                                 className={`w-full py-3 font-black rounded-lg text-white transition-all ${
                                   passed
                                     ? "bg-emerald-600 hover:bg-emerald-700"
-                                    : "bg-blue-600 hover:bg-blue-700"
+                                    : "bg-slate-900 hover:bg-slate-800"
                                 } disabled:opacity-50`}
                               >
-                                {quizSaving ? "Saving..." : passed ? "Save Progress ✓" : "Try Again"}
-                              </button>
-                              <button 
-                                onClick={() => setQuizActive(false)}
-                                disabled={quizSaving}
-                                className="w-full py-2 bg-slate-200 text-slate-900 font-bold rounded-lg hover:bg-slate-300 transition-all disabled:opacity-50"
-                              >
-                                Back
+                                {quizSaving ? "Saving..." : "Save & Close"}
                               </button>
                             </div>
                         </div>

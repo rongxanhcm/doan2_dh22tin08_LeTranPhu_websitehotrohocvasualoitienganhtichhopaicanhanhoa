@@ -737,11 +737,11 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
             ) : (
                 <div className="space-y-5 animate-fade-in-up">
                     
-                    {/* AI Feedback Card - Moved to top of sidebar */}
-                    <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border border-cyan-200 shadow-lg shadow-cyan-500/10 p-6 relative overflow-hidden group hover:shadow-xl hover:shadow-cyan-500/15 transition-all duration-300">
+                    {/* AI Feedback Card - Optimized for compact display */}
+                    <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border border-cyan-200 shadow-lg shadow-cyan-500/10 p-5 relative overflow-hidden group hover:shadow-xl hover:shadow-cyan-500/15 transition-all duration-300">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-100 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
                         
-                        <div className="flex items-center gap-2.5 mb-4 relative z-10">
+                        <div className="flex items-center gap-2.5 mb-3 relative z-10">
                             <div className="p-2 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md shadow-cyan-500/20">
                                 <Quote size={18} />
                             </div>
@@ -751,129 +751,97 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                             </div>
                         </div>
                         
-                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-4 rounded-xl border border-slate-200/50 relative z-10 max-h-[300px] overflow-y-auto hide-scrollbar">
+                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-3.5 rounded-xl border border-slate-200/50 relative z-10 max-h-[200px] overflow-y-auto hide-scrollbar">
                             {result.general_feedback.split('\n').map((line: string, i: number) => (
-                                <p key={i} className={`mb-2 last:mb-0 ${line.startsWith('**') ? 'font-bold text-slate-900 mt-2' : ''}`}>
+                                <p key={i} className={`mb-1.5 last:mb-0 text-xs ${line.startsWith('**') ? 'font-bold text-slate-900 mt-1.5' : ''}`}>
                                     {line.replace(/\*\*/g, '')}
                                 </p>
                             ))}
                         </div>
                     </div>
                     
-                    {/* Score Card */}
-                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8 rounded-2xl shadow-2xl shadow-slate-900/20 border-2 border-slate-700 relative overflow-hidden flex flex-col items-center justify-center min-h-[180px] group hover:shadow-slate-900/30 transition-all duration-300">
+                    {/* Score Card - Optimized */}
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6 rounded-2xl shadow-2xl shadow-slate-900/20 border-2 border-slate-700 relative overflow-hidden flex flex-col items-center justify-center min-h-[160px] group hover:shadow-slate-900/30 transition-all duration-300">
                          {/* Background trang trí */}
                          <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500 rounded-full blur-[80px] opacity-30 pointer-events-none glow-effect"></div>
                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20 pointer-events-none glow-effect" style={{animationDelay: '1.5s'}}></div>
                          
                          <div className="relative z-10 text-center">
-                            <div className="flex items-center justify-center gap-2 mb-3">
+                            <div className="flex items-center justify-center gap-2 mb-2">
                               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-                              <p className="text-xs font-black text-cyan-400 uppercase tracking-widest">Overall Band Score</p>
+                              <p className="text-xs font-black text-cyan-400 uppercase tracking-widest">Band Score</p>
                               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
                             </div>
-                            <div className="flex items-center justify-center gap-4">
-                                <span className="text-8xl font-black tracking-tighter text-white drop-shadow-2xl">{result.score}</span>
+                            <div className="flex items-center justify-center gap-3">
+                                <span className="text-7xl font-black tracking-tighter text-white drop-shadow-2xl">{result.score}</span>
                                 {parseFloat(result.score) >= 7.0 && (
-                                    <Sparkles className="text-yellow-400 animate-pulse drop-shadow-glow" size={28} />
+                                    <Sparkles className="text-yellow-400 animate-pulse drop-shadow-glow" size={24} />
                                 )}
                             </div>
-                            <p className="text-cyan-300 text-sm font-semibold mt-3 opacity-90">AI Assessment Complete</p>
+                            <p className="text-cyan-300 text-xs font-semibold mt-2 opacity-90">AI Assessment Complete</p>
                          </div>
                     </div>
 
                     {/* Error Interaction Area */}
                     <div>
                         {mode === 'vocab' ? (
-                            <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-7 rounded-2xl shadow-2xl shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all duration-300">
+                            <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-5 rounded-2xl shadow-2xl shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all duration-300">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
                                 <div className="relative z-10">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <Sparkles size={18} className="text-yellow-300 animate-pulse"/>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Sparkles size={16} className="text-yellow-300 animate-pulse"/>
                                         <span className="text-xs font-black uppercase tracking-widest">Elite Phrasing</span>
                                     </div>
-                                    <h3 className="text-xl font-black mb-3 drop-shadow-sm">Refined by Wrytt AI</h3>
-                                    <p className="text-sm text-cyan-50 leading-relaxed font-medium">
+                                    <h3 className="text-lg font-black mb-2.5 drop-shadow-sm">Refined by Wrytt AI</h3>
+                                    <p className="text-xs text-cyan-50 leading-relaxed font-medium">
                                         Your essay has been rewritten to meet strict <b className="text-white">academic standards</b>. Compare the changes to learn.
                                     </p>
                                 </div>
                             </div>
                         ) : activeError ? (
-                            <div className="bg-gradient-to-br from-white to-red-50/30 p-7 rounded-2xl border-2 border-red-100 shadow-xl shadow-red-500/10 relative overflow-hidden group hover:shadow-2xl hover:shadow-red-500/15 transition-all duration-300">
+                            <div className="bg-gradient-to-br from-white to-red-50/30 p-5 rounded-2xl border-2 border-red-100 shadow-xl shadow-red-500/10 relative overflow-hidden group hover:shadow-2xl hover:shadow-red-500/15 transition-all duration-300">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
                                 <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-5">
-                                        <span className="px-3 py-1.5 bg-gradient-to-r from-red-50 to-red-100 text-red-700 text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <span className="px-2.5 py-1 bg-gradient-to-r from-red-50 to-red-100 text-red-700 text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
                                             {activeError.error_type}
                                         </span>
-                                        <button onClick={() => setActiveError(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><X size={18}/></button>
+                                        <button onClick={() => setActiveError(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><X size={16}/></button>
                                     </div>
-                                    <p className="text-sm text-slate-700 mb-6 font-medium leading-relaxed bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                                        <span className="text-xs text-slate-500 uppercase font-bold block mb-2">AI Suggestion:</span>
-                                        <span className="text-base italic">"{activeError.explanation}"</span>
+                                    <p className="text-xs text-slate-700 mb-4 font-medium leading-relaxed bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                        <span className="text-xs text-slate-500 uppercase font-bold block mb-1.5">AI Suggestion:</span>
+                                        <span className="text-sm italic">"{activeError.explanation}"</span>
                                     </p>
-                                    <div className="flex flex-col gap-2.5">
+                                    <div className="flex flex-col gap-2">
                                         <button 
                                             onClick={() => handleOpenLesson(activeError.error_type)}
-                                            className="w-full py-2.5 bg-white border-2 border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 hover:bg-cyan-50 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all uppercase tracking-wide shadow-sm hover:shadow-md active:scale-[0.98]"
+                                            className="w-full py-2 bg-white border-2 border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 hover:bg-cyan-50 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all uppercase tracking-wide shadow-sm hover:shadow-md active:scale-[0.98]"
                                         >
-                                            <BookOpen size={16} /> Review Lesson
+                                            <BookOpen size={14} /> Review Lesson
                                         </button>
                                         <button 
                                             onClick={() => applyFix(activeError)}
-                                            className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
+                                            className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
                                         >
-                                            <Check size={18} /> Apply Fix
+                                            <Check size={16} /> Apply Fix
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-gradient-to-br from-white to-slate-50/50 p-8 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center h-full min-h-[200px] relative overflow-hidden group hover:border-cyan-200 transition-all">
+                            <div className="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center min-h-[150px] relative overflow-hidden group hover:border-cyan-200 transition-all">
                                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/0 via-cyan-50/30 to-blue-50/0 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="relative z-10">
-                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 mb-3 group-hover:scale-110 transition-transform">
-                                        <PencilLine size={24} />
+                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 mb-2.5 group-hover:scale-110 transition-transform">
+                                        <PencilLine size={20} />
                                     </div>
-                                    <p className="text-sm text-slate-600 font-medium">Select any highlighted text to view details.</p>
+                                    <p className="text-xs text-slate-600 font-medium">Select any highlighted text to view details.</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {/* Error List */}
-                    <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-lg overflow-hidden flex flex-col max-h-[350px] hover:shadow-xl transition-shadow">
-                        <div className="p-5 bg-gradient-to-r from-slate-50 to-slate-100/50 border-b border-slate-200">
-                             <h4 className="font-black text-xs text-slate-600 uppercase tracking-widest flex items-center gap-2.5">
-                                <div className="p-1.5 bg-white rounded-lg shadow-sm">
-                                    <History size={14} className="text-slate-500" />
-                                </div>
-                                <span>Detected Issues ({result.core_errors.length})</span>
-                            </h4>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 hide-scrollbar">
-                             {result.core_errors.length > 0 ? (
-                                result.core_errors.map((e: any, i: number) => (
-                                    <button 
-                                        key={i} 
-                                        onClick={() => setActiveError(e)}
-                                        className={`w-full text-left p-4 rounded-xl text-xs transition-all duration-200 border-2 shadow-sm hover:shadow-md ${activeError === e ? 'bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-cyan-300 text-cyan-900 shadow-cyan-100' : 'bg-white border-slate-100 hover:bg-slate-50 hover:border-slate-200 text-slate-600'}`}
-                                    >
-                                        <div className="font-bold truncate mb-1.5 text-sm">"{e.quote}"</div>
-                                        <div className={`text-[10px] uppercase tracking-wider font-black ${activeError === e ? 'text-cyan-600' : 'text-slate-400'}`}>{e.error_type}</div>
-                                    </button>
-                                ))
-                             ) : (
-                                <div className="py-10 text-center space-y-2">
-                                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mx-auto mb-2">
-                                        <Check size={20} />
-                                    </div>
-                                    <p className="text-slate-500 text-sm font-semibold">No errors found.</p>
-                                    <p className="text-slate-400 text-xs">Great job!</p>
-                                </div>
-                             )}
-                        </div>
-                    </div>
+
 
                 </div>
             )}

@@ -7,8 +7,8 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 
 // --- CẤU HÌNH LINK THANH TOÁN ---
-const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/e94485d4-5dd0-489d-aeb6-8182ccea5311";
-const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/7cae4736-2ee6-4ce6-854a-e89b299f3c1e";
+const CHECKOUT_URL_MONTHLY = "https://wrytt.lemonsqueezy.com/checkout/buy/76ea9484-fa92-43c9-ac90-ef9c22e2beab?enabled=1304553";
+const CHECKOUT_URL_YEARLY = "https://wrytt.lemonsqueezy.com/checkout/buy/2b2a245a-5675-47b4-bd64-ccd3aedd8e01?enabled=1304546";
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -205,10 +205,10 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
   };
 
   const comparisonFeatures = [
-    { name: "Daily Analysis Limit", free: "2 essays", pro: "50 essays", icon: <Zap size={16}/> },
+    { name: "Daily Essay Analysis", free: "2 essays", pro: "50 essays", icon: <Zap size={16}/> },
+    { name: "Daily Practice Quizzes", free: "6 quizzes", pro: "Unlimited", icon: <Globe size={16}/> },
     { name: "Band 9.0 Elite Rewrite", free: false, pro: true, icon: <Sparkles size={16}/> },
-    { name: "Full PDF Progress Reports", free: false, pro: true, icon: <FileText size={16}/> },    
-    { name: "Advanced Vocabulary Insights", free: false, pro: true, icon: <Globe size={16}/> },
+    { name: "PDF Progress Reports", free: false, pro: true, icon: <FileText size={16}/> },
   ];
 
   return (
@@ -302,7 +302,7 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
                         className={`flex-1 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all relative ${billingCycle === 'yearly' ? 'bg-cyan-600 text-white shadow-xl' : 'text-slate-500 hover:text-white'}`}
                     >
                         Yearly
-                        <span className="absolute -top-2 -right-1 bg-emerald-500 text-[8px] px-2 py-0.5 rounded-full text-white font-black tracking-normal ring-4 ring-slate-900">SAVE 20%</span>
+                        <span className="absolute -top-2 -right-1 bg-emerald-500 text-[8px] px-2 py-0.5 rounded-full text-white font-black tracking-normal ring-4 ring-slate-900">SAVE 45%</span>
                     </button>
                 </div>
 
@@ -310,7 +310,7 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
                     <p className="text-cyan-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-4">The Pro Plan</p>
                     <div className="flex items-baseline justify-center md:justify-start gap-2">
                         <span className="text-7xl font-bold text-white tracking-tighter">
-                            {billingCycle === 'monthly' ? '$5' : '$48'}
+                            {billingCycle === 'monthly' ? '$9' : '$59'}
                         </span>
                         <div className="text-left">
                             <p className="text-cyan-100 text-lg font-bold leading-none">USD</p>
