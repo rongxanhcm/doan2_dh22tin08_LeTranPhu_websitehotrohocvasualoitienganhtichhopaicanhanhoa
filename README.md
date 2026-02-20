@@ -6,6 +6,8 @@
   ### AI-Powered Writing Assistant
   
   *Refine your writing, word by word*
+
+  Last updated: 2026-02-21
   
   [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=flat&logo=next.js)](https://nextjs.org/)
   [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)](https://react.dev/)
@@ -79,14 +81,14 @@
 - **PDF Report Export** (Pro): Download a professional progress report
 
 ### 🎨 **Premium Features (Pro)**
-- **Higher Daily Limit** (Pro: 50/day, Free: 2/day, Guest: 1/day)
+- **Higher Daily Limit** (Pro: 50/day, Free: 2/day, Guest: 1 total per device)
 - **Band 9.0 Polished Rewrites** with C2 vocabulary and native phrasing
 - **Advanced Analytics**
 - **Full Submission History**
 - **PDF Report Export**
 
 ### 🔒 **Security & System Safety**
-- **Daily Quota Limits**: Prevent spam and protect API resources (Guest: 1/day, Free users: 2/day, Pro: 50/day)
+- **Daily Quota Limits**: Prevent spam and protect API resources (Guest: 1 total per device, Free users: 2/day, Pro: 50/day)
 - **Input Validation**: Minimum 15 word count enforcement
 - **Supabase Authentication**: Secure login with OAuth
 - **Rate Limiting**: Database-level quota management
@@ -276,8 +278,16 @@ wrytt/
 │
 ├── backend/              # FastAPI application
 │   ├── main.py          # API routes & endpoints
+│   ├── check_models.py  # Model checks / diagnostics
 │   ├── requirements.txt # Python dependencies
+│   ├── Procfile         # Deployment process file
+│   ├── package.json     # Supabase JS deps for tooling
 │   └── .env             # Environment variables
+│
+├── migrations/          # Supabase SQL migrations
+│   ├── add_default_language.sql
+│   ├── add_quiz_attempts_table.sql
+│   └── add_quiz_limit_tracking.sql
 │
 └── README.md            # This file
 ```
@@ -531,7 +541,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 💬 Support
 
-- **Email**: contact@wrytt.live
+- **Email**: contact@wrytt.me
 - **Issues**: [GitHub Issues](https://github.com/yourusername/wrytt/issues)
 - **Location**: Ninh Kieu District, Can Tho City, Vietnam
 

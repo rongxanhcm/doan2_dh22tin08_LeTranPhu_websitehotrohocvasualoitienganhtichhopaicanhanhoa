@@ -751,9 +751,9 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                             </div>
                         </div>
                         
-                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-3.5 rounded-xl border border-slate-200/50 relative z-10 max-h-[200px] overflow-y-auto hide-scrollbar">
+                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-3.5 rounded-xl border border-slate-200/50 relative z-10 max-h-[300px] overflow-y-auto hide-scrollbar">
                             {result.general_feedback.split('\n').map((line: string, i: number) => (
-                                <p key={i} className={`mb-1.5 last:mb-0 text-xs ${line.startsWith('**') ? 'font-bold text-slate-900 mt-1.5' : ''}`}>
+                                <p key={i} className={`mb-2 last:mb-0 text-sm ${line.startsWith('**') ? 'font-bold text-slate-900 mt-2' : ''}`}>
                                     {line.replace(/\*\*/g, '')}
                                 </p>
                             ))}
