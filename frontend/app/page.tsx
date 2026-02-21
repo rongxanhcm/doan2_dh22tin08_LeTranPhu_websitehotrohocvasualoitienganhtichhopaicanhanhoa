@@ -485,6 +485,7 @@ import UserDropdown from "@/components/UserDropdown";
                   <div>
                     <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
                     <ul role="list" className="mt-4 space-y-4">
+                      <li><a href="/rules" className="text-base text-gray-500 hover:text-gray-900">Grammar Rules</a></li>
                       <li><a href="/changelog" className="text-base text-gray-500 hover:text-gray-900">Changelog</a></li>
                     </ul>
                   </div>
