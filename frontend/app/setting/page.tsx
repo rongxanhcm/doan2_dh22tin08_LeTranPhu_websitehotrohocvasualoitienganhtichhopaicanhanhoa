@@ -7,6 +7,7 @@ import Image from "next/image";
 import { User, CreditCard, Shield, Mail, Zap, Check, ArrowLeft, Loader2, ExternalLink, AlertTriangle, Settings, Globe } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import PricingModal from "@/components/PricingModal";
 
 const SUPPORTED_LANGUAGES = [
     { code: "English", label: "English", flag: "🇺🇸" },
@@ -36,6 +37,7 @@ function SettingsContent() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [defaultLanguage, setDefaultLanguage] = useState("English");
   const [savingLanguage, setSavingLanguage] = useState(false);
+    const [isPricingOpen, setIsPricingOpen] = useState(false);
   
   const supabase = createClient();
   const searchParams = useSearchParams();
@@ -273,7 +275,10 @@ function SettingsContent() {
                                     </p>
                                 </div>
                                 {!isPro ? (
-                                    <button className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-lg shadow-lg shadow-cyan-500/30 text-sm hover:-translate-y-0.5 transition-transform">
+                                    <button
+                                        onClick={() => setIsPricingOpen(true)}
+                                        className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-lg shadow-lg shadow-cyan-500/30 text-sm hover:-translate-y-0.5 transition-transform"
+                                    >
                                         Upgrade Now
                                     </button>
                                 ) : (
@@ -297,10 +302,10 @@ function SettingsContent() {
                             <div className="space-y-4">
                                 <h4 className="text-sm font-bold text-slate-900">Features included:</h4>
                                 <div className="grid sm:grid-cols-2 gap-3 text-sm text-slate-600 font-medium">
-                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Unlimited Analysis</div>
-                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Band 9.0 Rewrite</div>
-                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Advanced Vocabulary</div>
-                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Priority Support</div>
+                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Daily Essay Analysis (50 essays)</div>
+                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Daily Practice Quizzes (Unlimited)</div>
+                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Band 9.0 Elite Rewrite</div>
+                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> PDF Progress Reports</div>
                                 </div>
                             </div>
                         </div>
@@ -328,6 +333,12 @@ function SettingsContent() {
                 </div>
             )}
         </div>
+
+        <PricingModal
+            isOpen={isPricingOpen}
+            onClose={() => setIsPricingOpen(false)}
+            onSuccess={() => setIsPro(true)}
+        />
     </div>
   );
 }

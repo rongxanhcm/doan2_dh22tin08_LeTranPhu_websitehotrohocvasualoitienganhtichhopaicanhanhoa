@@ -11,6 +11,17 @@ export interface GrammarRule {
   tip: string;
 }
 
+const normalizeErrorKey = (rawKey: string): string => {
+  const decoded = decodeURIComponent(rawKey || '').trim().toLowerCase();
+  const normalized = decoded
+    .replace(/[_\s]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return normalized || decoded;
+};
+
 // 1. Hàm lấy toàn bộ Rules từ DB (Dùng cho Admin hoặc cache)
 export const fetchAllRules = async (): Promise<GrammarRule[]> => {
   const supabase = createClient();
@@ -28,23 +39,38 @@ export const fetchAllRules = async (): Promise<GrammarRule[]> => {
 // 2. Hàm lấy 1 Rule theo error_type (Dùng cho Modal)
 export const fetchRuleByKey = async (errorKey: string): Promise<GrammarRule | null> => {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("grammar_rules")
-    .select("*")
-    .eq("error_key", errorKey) // Tìm chính xác theo key (VD: "Past Tense")
-    .single();
+  const fetchByKey = async (key: string) => {
+    const { data, error } = await supabase
+      .from("grammar_rules")
+      .select("*")
+      .eq("error_key", key) // Tìm chính xác theo key (VD: "past-tense")
+      .maybeSingle();
 
-  if (error || !data) {
-    // Nếu không tìm thấy, trả về fallback mặc định
-    return {
-      error_key: errorKey,
-      title: errorKey,
-      definition: "Chưa có dữ liệu bài học cho lỗi này.",
-      rule: "Đang cập nhật...",
-      bad_example: "...",
-      good_example: "...",
-      tip: "Hãy liên hệ Admin để bổ sung bài học này."
-    };
+    if (error) {
+      console.error("Error fetching rule:", error);
+      return null;
+    }
+
+    return data || null;
+  };
+
+  const directMatch = await fetchByKey(errorKey);
+  if (directMatch) return directMatch;
+
+  const normalizedKey = normalizeErrorKey(errorKey);
+  if (normalizedKey !== errorKey) {
+    const normalizedMatch = await fetchByKey(normalizedKey);
+    if (normalizedMatch) return normalizedMatch;
   }
-  return data;
+
+  // Nếu không tìm thấy, trả về fallback mặc định
+  return {
+    error_key: errorKey,
+    title: errorKey,
+    definition: "Chưa có dữ liệu bài học cho lỗi này.",
+    rule: "Đang cập nhật...",
+    bad_example: "...",
+    good_example: "...",
+    tip: "Hãy liên hệ Admin để bổ sung bài học này."
+  };
 };

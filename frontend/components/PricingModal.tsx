@@ -276,7 +276,7 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
                 <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                     <Shield size={20} className="text-slate-400 shrink-0" />
                     <p className="text-slate-500 text-[11px] leading-relaxed font-medium uppercase tracking-tight">
-                        Secure checkout powered by Stripe.
+                        Secure checkout powered by Lemon Squeeze.
                     </p>
                 </div>
             )}
