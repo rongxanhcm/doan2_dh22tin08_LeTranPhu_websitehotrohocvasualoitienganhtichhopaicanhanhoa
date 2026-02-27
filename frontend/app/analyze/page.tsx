@@ -489,18 +489,19 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/60 flex flex-col min-h-[680px] overflow-hidden relative hover:shadow-slate-200/80 transition-shadow duration-300">
             
             {/* Toolbar */}
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-b from-slate-50/50 to-white backdrop-blur-sm">
-              <div className="flex items-end gap-3">
+            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-b from-slate-50/50 to-white backdrop-blur-sm">
+              <div className="flex flex-wrap items-end gap-2 md:gap-3">
                  <div className="relative group">
                     <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-black uppercase text-slate-600 tracking-wide flex items-center gap-2">
                             <Globe size={14} className="text-cyan-500" />
-                            AI Feedback Language
+                            <span className="hidden sm:inline">AI Feedback Language</span>
+                            <span className="sm:hidden">Language</span>
                             <span className="text-cyan-600 font-bold" title="This language is used for AI feedback, not for the app interface"></span>
                         </label>
-                        <p className="text-xs text-slate-500 font-medium -mt-1">Choose the language for AI analysis feedback</p>
+                        <p className="text-xs text-slate-500 font-medium -mt-1 hidden md:block">Choose the language for AI analysis feedback</p>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-cyan-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-cyan-300 shadow-sm hover:shadow-md mt-2">
+                    <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white hover:bg-cyan-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-cyan-300 shadow-sm hover:shadow-md mt-2">
                         <select 
                             value={nativeLang} 
                             onChange={(e) => setNativeLang(e.target.value)}
@@ -512,7 +513,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                     </div>
                  </div>
                  
-                 <div className={`text-xs font-black px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${wordCount >= MIN_WORDS ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
+                 <div className={`text-xs font-black px-3 md:px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${wordCount >= MIN_WORDS ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
                     <span className="flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${wordCount >= MIN_WORDS ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                       {wordCount}/20 Words
@@ -522,16 +523,16 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
 
               {/* Mode Switcher */}
               {result && (
-                <div className="flex p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl border border-slate-200 shadow-inner">
+                <div className="flex p-1.5 bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl border border-slate-200 shadow-inner w-full sm:w-auto">
                     <button 
                         onClick={() => switchMode("grammar")}
-                        className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${mode === 'grammar' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
+                        className={`flex-1 sm:flex-none px-4 md:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${mode === 'grammar' ? 'bg-white text-slate-900 shadow-md border border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
                     >
                         Grammar
                     </button>
                     <button 
                         onClick={() => switchMode("vocab")}
-                        className={`px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center gap-2 ${mode === 'vocab' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-500/30' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
+                        className={`flex-1 sm:flex-none px-4 md:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'vocab' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-500/30' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
                     >
                         <Sparkles size={14} className={mode === 'vocab' ? 'text-yellow-300 animate-pulse' : ''}/>
                         Band 9.0
@@ -629,11 +630,6 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                         /* CASE 2: ĐÃ CÓ KẾT QUẢ (HIỆN TEXT XỊN) */
                         ) : isPro && result.polished_text ? (
                             <div className="relative w-full min-h-[300px]">
-                                {isAnimating && (
-                                    <div className="absolute inset-0 text-lg md:text-xl text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
-                                        {inputText}
-                                    </div>
-                                )}
                                 <div 
                                     className={`text-lg md:text-xl text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}
                                 >
