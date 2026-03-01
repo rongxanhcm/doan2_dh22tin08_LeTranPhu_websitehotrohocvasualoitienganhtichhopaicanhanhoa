@@ -413,6 +413,7 @@ Handle payment webhooks (LemonSqueezy subscriptions).
 ---
 
 ## 🗄️ Database Schema
+<img width="996" height="683" alt="image" src="https://github.com/user-attachments/assets/60c19a26-8ba4-4b9b-b6c7-64534ef04645" />
 
 ### **Tables**
 
