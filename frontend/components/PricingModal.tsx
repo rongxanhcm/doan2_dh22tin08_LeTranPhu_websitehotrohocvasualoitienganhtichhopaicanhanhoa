@@ -207,7 +207,7 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
   const comparisonFeatures = [
     { name: "Daily Essay Analysis", free: "2 essays", pro: "50 essays", icon: <Zap size={16}/> },
     { name: "Daily Practice Quizzes", free: "6 quizzes", pro: "Unlimited", icon: <Globe size={16}/> },
-    { name: "Band 9.0 Elite Rewrite", free: false, pro: true, icon: <Sparkles size={16}/> },
+    { name: "Elite Rewrite", free: false, pro: true, icon: <Sparkles size={16}/> },
     { name: "PDF Progress Reports", free: false, pro: true, icon: <FileText size={16}/> },
   ];
 

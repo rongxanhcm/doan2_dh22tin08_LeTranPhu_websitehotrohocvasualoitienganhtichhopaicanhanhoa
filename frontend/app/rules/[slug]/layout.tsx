@@ -19,7 +19,7 @@ export async function generateMetadata(
     };
   }
 
-  const title = `${rule.title} - IELTS Grammar Explained | Wrytt`;
+  const title = `${rule.title} - Grammar Explained | Wrytt`;
   const description = rule.definition.substring(0, 160);
 
   return {
@@ -27,7 +27,7 @@ export async function generateMetadata(
     description,
     keywords: [
       rule.title.toLowerCase(),
-      'IELTS writing',
+      'writing',
       'grammar',
       'English learning',
       'academic writing',

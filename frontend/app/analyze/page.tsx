@@ -274,7 +274,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                 // 2. TẮT CHẾ ĐỘ XỬ LÝ -> HIỆN KẾT QUẢ
                 setIsUnlocking(false); 
                 
-                toast.success("Band 9.0 Unlocked!");
+                toast.success("Elite Version Unlocked!");
                 setMode("vocab");
                 setIsAnimating(true);
                 setTimeout(() => setIsAnimating(false), 1200);
@@ -535,7 +535,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                         className={`flex-1 sm:flex-none px-4 md:px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${mode === 'vocab' ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-500/30' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}`}
                     >
                         <Sparkles size={14} className={mode === 'vocab' ? 'text-yellow-300 animate-pulse' : ''}/>
-                        Band 9.0
+                        Elite
                     </button>
                 </div>
               )}
@@ -614,7 +614,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                                     </div>
                                     
                                     <div className="text-center space-y-1">
-                                        <h3 className="text-xl font-bold text-slate-800">Unlocking Band 9.0...</h3>
+                                        <h3 className="text-xl font-bold text-slate-800">Unlocking Elite Version...</h3>
                                         <div className="flex flex-col gap-1 text-xs font-medium text-slate-400 uppercase tracking-wider">
                                             <span className="flex items-center gap-2 text-emerald-500 justify-center">
                                                 <Check size={12}/> Payment Verified
@@ -649,9 +649,9 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                                     <div className="mx-auto w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mb-4 text-cyan-600">
                                         <Lock size={24} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Unlock Band 9.0 Rewrite</h3>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Unlock Elite Rewrite</h3>
                                     <p className="text-slate-500 mb-6 text-sm leading-relaxed">
-                                        See how AI transforms your essay with <b>C2 Vocabulary</b> & <b>Native Phrasing</b>.
+                                        See how AI transforms your writing with <b>Advanced Vocabulary</b> & <b>Professional Phrasing</b>.
                                     </p>
                                     <button 
                                         onClick={() => setShowPricingModal(true)}
@@ -765,7 +765,7 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                          <div className="relative z-10 text-center">
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
-                              <p className="text-xs font-black text-cyan-400 uppercase tracking-widest">Band Score</p>
+                              <p className="text-xs font-black text-cyan-400 uppercase tracking-widest">Writing Score</p>
                               <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
                             </div>
                             <div className="flex items-center justify-center gap-3">

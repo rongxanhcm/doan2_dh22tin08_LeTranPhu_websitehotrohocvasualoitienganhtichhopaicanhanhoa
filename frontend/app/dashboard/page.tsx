@@ -512,7 +512,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                         <p className="font-bold text-lg">Daily Limit: {usageCount} / {FREE_DAILY_LIMIT}</p>
-                        <p className="text-sm text-slate-400">Get unlimited analysis and Band 9.0 rewrites with Pro.</p>
+                        <p className="text-sm text-slate-400">Get unlimited analysis and Elite rewrites with Pro.</p>
                     </div>
                 </div>
                 <button 
@@ -527,7 +527,7 @@ export default function Dashboard() {
         {/* --- STATS OVERVIEW --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard icon={<FileText size={20} />} label="Total Essays" value={stats.totalEssays} subValue="Submissions" color="slate" />
-          <StatCard icon={<Award size={20} />} label="Avg. Score" value={stats.avgScore} subValue="Band Accuracy" color="cyan" isScore />
+          <StatCard icon={<Award size={20} />} label="Avg. Score" value={stats.avgScore} subValue="Score Accuracy" color="cyan" isScore />
           <StatCard icon={<Target size={20} />} label="Highest" value={stats.highestScore} subValue="Personal Record" color="slate" isScore />
           <StatCard icon={<AlertTriangle size={20} />} label="Top Issue" value={stats.topErrors.length > 0 ? stats.topErrors[0].count : 0} subValue={stats.topErrors.length > 0 ? stats.topErrors[0].name : 'No issues'} color="rose" />
         </div>
@@ -920,7 +920,7 @@ export default function Dashboard() {
                             </td>
                             <td className="px-6 py-5">
                                 <span className={`px-3 py-1 rounded text-xs font-bold ${item.score >= 7.0 ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-700'}`}>
-                                    Band {item.score.toFixed(1)}
+                                    Score {item.score.toFixed(1)}
                                 </span>
                             </td>
                             <td className="px-6 py-5">

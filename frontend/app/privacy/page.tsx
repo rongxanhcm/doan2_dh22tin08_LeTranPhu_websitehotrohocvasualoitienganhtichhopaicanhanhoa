@@ -35,7 +35,7 @@ export default function PrivacyPage() {
           <h3>2. How We Use Your Information</h3>
           <p>We use the collected data for the following purposes:</p>
           <ul>
-            <li>To provide AI-generated feedback on your writing (IELTS scoring, grammar checks).</li>
+            <li>To provide AI-generated feedback on your writing (scoring, grammar checks).</li>
             <li>To maintain and improve our Vertex AI & Gemini integration.</li>
             <li>To communicate with you about updates, security alerts, and support.</li>
           </ul>

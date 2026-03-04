@@ -203,7 +203,7 @@ def analyze_essay(input: EssayInput, request: Request):
         
         # Vì Guest không bao giờ là Pro nên polish_instruction sẽ luôn trống cho Guest
         polish_instruction = (
-            ', "polished_text": "<Rewrite to Band 9.0 (C2 Vocab). '
+            ', "polished_text": "<Rewrite to advanced/professional level with refined vocabulary. '
             'CRITICAL: Keep word count similar to original (max +10%). '
             'Focus on upgrading vocabulary and grammar structures ONLY. '
             'Do NOT expand ideas or add new sentences.>"'
@@ -345,14 +345,52 @@ def generate_quiz_single(input: SingleErrorQuizRequest, request: Request):
         # Get system prompt for single error quiz (or fallback)
         raw_prompt = get_system_prompt_cached("generate_quiz")
         if not raw_prompt:
-            raw_prompt = """Generate exactly 10 practice questions for the following error:
-- Error Type: {{error_type}}
-- User's Mistake: '{{quote}}'
+            raw_prompt = """You are an expert Writing Tutor creating focused practice drills for grammar and spelling errors.
 
-Create 10 diverse, progressively challenging questions that test understanding of this specific error type.
+TARGET ERROR CONTEXT:
+- Error Type: {{error_type}}
+- Student's Mistake: \"{{quote}}\"
+
+LANGUAGE INSTRUCTIONS (CRITICAL):
 {{lang_instruction}}
 
-Return as JSON with array of questions, each having: id, question, options (4 strings), correct_answer_index (0-3), explanation."""
+TASK:
+Generate exactly 10 multiple-choice questions (Cloze Test style) to master the **underlying rule** of this error.
+
+CRITICAL DIVERSITY RULE (MUST FOLLOW):
+1. **Analyze the Pattern**: Do NOT just test the exact word the student missed repeatedly. Identify the *category* of the error.
+   - If error is **Spelling**: Identify the rule (e.g., \"ie vs ei\", \"double consonants\", \"suffix -ous\"). Test 10 DIFFERENT words following that rule.
+   - If error is **Grammar** (e.g., Past Tense): Test 10 DIFFERENT verbs/scenarios, not just the one in the quote.
+2. **Progression**:
+   - Q1-3: Test the specific word/case the student got wrong (Direct fix).
+   - Q4-7: Test **similar words/cases** aiming at the same rule (Expansion).
+   - Q8-10: Test **complex/exception cases** of that rule (Mastery).
+
+STRICT FORMATTING RULES:
+1. **The Question**:
+   - It MUST be a \"Cloze Test\" style (Fill-in-the-blank).
+   - The *instruction* part must follow the LANGUAGE INSTRUCTIONS.
+   - The *target sentence* containing the blank `_______` must remain in **ENGLISH**.
+   - Create NEW sentences relevant to academic/professional writing contexts.
+2. **The Options**:
+   - Must be in **ENGLISH**.
+   - Provide 4 options: 1 correct, 3 plausible distractors.
+3. **The Explanation**:
+   - Must follow the LANGUAGE INSTRUCTIONS (Native Language).
+   - Explain the *rule*, not just the word.
+
+OUTPUT FORMAT (Strict JSON):
+{
+  \"questions\": [
+    {
+      \"id\": 1,
+      \"question\": \"Choose the correct spelling: 'The environmental damage is _______.'\" ,
+      \"options\": [\"serious\", \"serius\", \"sereous\", \"cerious\"],
+      \"correct_answer_index\": 0,
+      \"explanation\": \"Explanation in Native Language...\"
+    }
+  ]
+}"""
 
         prompt_text = raw_prompt.replace("{{error_type}}", input.error_type)\
                                 .replace("{{quote}}", input.quote)\
@@ -407,12 +445,12 @@ def upgrade_submission(req: UpgradeSubmissionRequest):
 
         # 3. Gọi AI Rewrite (Dùng model mạnh hơn cho task này nếu cần, hoặc flash cho rẻ)
         prompt = f"""
-        Rewrite to IELTS Band 9.0 (C2 Vocab). Keep meaning. Output ONLY text.
+        Rewrite to advanced/professional level with refined vocabulary. Keep meaning and intent. Output ONLY the rewritten text.
         Original: "{submission['original_text']}"
         """
         
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash', # Dùng 1.5 Flash vẫn tốt, hoặc đổi sang 2.0-flash
+            model='gemini-2.5-flash-lite', # Dùng 1.5 Flash vẫn tốt, hoặc đổi sang 2.0-flash
             contents=prompt
         )
         polished_text = response.text.strip()

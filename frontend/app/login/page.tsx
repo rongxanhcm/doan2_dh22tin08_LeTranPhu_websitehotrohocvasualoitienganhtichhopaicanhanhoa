@@ -113,7 +113,7 @@ export default function LoginPage() {
           
           <div className="space-y-5 mb-12">
             {[
-              "Proprietary Band 9.0 Analysis",
+              "Proprietary AI Analysis Engine",
               "Advanced Contextual Diagnostics",
               "Vertex AI Powered Engine"
             ].map((text, i) => (

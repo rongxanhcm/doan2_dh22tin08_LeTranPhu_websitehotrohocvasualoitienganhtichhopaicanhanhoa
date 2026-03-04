@@ -18,7 +18,7 @@ interface ReportProps {
 const TRANSLATIONS: any = {
   en: {
     title: "Progress Report",
-    subtitle: "IELTS Writing Analysis",
+    subtitle: "Writing Analysis",
     tagline: "Professional Performance Review",
     total_essays: "Total Essays",
     avg_score: "Average Score",
@@ -28,12 +28,12 @@ const TRANSLATIONS: any = {
     no_feedback: "No feedback available",
     footer: "AI-Powered Writing Analysis • Wrytt Pro",
     date_label: "Date",
-    score_label: "Band Score",
+    score_label: "Writing Score",
     feedback_label: "Feedback"
   },
   vi: {
     title: "Báo Cáo Tiến Độ",
-    subtitle: "Phân Tích IELTS Writing",
+    subtitle: "Phân Tích Writing",
     tagline: "Đánh Giá Hiệu Suất Chuyên Nghiệp",
     total_essays: "Tổng Số Bài",
     avg_score: "Điểm Trung Bình",
@@ -43,7 +43,7 @@ const TRANSLATIONS: any = {
     no_feedback: "Chưa có nhận xét",
     footer: "Phân Tích Bài Viết AI • Wrytt Pro",
     date_label: "Ngày",
-    score_label: "Band Score",
+    score_label: "Writing Score",
     feedback_label: "Nhận xét"
   }
 };

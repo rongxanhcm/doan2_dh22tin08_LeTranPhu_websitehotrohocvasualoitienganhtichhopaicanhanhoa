@@ -26,7 +26,7 @@ export default function TermsPage() {
 
           <h3>1. Use of Services</h3>
           <p>
-            Wrytt provides an AI-powered writing assistant for educational purposes. You engage with our service at your own risk. While we strive for accuracy (using Vertex AI), we do not guarantee that the AI feedback is 100% error-free or that it will guarantee a specific IELTS score.
+            Wrytt provides an AI-powered writing assistant for educational purposes. You engage with our service at your own risk. While we strive for accuracy (using Vertex AI), we do not guarantee that the AI feedback is 100% error-free or that it will guarantee a specific score or outcome.
           </p>
 
           <h3>2. User Accounts</h3>

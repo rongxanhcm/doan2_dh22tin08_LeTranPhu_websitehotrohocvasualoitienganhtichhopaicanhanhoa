@@ -179,7 +179,7 @@ import UserDropdown from "@/components/UserDropdown";
             </h1>
             
             <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Wrytt is an AI-powered writing coach that doesn't just catch mistakes—it helps you <span className="font-semibold text-slate-900">master academic writing</span>. Get detailed feedback, practice with intelligent quizzes, and track your progress from Band 5.0 to Band 9.0+.
+              Wrytt is an AI-powered writing coach that doesn't just catch mistakes—it helps you <span className="font-semibold text-slate-900">master your writing skills</span>. Get detailed feedback, practice with intelligent quizzes, and track your progress from beginner to advanced level.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -247,8 +247,8 @@ import UserDropdown from "@/components/UserDropdown";
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FeatureCard 
                   icon={Zap}
-                  title="Instant Band Score"
-                  desc="Get accurate IELTS Band estimation with detailed breakdown of your Lexical Range, Coherence & Cohesion."
+                  title="Instant Writing Score"
+                  desc="Get accurate writing quality assessment with detailed breakdown of grammar, vocabulary, and coherence."
               />
               <FeatureCard 
                   icon={BookOpen}
@@ -264,8 +264,8 @@ import UserDropdown from "@/components/UserDropdown";
               />
               <FeatureCard 
                   icon={Sparkles}
-                  title="Band 9.0 Rewrites"
-                  desc="See how AI transforms your essay with C2 vocabulary and elite phrasing. Pro-only feature."
+                  title="Elite Rewrites"
+                  desc="See how AI transforms your writing with advanced vocabulary and professional phrasing. Pro-only feature."
               />
               <FeatureCard 
                   icon={BarChart3}
@@ -360,7 +360,7 @@ import UserDropdown from "@/components/UserDropdown";
                     { text: "Complete error analysis", icon: true },
                     { text: "Lesson access", icon: true },
                     { text: "Mastery tracking", icon: true },
-                    { text: "Band 9.0 rewrites", icon: false },
+                    { text: "Elite rewrites", icon: false },
                     { text: "PDF reports", icon: false },
                   ],
                   cta: "Get Started",
@@ -379,7 +379,7 @@ import UserDropdown from "@/components/UserDropdown";
                     { text: "Complete error analysis", icon: true },
                     { text: "Lesson access", icon: true },
                     { text: "Mastery tracking", icon: true },
-                    { text: "Band 9.0 rewrites", icon: true },
+                    { text: "Elite rewrites", icon: true },
                     { text: "PDF progress reports", icon: true },
                     
                   ],
@@ -450,10 +450,10 @@ import UserDropdown from "@/components/UserDropdown";
         <section className="py-32 px-6">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
-              Stop hoping for Band 7.0. Start earning it.
+              Stop hoping. Start mastering your writing.
             </h2>
             <p className="text-xl text-slate-500">
-              With daily practice quizzes, smart error tracking, and detailed feedback—you'll improve faster than you ever thought possible.
+              With targeted practice quizzes, smart error tracking, and detailed feedback—you'll improve faster than you ever thought possible.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/analyze" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-all hover:scale-[1.02] shadow-lg shadow-teal-600/30">

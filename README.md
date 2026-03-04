@@ -40,7 +40,7 @@
 
 ## 🎯 Overview
 
-**Wrytt** is a modern EdTech platform that helps IELTS Writing learners and English writers improve their skills through AI-powered essay analysis, real-time error detection, personalized grammar lessons, and progress tracking.
+**Wrytt** is a modern EdTech platform that helps English writers improve their skills through AI-powered essay analysis, real-time error detection, personalized grammar lessons, and progress tracking.
 
 **Key Differentiators:**
 - ✅ **No login required** to analyze essays — start instantly (guest mode)
@@ -50,7 +50,7 @@
 - ✅ **Multilingual feedback** in 18+ languages (English, Vietnamese, Spanish, French, Japanese, Korean, etc.)
 - ✅ Providing **actionable learning paths**
 
-**Target Audience:** IELTS test takers, English learners, students preparing for academic writing exams, anyone looking to improve their writing
+**Target Audience:** Students, professionals, content creators, anyone looking to improve their English writing skills
 
 ---
 
@@ -58,12 +58,12 @@
 
 ### 🔍 **Deep Essay Analysis**
 - **No Login Required**: Start analyzing immediately without creating an account
-- **AI-Powered Scoring**: Estimate IELTS band scores (1.0 - 9.0)
+- **AI-Powered Scoring**: Writing quality score (0-10)
 - **Visual Error Highlighting**: Errors highlighted directly in your text with tooltips
 - **Multilingual Feedback**: Choose from 18+ languages for AI explanations (English, Vietnamese, Spanish, French, Japanese, Korean, German, Italian, Portuguese, Russian, Chinese, Arabic, Hindi, Thai, Turkish, Dutch, Polish, Swedish)
 - **Corrected Output**: See your essay with all errors fixed
-- **Examiner's Feedback**: AI-generated comprehensive feedback on your writing
-- **Band 9.0 Rewrite** (Pro): Get a polished, examiner-level version with C2 vocabulary
+- **Comprehensive Feedback**: AI-generated detailed feedback on your writing
+- **Elite Rewrite** (Pro): Get a polished, professional version with advanced vocabulary
 
 ### 📚 **Personalized Learning System**
 - **Grammar Knowledge Base**: Comprehensive grammar rules with examples
@@ -82,7 +82,7 @@
 
 ### 🎨 **Premium Features (Pro)**
 - **Higher Daily Limit** (Pro: 50/day, Free: 2/day, Guest: 1 total per device)
-- **Band 9.0 Polished Rewrites** with C2 vocabulary and native phrasing
+- **Elite Polished Rewrites** with advanced vocabulary and professional phrasing
 - **Advanced Analytics**
 - **Full Submission History**
 - **PDF Report Export**
@@ -333,7 +333,7 @@ Analyze an essay and return detailed feedback.
     }
   ],
   "corrected_text": "Fully corrected version...",
-  "polished_text": "Band 9.0 version (Pro only)"
+  "polished_text": "Elite version (Pro only)"
 }
 ```
 
@@ -366,7 +366,7 @@ Generate a 10-question quiz for a single error type.
 ```
 
 #### **POST** `/upgrade-submission`
-Upgrade a submission with Band 9.0 polished text (Pro feature).
+Upgrade a submission with Elite polished text (Pro feature).
 
 **Request Body:**
 ```json
@@ -553,7 +553,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **Google Gemini** for powerful AI capabilities
 - **Supabase** for excellent backend infrastructure
 - **Next.js Team** for the amazing framework
-- **IELTS Learners** for inspiring this project
+- **All writers and learners** for inspiring this project
 - **Academic Project** by Phu Le
 
 ---

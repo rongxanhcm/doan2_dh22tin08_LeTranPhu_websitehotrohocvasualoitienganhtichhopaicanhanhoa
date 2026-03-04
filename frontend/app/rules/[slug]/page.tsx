@@ -46,7 +46,7 @@ export default async function RulePage({ params }: Props) {
       '@type': 'LearningResource',
       name: rule.title,
       description: rule.definition,
-      educationalLevel: 'IELTS Writing (Band 5-9)',
+      educationalLevel: 'Academic Writing (All Levels)',
       learningResourceType: 'Grammar Guide',
       inLanguage: 'en-US',
       url: `https://wrytt.me/rules/${rule.error_key}`,

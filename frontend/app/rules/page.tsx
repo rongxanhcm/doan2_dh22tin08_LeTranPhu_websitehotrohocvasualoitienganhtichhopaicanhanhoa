@@ -4,21 +4,21 @@ import { getAllGrammarRules } from '@/lib/supabase/grammarRules';
 import { BookOpen, ArrowRight, Brain, Target } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Grammar Rules & IELTS Writing Guide | Wrytt',
+  title: 'Grammar Rules & Writing Guide | Wrytt',
   description:
-    'Master essential grammar rules for IELTS academic writing. Learn with clear explanations, examples, and practice quizzes. Improve from Band 5 to Band 9.',
+    'Master essential grammar rules for academic writing. Learn with clear explanations, examples, and practice quizzes. Improve your writing skills at any level.',
   keywords: [
-    'IELTS grammar',
+    'grammar',
     'writing rules',
     'academic english',
     'grammar guide',
-    'IELTS preparation',
+    'writing improvement',
     'English writing tips',
   ],
   openGraph: {
-    title: 'Grammar Rules & IELTS Writing Guide | Wrytt',
+    title: 'Grammar Rules & Writing Guide | Wrytt',
     description:
-      'Master essential grammar rules for IELTS academic writing with personalized practice.',
+      'Master essential grammar rules for academic writing with personalized practice.',
     type: 'website',
     url: 'https://wrytt.me/rules',
     images: [

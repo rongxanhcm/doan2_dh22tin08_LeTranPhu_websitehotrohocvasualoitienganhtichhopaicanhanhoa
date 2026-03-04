@@ -271,7 +271,7 @@ function SettingsContent() {
                                     <p className="text-sm text-slate-500 mt-2 font-medium">
                                         {isPro 
                                             ? "Access to all Pro features." 
-                                            : "Upgrade to unlock Band 9.0 rewrites."}
+                                            : "Upgrade to unlock Elite rewrites."}
                                     </p>
                                 </div>
                                 {!isPro ? (
@@ -304,7 +304,7 @@ function SettingsContent() {
                                 <div className="grid sm:grid-cols-2 gap-3 text-sm text-slate-600 font-medium">
                                     <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Daily Essay Analysis (50 essays)</div>
                                     <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Daily Practice Quizzes (Unlimited)</div>
-                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Band 9.0 Elite Rewrite</div>
+                                    <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> Elite Rewrite</div>
                                     <div className="flex items-center gap-2"><Check size={16} className="text-emerald-500"/> PDF Progress Reports</div>
                                 </div>
                             </div>
