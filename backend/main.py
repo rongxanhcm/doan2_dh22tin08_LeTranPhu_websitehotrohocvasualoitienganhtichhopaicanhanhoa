@@ -218,7 +218,7 @@ def analyze_essay(input: EssayInput, request: Request):
 
         # 4. GỌI GEMINI
         response = genai_client.models.generate_content(
-            model='gemini-2.5-flash', 
+            model='gemini-2.5-flash-lite', # Dùng model nhẹ hơn cho task này để tiết kiệm token và tăng tốc độ
             contents=prompt_text,
             config=types.GenerateContentConfig(response_mime_type='application/json', response_schema=target_schema)
         )
