@@ -3,11 +3,11 @@
   
   # Wrytt
   
-  ### AI-Powered Writing Assistant
+  ### Learn English from Your Mistakes
   
-  *Catch mistakes, master writing*
+  *AI-generated quizzes from YOUR writing errors*
 
-  Last updated: 2026-03-04
+  Last updated: 2026-03-05
   
   [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=flat&logo=next.js)](https://nextjs.org/)
   [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)](https://react.dev/)
@@ -40,73 +40,84 @@
 
 ## 🎯 Overview
 
-**Wrytt** is an AI-powered writing improvement platform that helps you catch errors and master grammar through targeted practice. Unlike traditional grammar checkers that only highlight mistakes, Wrytt **teaches you why errors happen** and creates personalized quizzes from YOUR actual mistakes.
+**Wrytt** is an AI-powered English learning platform that turns YOUR writing mistakes into personalized practice quizzes. Submit your essay → AI finds your errors → Get 10-question quizzes generated from YOUR exact mistakes. Not generic grammar exercises—learn what YOU need to improve.
 
 **How It Works:**
-1. **Paste** your essay or writing sample
-2. **Analysis** - Get instant error detection with detailed explanations
-3. **Practice** - Take AI-generated quizzes built from your specific errors
-4. **Master** - Track progress as you move from "Learning" to "Mastered"
+1. **Submit** your essay or writing sample
+2. **AI Analyzes** - Detects all grammar errors with explanations
+3. **Quiz Generated** - Get 10 personalized questions built from YOUR mistakes
+4. **Practice & Master** - Track progress as errors move "Learning" → "Practicing" → "Mastered"
+
+**Core Value:** Writing is the INPUT. Personalized AI quizzes are the OUTPUT. You don't just fix errors—you LEARN through targeted practice.
 
 **Key Differentiators:**
+- ✅ **AI Quiz Generation** - Every error becomes a personalized quiz question
+- ✅ **No generic exercises** - Practice exactly what YOU wrote wrong
 - ✅ **No login required** to start analyzing — instant guest mode
-- ✅ Not just finding errors, but **explaining the underlying rules**
-- ✅ **Personalized quizzes** generated from YOUR actual mistakes
-- ✅ **Progress tracking** with visual mastery analytics
+- ✅ **Progress tracking** with visual mastery analytics (Learning → Practicing → Mastered)
 - ✅ **Multilingual feedback** in 18+ languages (English, Vietnamese, Spanish, French, Japanese, Korean, etc.)
-- ✅ **Adaptive learning** — focus on your weakest areas automatically
+- ✅ **Adaptive learning** — AI focuses on your weakest areas automatically
 
-**Target Audience:** Students, professionals, content creators, ESL learners — anyone looking to improve their English writing skills
+**Target Audience:** ESL learners, students, professionals — anyone who wants to LEARN English grammar through their own writing mistakes, not just get corrections
 
-### **Quick Demo** 
-Try it now without registration: [wrytt.me/analyze](https://wrytt.me/analyze)
+### **🚀 Quick Demo** 
+1. Visit [wrytt.me/analyze](https://wrytt.me/analyze) (no login required)
+2. Paste your essay
+3. Get error analysis + **click "Generate Quiz" button**
+4. Practice 10 personalized questions from YOUR mistakes
 
 ### **What Makes Wrytt Different?**
 
 | Traditional Grammar Checkers | Wrytt |
 |------------------------------|-------|
-| ❌ Only highlight errors | ✅ Explains WHY errors happen |
-| ❌ Generic corrections | ✅ Personalized learning path |
-| ❌ No follow-up practice | ✅ AI quizzes from YOUR mistakes |
-| ❌ Static feedback | ✅ Progress tracking & mastery system |
+| ❌ Only highlight errors | ✅ Generates personalized quizzes from YOUR errors |
+| ❌ Generic corrections | ✅ Every mistake becomes a practice question |
+| ❌ No follow-up practice | ✅ 10-question AI quiz per essay submission |
+| ❌ Static feedback | ✅ Progress tracking: Learning → Mastered |
 | ❌ English-only explanations | ✅ 18+ languages for feedback |
+| ❌ You read corrections | ✅ You PRACTICE through quizzes |
 
 ---
 
 ## ✨ Features
 
-### 🔍 **Instant Error Detection**
-- **No Login Required**: Start analyzing immediately — paste and analyze in seconds
-- **AI-Powered Scoring**: Get a 0-10 writing quality score based on grammar, vocabulary, and clarity
-- **Visual Error Highlighting**: Errors highlighted directly in your text with hover tooltips
-- **Detailed Explanations**: Each error comes with why it's wrong and the underlying rule
-- **Corrected Output**: See your text with all errors fixed side-by-side
-- **Multilingual Feedback**: AI explanations in 18+ languages (English, Vietnamese, Spanish, French, Japanese, Korean, German, Italian, Portuguese, Russian, Chinese, Arabic, Hindi, Thai, Turkish, Dutch, Polish, Swedish)
-- **Elite Rewrite** (Pro): Get a professionally polished version with advanced vocabulary
+### 🎯 **AI Quiz Generation (Core Feature)**
+- **Personalized Questions**: Submit essay → AI generates 10-question quiz from YOUR exact mistakes
+- **Not Generic Exercises**: Every quiz is unique to what YOU wrote wrong
+- **Multiple Choice Format**: 4 options per question with instant explanations
+- **Progressive Difficulty**: Questions test understanding, not just recall
+- **Real-time Feedback**: Know immediately why each answer is right/wrong
+- **Unlimited Practice** (Pro): Free users get 6 quizzes/day, Pro unlimited
 
-### 📚 **Learn from YOUR Mistakes**
-- **Grammar Knowledge Base**: 50+ grammar rules with clear explanations and examples
-- **Interactive Lessons**: Click any error type to open an in-depth lesson modal
-- **AI-Generated Quizzes**: 10 targeted questions created from each of your specific errors
-- **Progressive Difficulty**: Questions range from basic recall to complex application
-- **Real-time Feedback**: Instant explanations for right and wrong answers
-- **Mastery Tracking**: Errors move through Learning → Practicing → Mastered states
+### 📝 **Error Analysis (The Input)**
+- **No Login Required**: Start analyzing immediately — paste and analyze in seconds
+- **AI-Powered Detection**: Identifies grammar, vocabulary, and clarity issues
+- **Visual Error Highlighting**: Errors highlighted directly in your text
+- **Detailed Explanations**: Each error comes with the underlying rule
+- **Writing Score**: 0-10 quality assessment
+- **Multilingual Feedback**: AI explanations in 18+ languages
+
+### � **Grammar Learning System**
+- **50+ Grammar Rules**: Comprehensive knowledge base with explanations
+- **Interactive Lessons**: Click any error to see in-depth lesson modal
+- **Real Examples**: See correct vs incorrect usage for each rule
+- **Linked Learning**: Every quiz question links back to the relevant lesson
 
 ### 📊 **Track Your Progress**
-- **Performance Dashboard**: Total essays analyzed, average score, highest score
+- **Mastery Tracking**: Errors move through Learning → Practicing → Mastered
+- **Performance Dashboard**: Total essays, quiz completion rate, mastery progress
 - **Error Frequency Charts**: Bar graphs showing your most common mistake types
-- **Priority Focus System**: Automatically identifies which errors to tackle first
-- **Submission History**: Review all past essays with scores and feedback
-- **Score Trajectory**: Line chart visualizing improvement over time
-- **PDF Report Export** (Pro): Download a professional progress report
+- **Priority Focus System**: AI identifies which errors to practice first
+- **Submission History**: Review all past essays with scores and quizzes taken
+- **PDF Report Export** (Pro): Download professional progress report
 
 ### 🎨 **Premium Features (Pro)**
-- **Higher Daily Limits**: 50 essays/day (vs 2/day for Free, 1 lifetime for Guest)
-- **Unlimited Quizzes**: Practice as much as you want (Free: 6/day)
-- **Elite Polished Rewrites**: AI rewrites with professional-level vocabulary and phrasing
-- **Advanced Analytics**: Detailed breakdowns and insights
-- **Full History Access**: Never lose your past submissions
+- **Unlimited Quizzes**: Practice without daily limits (Free: 6 quizzes/day)
+- **Higher Essay Limits**: 50 essays/day (vs 2/day for Free, 1 lifetime for Guest)
+- **Elite Rewrites**: AI rewrites with professional vocabulary (learning reference)
+- **Full History Access**: Never lose past submissions and quiz results
 - **PDF Export**: Download beautifully formatted progress reports
+- **Advanced Analytics**: Detailed mastery insights and learning patterns
 
 ### 🔒 **Privacy & Security**
 - **Anonymous Guest Mode**: Analyze without creating an account (1 free essay)

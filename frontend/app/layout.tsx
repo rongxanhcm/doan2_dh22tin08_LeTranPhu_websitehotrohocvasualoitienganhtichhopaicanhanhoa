@@ -13,10 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wrytt",
-  description: "Essay fixer and improver powered by AI",
+  title: "Wrytt - Learn English from Your Mistakes | AI Quiz Generator",
+  description: "Submit your essay, AI finds your errors and generates personalized practice quizzes from YOUR actual mistakes. Not generic exercises—learn what YOU need. Free to start.",
+  keywords: ["English learning", "AI quiz generator", "grammar checker", "learn from mistakes", "personalized learning", "ESL", "writing improvement", "essay feedback"],
   icons: {
-    icon: "/logo.svg", // Trỏ trực tiếp đến tên file mới
+    icon: "/logo.svg",
+  },
+  openGraph: {
+    title: "Wrytt - Learn English from Your Mistakes",
+    description: "AI analyzes your writing and generates personalized quizzes from YOUR mistakes. Practice what YOU need to improve.",
+    type: "website",
+    url: "https://wrytt.me",
+    images: [
+      {
+        url: "https://wrytt.me/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Wrytt - AI-powered English learning from your mistakes",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Learn English from Your Mistakes with AI",
+    description: "Get personalized quizzes generated from your actual writing errors. Free to start.",
+    images: ["https://wrytt.me/og-image.png"],
   },
 };
 

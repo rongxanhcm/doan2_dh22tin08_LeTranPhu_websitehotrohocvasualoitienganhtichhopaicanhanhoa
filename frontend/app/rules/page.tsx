@@ -160,30 +160,27 @@ export default async function RulesPage() {
                     <Link
                       key={rule.id}
                       href={`/rules/${rule.error_key}`}
-                      className="group relative overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                      className="group relative rounded-xl transition-all duration-200 hover:shadow-lg"
                     >
-                      {/* Card Background Gradient */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-
                       {/* Main Card */}
-                      <div className="relative h-full p-6 bg-white rounded-2xl border border-slate-200 group-hover:border-slate-300 backdrop-blur-sm flex flex-col">
+                      <div className="relative h-full p-6 bg-white rounded-xl border border-slate-200 group-hover:border-teal-300 flex flex-col">
                         {/* Top Section: Category & Difficulty */}
                         <div className="flex items-center justify-between mb-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${diffConfig.color}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${diffConfig.color}`}>
                             {diffConfig.badge} {diffConfig.label}
                           </span>
-                          <span className="text-2xl">{category.icon}</span>
+                          <span className="text-xl">{category.icon}</span>
                         </div>
 
                         {/* Category Tag */}
                         <div className="mb-3">
-                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${category.color}`}>
+                          <span className="inline-block px-2.5 py-1 rounded-md text-xs font-medium text-teal-700 bg-teal-50 border border-teal-100">
                             {category.label}
                           </span>
                         </div>
 
                         {/* Title */}
-                        <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-teal-600 transition-colors line-clamp-2">
+                        <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2">
                           {rule.title}
                         </h3>
 
@@ -206,14 +203,9 @@ export default async function RulesPage() {
 
                         {/* CTA Button */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                          <span className="text-sm font-semibold text-teal-600 group-hover:text-teal-700">Explore Rule</span>
-                          <ArrowRight className="w-4 h-4 text-teal-600 group-hover:translate-x-1 transition-transform" />
+                          <span className="text-sm font-medium text-teal-600">Explore Rule</span>
+                          <ArrowRight className="w-4 h-4 text-teal-600 group-hover:translate-x-0.5 transition-transform" />
                         </div>
-                      </div>
-
-                      {/* Shimmer Effect on Hover */}
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                       </div>
                     </Link>
                   );

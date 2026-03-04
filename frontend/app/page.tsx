@@ -164,14 +164,14 @@ import UserDropdown from "@/components/UserDropdown";
             ) : (
               <Badge>
                 <Sparkles size={12} className="text-teal-600"/> 
-                AI Writing Assistant v2.0
+                Learn From Your Mistakes
               </Badge>
             )}
             
             <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
-              Catch mistakes,<br/>
+              Learn English<br/>
               <span className="text-teal-600 relative inline-block">
-                master writing.
+                from Your Mistakes
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-teal-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
@@ -179,7 +179,7 @@ import UserDropdown from "@/components/UserDropdown";
             </h1>
             
             <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Paste your essay and get <span className="font-semibold text-slate-900">instant error analysis</span>. Then practice with AI quizzes built from YOUR actual mistakes. <span className="font-semibold text-slate-900">Learn, don't just fix.</span>
+              Write your essay → AI finds your errors → Get <span className="font-semibold text-slate-900">personalized practice quizzes</span> generated from YOUR actual mistakes. Not generic exercises—learn what <span className="font-semibold text-slate-900">YOU</span> need to improve.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -206,28 +206,74 @@ import UserDropdown from "@/components/UserDropdown";
             )}
           </div>
 
-          {/* Right Visual: Mockup (Giữ nguyên) */}
+          {/* Right Visual: AI Quiz Mockup */}
           <div className="lg:w-1/2 w-full relative">
             <div className="absolute -inset-1 bg-gradient-to-tr from-teal-400 to-teal-600 rounded-2xl blur opacity-20 animate-pulse"></div>
             <div className="relative bg-white rounded-xl border border-slate-200 shadow-2xl overflow-hidden">
+                {/* Header */}
                 <div className="h-10 border-b border-slate-100 bg-slate-50 flex items-center px-4 gap-2">
                     <div className="flex gap-1.5">
                       <div className="w-3 h-3 rounded-full bg-red-400/80" />
                       <div className="w-3 h-3 rounded-full bg-amber-400/80" />
                       <div className="w-3 h-3 rounded-full bg-green-400/80" />
                     </div>
+                    <span className="ml-2 text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <Sparkles size={12} className="text-teal-600"/> AI Quiz Generator
+                    </span>
                 </div>
-                <div className="grid grid-cols-2 min-h-[360px] divide-x divide-slate-100">
-                    <div className="p-6 font-serif text-slate-500 leading-loose text-sm">
-                      <p className="mb-4 text-xs font-sans font-bold uppercase tracking-wider text-red-400">Original</p>
-                      The graph <span className="bg-red-50 text-red-600 border-b border-red-200 decoration-red-400 px-0.5">shows the amount of people</span> who use the internet...
-                    </div>
-                    <div className="p-6 bg-teal-50/30 font-serif text-slate-800 leading-loose text-sm">
-                      <p className="mb-4 text-xs font-sans font-bold uppercase tracking-wider text-teal-600 flex items-center gap-2">
-                        <Sparkles size={12}/> Wrytt Rewrite
+                
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  {/* Your Error Section */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-red-500 flex items-center gap-2">
+                      ❌ Your Error
+                    </p>
+                    <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                      <p className="font-serif text-sm text-slate-700 leading-relaxed">
+                        The graph <span className="bg-red-100 text-red-700 font-semibold px-1 rounded">shows the amount of people</span> who use the internet...
                       </p>
-                      The graph <span className="bg-green-100 text-green-800 border-b border-green-300 px-0.5">illustrates the number of individuals</span> accessing the internet...
                     </div>
+                  </div>
+
+                  {/* AI Generated Quiz */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-teal-600 flex items-center gap-2">
+                      <Sparkles size={12}/> Generated Quiz Question
+                    </p>
+                    <div className="p-4 bg-gradient-to-br from-teal-50 to-teal-100/50 border border-teal-200 rounded-lg space-y-4">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Which is the correct form?
+                      </p>
+                      <div className="space-y-2">
+                        {[
+                          { letter: 'A', text: 'the amount of people', correct: false },
+                          { letter: 'B', text: 'the number of people', correct: true },
+                          { letter: 'C', text: 'the quantity of people', correct: false },
+                          { letter: 'D', text: 'the total of people', correct: false },
+                        ].map((option) => (
+                          <div 
+                            key={option.letter} 
+                            className={`p-3 rounded-lg border-2 transition-all text-sm ${
+                              option.correct 
+                                ? 'bg-green-50 border-green-400' 
+                                : 'bg-white border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            <span className="font-bold text-slate-700">{option.letter}.</span> {option.text}
+                            {option.correct && (
+                              <span className="ml-2 text-green-600 font-bold">✓</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="pt-3 border-t border-teal-200">
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          💡 <span className="font-semibold">Tip:</span> Use "number" for countable nouns (people, cars), "amount" for uncountable (water, money).
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
             </div>
           </div>
@@ -238,9 +284,9 @@ import UserDropdown from "@/components/UserDropdown";
         <section className="py-24 bg-slate-50 border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16 max-w-2xl mx-auto">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Master writing, not just fix it</h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">AI Quizzes Built From YOUR Writing</h2>
               <p className="text-slate-500">
-                Catch your mistakes with AI analysis. Then learn the rules through targeted quizzes built from YOUR errors.
+                Every error you make becomes a personalized quiz question. Practice what YOU struggle with—not random grammar exercises.
               </p>
             </div>
 
@@ -252,8 +298,8 @@ import UserDropdown from "@/components/UserDropdown";
               />
               <FeatureCard 
                   icon={BookOpen}
-                  title="AI-Powered Quiz System"
-                  desc="Practice with 10-question quizzes targetting your specific errors. Free users get 6/day, Pro unlimited."
+                  title="AI Quizzes From YOUR Mistakes"
+                  desc="Submit an essay, AI generates 10-question quizzes targeting YOUR specific errors. Every question is personalized to what YOU wrote wrong. Free: 6 quizzes/day. Pro: unlimited."
                   className="md:col-span-2 bg-gradient-to-br from-white to-teal-50/50 border-teal-100"
               />
               <FeatureCard 
@@ -285,18 +331,18 @@ import UserDropdown from "@/components/UserDropdown";
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16 max-w-2xl mx-auto">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Your learning journey</h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">How AI Learning Works</h2>
               <p className="text-slate-500">
-                Analyze → Learn → Practice → Master. Repeat with next error.
+                Submit writing → AI analyzes errors → Get personalized quizzes → Track mastery. Your mistakes become your curriculum.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[
-                { step: "1", title: "Submit Essay", desc: "Paste your writing and get instant AI analysis" },
-                { step: "2", title: "Get Feedback", desc: "Every error with explanation + lesson link" },
-                { step: "3", title: "Practice Quiz", desc: "10 targeted questions on your weaknesses" },
-                { step: "4", title: "Track Mastery", desc: "Watch errors move from Learning → Mastered" }
+                { step: "1", title: "Submit Essay", desc: "Paste your writing—AI finds all grammar errors" },
+                { step: "2", title: "AI Generates Quiz", desc: "Get 10-question quiz built from YOUR exact mistakes" },
+                { step: "3", title: "Practice & Learn", desc: "Answer questions with instant explanations" },
+                { step: "4", title: "Track Mastery", desc: "Watch errors move Learning → Practicing → Mastered" }
               ].map((item, i) => (
                 <div key={i} className="relative">
                   <div className="p-6 rounded-2xl bg-white border-2 border-teal-100 hover:border-teal-400 transition-all">
@@ -450,17 +496,14 @@ import UserDropdown from "@/components/UserDropdown";
         <section className="py-32 px-6">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
-              Stop hoping. Start mastering your writing.
+              Turn your mistakes into mastery.
             </h2>
             <p className="text-xl text-slate-500">
-              With targeted practice quizzes, smart error tracking, and detailed feedback—you'll improve faster than you ever thought possible.
+              Every error becomes a personalized quiz question. Practice what YOU need, track YOUR progress, master YOUR weaknesses.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/analyze" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700 transition-all hover:scale-[1.02] shadow-lg shadow-teal-600/30">
-                Start Free (No login) <ArrowRight size={18} />
-              </Link>
-              <Link href="/#pricing" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-teal-400 hover:bg-teal-50 transition-all">
-                View Pro Benefits
+                Start Learning Now <ArrowRight size={18} />
               </Link>
             </div>
           </div>
@@ -472,8 +515,8 @@ import UserDropdown from "@/components/UserDropdown";
               <div className="space-y-8 xl:col-span-1">
                 <img className="h-10" src="/logo.svg" alt="Wrytt AI" />
                 <p className="text-gray-500 text-base">
-                  Catch mistakes, master writing. <br/>
-                  Powered by <strong>Google Gemini</strong> & <strong>Vertex AI</strong>.
+                  Learn English from your mistakes. <br/>
+                  AI-powered quiz generator from YOUR writing errors.
                 </p>
                 <div className="flex space-x-6">
                   {/* Social icons nếu có (Github, Twitter/X) */}
