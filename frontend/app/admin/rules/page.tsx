@@ -53,7 +53,26 @@ export default function RulesManager() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRules(); }, []);
+  useEffect(() => {
+    fetchRules();
+
+    // Subscribe to real-time changes on grammar_rules table
+    const subscription = supabase
+      .channel('grammar_rules_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'grammar_rules' },
+        () => {
+          fetchRules();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   // 2. HANDLE OPEN MODAL
   const handleEdit = (rule: RuleFormData) => {
@@ -120,13 +139,39 @@ export default function RulesManager() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this rule?")) return;
     
-    const { error } = await supabase
-        .from("grammar_rules")
-        .delete()
-        .eq("id", id);
-    
-    if (error) toast.error("Delete failed: " + error.message);
-    else fetchRules();
+    try {
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      // Call backend endpoint
+      const response = await fetch("http://localhost:8000/delete-grammar-rule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ rule_id: id })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Delete error:", data);
+        toast.error(data.detail || "Delete failed");
+        return;
+      }
+
+      console.log("Delete successful:", data);
+      toast.success("Rule deleted successfully!");
+      await fetchRules();
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Delete failed: " + String(error));
+    }
   };
 
   // Filter Search

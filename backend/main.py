@@ -625,6 +625,66 @@ def update_password(req: UpdatePasswordRequest, authorization: str = Header(None
     except Exception as e:
         print(f"Error updating password: {e}")
         raise HTTPException(status_code=400, detail="Could not update password. Token might be expired.")
+
+# ==========================================
+# DELETE GRAMMAR RULE (ADMIN ONLY)
+# ==========================================
+class DeleteRuleRequest(BaseModel):
+    rule_id: int
+
+@app.post("/delete-grammar-rule")
+def delete_grammar_rule(req: DeleteRuleRequest, authorization: str = Header(None)):
+    """
+    Delete a grammar rule. Only admins can do this.
+    Uses backend service key to bypass RLS policies.
+    """
+    try:
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing Access Token")
+
+        # Extract token
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+
+        # Verify user
+        auth_url = f"{SUPABASE_URL}/auth/v1/user"
+        auth_headers = {
+            "Authorization": f"Bearer {token}",
+            "apikey": SUPABASE_KEY,
+        }
+        
+        user_response = requests.get(auth_url, headers=auth_headers)
+        if user_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user_data = user_response.json()
+        user_id = user_data.get("id")
+        
+        # Check if user is admin - try to get role from profiles table
+        try:
+            user_profile = supabase.table("profiles").select("role").eq("id", user_id).single().execute()
+            if user_profile.data:
+                user_role = user_profile.data.get("role")
+                if user_role != "admin":
+                    raise HTTPException(status_code=403, detail="Only admins can delete grammar rules")
+            else:
+                raise HTTPException(status_code=403, detail="User profile not found")
+        except Exception as profile_error:
+            print(f"Warning: Could not verify admin role: {profile_error}")
+            # If we can't check role, deny access for safety
+            raise HTTPException(status_code=403, detail="Could not verify admin credentials")
+        
+        # Delete the rule (backend service key bypasses RLS)
+        delete_result = supabase.table("grammar_rules").delete().eq("id", req.rule_id).execute()
+        
+        print(f"✅ Rule {req.rule_id} deleted by admin {user_id}")
+        return {"message": f"Rule {req.rule_id} deleted successfully"}
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"Error deleting rule: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))

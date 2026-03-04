@@ -4,21 +4,27 @@ import { getAllGrammarRules } from '@/lib/supabase/grammarRules';
 import { BookOpen, ArrowRight, Brain, Target } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Grammar Rules & Writing Guide | Wrytt',
+  title: 'Grammar Rules & Writing Guide | Improve Your English Writing | Wrytt',
   description:
-    'Master essential grammar rules for academic writing. Learn with clear explanations, examples, and practice quizzes. Improve your writing skills at any level.',
+    'Master essential grammar rules with AI-powered explanations. Learn why errors happen, not just the fixes. Personalized quizzes from your actual mistakes. Perfect for students, professionals, and ESL learners.',
   keywords: [
-    'grammar',
-    'writing rules',
-    'academic english',
-    'grammar guide',
+    'grammar rules',
     'writing improvement',
-    'English writing tips',
+    'English grammar guide',
+    'grammar mistakes',
+    'writing skills',
+    'ESL grammar',
+    'professional writing',
+    'academic writing',
+    'grammar learning',
+    'English language tips',
+    'writing errors',
+    'grammar explanations',
   ],
   openGraph: {
-    title: 'Grammar Rules & Writing Guide | Wrytt',
+    title: 'Master Grammar Rules | Personalized Learning with Wrytt',
     description:
-      'Master essential grammar rules for academic writing with personalized practice.',
+      'Learn grammar through practice quizzes generated from your actual writing mistakes. AI-powered guidance in 18+ languages.',
     type: 'website',
     url: 'https://wrytt.me/rules',
     images: [
@@ -39,7 +45,7 @@ function generateStructuredData(rules: any[]) {
       name: 'Wrytt',
       url: 'https://wrytt.me',
       logo: 'https://wrytt.me/logo.svg',
-      description: 'AI-powered IELTS writing coach for academic excellence',
+      description: 'AI-powered writing coach helping students, professionals, and ESL learners master English grammar and improve their writing skills',
       sameAs: [
         'https://twitter.com/wrytt',
         'https://github.com/wrytt',
@@ -48,13 +54,17 @@ function generateStructuredData(rules: any[]) {
     {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
-      name: 'Grammar Rules & IELTS Writing Guide',
-      description: 'Master essential grammar rules for IELTS academic writing with clear explanations and practice',
+      name: 'Grammar Rules & Writing Guide - Master English Grammar',
+      description: 'Learn 50+ grammar rules with personalized AI-powered quizzes. Master writing skills with explanations in 18+ languages.',
       url: 'https://wrytt.me/rules',
       hasPart: rules.map((rule) => ({
         '@type': 'LearningResource',
         name: rule.title,
         url: `https://wrytt.me/rules/${rule.error_key}`,
+        author: {
+          '@type': 'Organization',
+          name: 'Wrytt',
+        },
       })),
     },
     {
@@ -114,10 +124,10 @@ export default async function RulesPage() {
         <div className="bg-slate-50 border-b border-slate-200">
           <div className="max-w-6xl mx-auto px-6 py-16">
             <div className="space-y-6">
-              <h1 className="text-5xl lg:text-6xl font-bold text-slate-900">Grammar Rules for IELTS</h1>
+              <h1 className="text-5xl lg:text-6xl font-bold text-slate-900">Master English Grammar Rules</h1>
               <p className="text-xl text-slate-600 max-w-2xl">
-                Master every grammar rule with clear explanations, real examples, and targeted practice.
-                Build the foundation for Band 7+ writing.
+                Learn every essential grammar rule with clear explanations, real examples, and personalized practice quizzes.
+                Improve your writing at any level—from student essays to professional documents.
               </p>
             </div>
           </div>
@@ -130,7 +140,7 @@ export default async function RulesPage() {
             <div className="flex items-center justify-between mb-12">
               <div>
                 <h2 className="text-4xl font-bold text-slate-900 mb-2">All Grammar Rules</h2>
-                <p className="text-slate-600">Explore {rules.length} essential rules for IELTS writing</p>
+                <p className="text-slate-600">Explore {rules.length} essential rules to improve your English writing skills</p>
               </div>
             </div>
 
@@ -216,7 +226,7 @@ export default async function RulesPage() {
           <div className="mb-20 p-8 bg-gradient-to-r from-teal-600 to-teal-500 rounded-2xl text-white">
             <h2 className="text-2xl font-bold mb-4">Master Your Writing</h2>
             <p className="text-teal-50 mb-6">
-              Learn grammar rules → Practice with quizzes → Track mastery → Improve your Band score
+              Learn grammar rules → Practice with AI quizzes → Track your progress → Become a better writer
             </p>
             <Link
               href="/analyze"
@@ -233,19 +243,19 @@ export default async function RulesPage() {
               {[
                 {
                   q: 'How do I use these grammar rules?',
-                  a: 'Each rule page includes definitions, examples of correct and incorrect usage, and tips. Use them as reference while writing or practicing quizzes.',
+                  a: 'Each rule page includes definitions, examples of correct and incorrect usage, and tips. Use them as reference while writing or practicing AI-generated quizzes.',
                 },
                 {
-                  q: 'Do these rules apply to IELTS writing?',
-                  a: 'Yes! All rules are specifically curated for IELTS Academic Writing (Tasks 1 & 2). They directly impact band score for grammatical accuracy.',
+                  q: 'Are these rules useful for my level?',
+                  a: 'Yes! Rules are organized by difficulty level (Beginner, Intermediate, Advanced) and apply to academic, professional, and general writing—perfect for students, ESL learners, and professionals.',
                 },
                 {
                   q: 'Can I practice these rules?',
-                  a: 'Absolutely. Each rule links to practice quizzes that test your understanding. Get 6 quizzes/day free, unlimited with Pro.',
+                  a: 'Absolutely. Each rule links to AI-powered practice quizzes that adapt to your learning. Get 6 quizzes/day free, unlimited with Pro access.',
                 },
                 {
                   q: 'How often are new rules added?',
-                  a: 'We regularly add new rules based on common student errors and IELTS writing requirements. Check our changelog for updates.',
+                  a: 'We regularly add new rules based on common writing errors from real user submissions. Check our changelog for the latest updates.',
                 },
               ].map((item, i) => (
                 <div key={i} className="p-6 bg-white rounded-2xl border border-slate-200">

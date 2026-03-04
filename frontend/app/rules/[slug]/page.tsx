@@ -3,9 +3,56 @@ import Link from 'next/link';
 import { getGrammarRuleByKey } from '@/lib/supabase/grammarRules';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { GrammarRule } from '@/lib/supabase/grammarRules';
+import { Metadata } from 'next';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const rule = await getGrammarRuleByKey(slug);
+
+  if (!rule) {
+    return {
+      title: 'Grammar Rule Not Found | Wrytt',
+      description: 'This grammar rule could not be found.',
+    };
+  }
+
+  const title = `${rule.title} - Grammar Rule | Wrytt`;
+  const description = rule.definition || `Learn about ${rule.title} with examples, explanation, and practice quizzes.`;
+
+  return {
+    title,
+    description,
+    keywords: [
+      rule.error_key.toLowerCase(),
+      rule.title.toLowerCase(),
+      'grammar rule',
+      'English grammar',
+      'writing improvement',
+      'grammar explanation',
+    ],
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: `https://wrytt.me/rules/${rule.error_key}`,
+      images: [
+        {
+          url: 'https://wrytt.me/og-image.png',
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
 }
 
 export default async function RulePage({ params }: Props) {
@@ -46,7 +93,7 @@ export default async function RulePage({ params }: Props) {
       '@type': 'LearningResource',
       name: rule.title,
       description: rule.definition,
-      educationalLevel: 'Academic Writing (All Levels)',
+      educationalLevel: ['Beginner', 'Intermediate', 'Advanced'],
       learningResourceType: 'Grammar Guide',
       inLanguage: 'en-US',
       url: `https://wrytt.me/rules/${rule.error_key}`,

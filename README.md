@@ -432,72 +432,137 @@ Handle payment webhooks (LemonSqueezy subscriptions).
 ---
 
 ## 🗄️ Database Schema
-<img width="996" height="683" alt="image" src="https://github.com/user-attachments/assets/60c19a26-8ba4-4b9b-b6c7-64534ef04645" />
 
-### **Tables**
+The project uses **Supabase (PostgreSQL)** for data persistence. All tables have **Row Level Security (RLS)** enabled to protect user data.
 
-#### **`submissions`**
+### **Core Tables**
+
+#### **`auth.users`** (Managed by Supabase Auth)
 ```sql
-id             UUID PRIMARY KEY
-user_id        UUID REFERENCES auth.users
-visitor_id     TEXT
-original_text  TEXT
-corrected_text TEXT
-score          DECIMAL
-created_at     TIMESTAMP
-general_feedback TEXT
-target_language  TEXT
-polished_text    TEXT (nullable)
+id              UUID PRIMARY KEY
+email           TEXT UNIQUE NOT NULL
+created_at      TIMESTAMP
+last_sign_in_at TIMESTAMP
 ```
 
-#### **`analysis_results`**
+#### **`profiles`** (User Profile & Roles)
 ```sql
-id             UUID PRIMARY KEY
-submission_id  UUID REFERENCES submissions
-error_type     VARCHAR
-quote          TEXT
-severity       VARCHAR
-explanation    TEXT
-suggestion     TEXT
-is_resolved    BOOLEAN DEFAULT false
+id                UUID PRIMARY KEY
+email             TEXT
+role              TEXT DEFAULT 'user'  -- 'user' or 'admin'
+created_at        TIMESTAMP NOT NULL DEFAULT now()
+native_language   TEXT DEFAULT 'English'
+FOREIGN KEY (id) REFERENCES auth.users(id)
 ```
+**Purpose**: Store user profiles and roles for admin/user differentiation.
 
-#### **`user_usage`**
+#### **`submissions`** (Essay Analysis Records)
 ```sql
-user_id         UUID PRIMARY KEY
-is_pro          BOOLEAN DEFAULT false
-usage_count     INTEGER DEFAULT 0
-last_reset_date DATE
-default_language VARCHAR(50) DEFAULT 'English'
+id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY
+user_id           UUID (nullable) REFERENCES auth.users
+visitor_id        TEXT (nullable) -- For guest/anonymous users
+original_text     TEXT NOT NULL
+corrected_text    TEXT
+score             DOUBLE PRECISION
+general_feedback  TEXT
+target_language   TEXT DEFAULT 'English'
+polished_text     TEXT (nullable) -- Pro users only
+created_at        TIMESTAMP NOT NULL DEFAULT now()
 ```
+**Purpose**: Store all essay submissions and analysis results from users.
 
-#### **`grammar_rules`**
+#### **`analysis_results`** (Detailed Error Analysis)
 ```sql
-id           SERIAL PRIMARY KEY
-error_key    VARCHAR UNIQUE
-title        VARCHAR
-definition   TEXT
-rule         TEXT
-bad_example  TEXT
-good_example TEXT
-tip          TEXT
+id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY
+submission_id     BIGINT NOT NULL REFERENCES submissions(id)
+error_type        TEXT
+quote             TEXT -- Exact error text from original
+severity          TEXT
+explanation       TEXT
+suggestion        TEXT -- Correction suggestion
+is_resolved       BOOLEAN DEFAULT false
+FOREIGN KEY (submission_id) REFERENCES submissions(id)
 ```
+**Purpose**: Store detailed error information for each submission.
 
-#### **`quiz_attempts`**
+#### **`grammar_rules`** (Grammar Knowledge Base - No RLS)
 ```sql
-id         BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY
-user_id    UUID REFERENCES auth.users
-error_type TEXT
-quiz_date  TIMESTAMP
-score      INT
-passed     BOOLEAN
-created_at TIMESTAMP
-updated_at TIMESTAMP
+id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY
+error_key         TEXT NOT NULL UNIQUE
+title             TEXT NOT NULL
+definition        TEXT
+rule              TEXT
+bad_example       TEXT
+good_example      TEXT
+tip               TEXT
+created_at        TIMESTAMP NOT NULL DEFAULT now()
 ```
+**Purpose**: Centralized grammar rule definitions accessible to all users. **No RLS** - publicly readable.
 
-#### **Other tables used by backend**
-- `guest_usage` for anonymous quota tracking
-- `system_prompts` for server-managed AI prompt content
+#### **`quiz_attempts`** (Learning Progress Tracking)
+```sql
+id                BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY
+user_id           UUID NOT NULL REFERENCES auth.users
+error_type        TEXT NOT NULL
+quiz_date         TIMESTAMP DEFAULT now()
+score             INTEGER NOT NULL CHECK (score >= 0 AND score <= 10)
+passed            BOOLEAN NOT NULL DEFAULT false  -- TRUE if score >= 6 (60%)
+created_at        TIMESTAMP DEFAULT now()
+updated_at        TIMESTAMP DEFAULT now()
+```
+**RLS Policies**: Users can only read/write their own quiz attempts.
+
+#### **`user_usage`** (Quota & Plan Tracking)
+```sql
+user_id           UUID PRIMARY KEY REFERENCES auth.users
+usage_count       INTEGER DEFAULT 0
+last_reset_date   DATE DEFAULT CURRENT_DATE
+is_pro            BOOLEAN DEFAULT false
+default_language  VARCHAR DEFAULT 'English'
+quiz_count        INTEGER DEFAULT 0
+last_quiz_reset_date DATE
+FOREIGN KEY (user_id) REFERENCES auth.users(id)
+```
+**Purpose**: Track daily quota for free users and Pro status.
+
+#### **`guest_usage`** (Anonymous User Quota)
+```sql
+visitor_id        TEXT PRIMARY KEY
+usage_count       INTEGER DEFAULT 0
+created_at        TIMESTAMP DEFAULT now()
+```
+**Purpose**: Track quota for guests using device fingerprinting (no login).
+
+#### **`system_prompts`** (AI Prompt Management)
+```sql
+key               TEXT PRIMARY KEY
+content           TEXT NOT NULL
+description       TEXT
+updated_at        TIMESTAMP DEFAULT now()
+```
+**Purpose**: Store and manage prompts for Gemini AI (analyze essay, generate quiz, etc.).
+
+### **Key Design Patterns**
+
+| Pattern | Usage |
+|---------|-------|
+| **RLS Enabled** | `submissions`, `analysis_results`, `quiz_attempts` - protect user data |
+| **RLS Disabled** | `grammar_rules`, `system_prompts` - admin/backend managed |
+| **No Auth FK** | `guest_usage` - for anonymous users |
+| **Soft Delete Ready** | `analysis_results.is_resolved` tracks resolution state |
+| **Quota Tracking** | `user_usage` + `guest_usage` for daily limits enforcement |
+
+### **Database Indexes**
+
+```sql
+-- For fast user lookups
+CREATE INDEX idx_submissions_user_id ON submissions(user_id);
+CREATE INDEX idx_analysis_results_submission_id ON analysis_results(submission_id);
+
+-- For quiz progress tracking
+CREATE INDEX idx_quiz_attempts_user_error ON quiz_attempts(user_id, error_type, quiz_date DESC);
+CREATE INDEX idx_quiz_attempts_recent ON quiz_attempts(user_id, quiz_date DESC);
+```
 
 ---
 
