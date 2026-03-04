@@ -169,9 +169,9 @@ import UserDropdown from "@/components/UserDropdown";
             )}
             
             <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
-              Refine your writing, <br/>
+              Catch mistakes,<br/>
               <span className="text-teal-600 relative inline-block">
-                word by word.
+                master writing.
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-teal-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
@@ -179,12 +179,12 @@ import UserDropdown from "@/components/UserDropdown";
             </h1>
             
             <p className="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Wrytt is an AI-powered writing coach that doesn't just catch mistakes—it helps you <span className="font-semibold text-slate-900">master your writing skills</span>. Get detailed feedback, practice with intelligent quizzes, and track your progress from beginner to advanced level.
+              Paste your essay and get <span className="font-semibold text-slate-900">instant error analysis</span>. Then practice with AI quizzes built from YOUR actual mistakes. <span className="font-semibold text-slate-900">Learn, don't just fix.</span>
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Link href="/analyze" className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-all hover:scale-[1.02] shadow-xl shadow-teal-600/20">
-                {user ? "Continue Writing" : "Analyze My Writing"} <ArrowRight size={18} />
+                {user ? "Continue Writing" : "Start Analyzing"} <ArrowRight size={18} />
               </Link>
               {user && (
                 <Link href="/dashboard" className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all">
@@ -240,7 +240,7 @@ import UserDropdown from "@/components/UserDropdown";
             <div className="text-center mb-16 max-w-2xl mx-auto">
               <h2 className="text-3xl font-bold text-slate-900 mb-4">Master writing, not just fix it</h2>
               <p className="text-slate-500">
-                AI-powered analysis combined with adaptive learning to turn weaknesses into strengths.
+                Catch your mistakes with AI analysis. Then learn the rules through targeted quizzes built from YOUR errors.
               </p>
             </div>
 
@@ -472,7 +472,7 @@ import UserDropdown from "@/components/UserDropdown";
               <div className="space-y-8 xl:col-span-1">
                 <img className="h-10" src="/logo.svg" alt="Wrytt AI" />
                 <p className="text-gray-500 text-base">
-                  Refine your writing, word by word. <br/>
+                  Catch mistakes, master writing. <br/>
                   Powered by <strong>Google Gemini</strong> & <strong>Vertex AI</strong>.
                 </p>
                 <div className="flex space-x-6">

@@ -461,6 +461,49 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
 
       {/* --- MAIN LAYOUT --- */}
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 relative z-10">
+        {/* Floating Error Panel - Always accessible */}
+        {result && activeError && mode === 'grammar' && (
+          <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-48px)] animate-in slide-in-from-bottom-5 lg:slide-in-from-right-5 duration-300">
+            <div className="bg-gradient-to-br from-white to-red-50/30 p-5 rounded-2xl border-2 border-red-100 shadow-2xl shadow-red-500/20 backdrop-blur-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-red-500/25 transition-all">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-30 group-hover:opacity-40 transition-opacity" />
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="px-2.5 py-1 bg-gradient-to-r from-red-50 to-red-100 text-red-700 text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
+                    {activeError.error_type}
+                  </span>
+                  <button 
+                    onClick={() => setActiveError(null)} 
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all active:scale-95"
+                  >
+                    <X size={16}/>
+                  </button>
+                </div>
+                
+                <p className="text-xs text-slate-700 mb-4 font-medium leading-relaxed bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                  <span className="text-xs text-slate-500 uppercase font-bold block mb-1.5">AI Suggestion:</span>
+                  <span className="text-sm italic">"{activeError.explanation}"</span>
+                </p>
+                
+                <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => handleOpenLesson(activeError.error_type)}
+                    className="w-full py-2 bg-white border-2 border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 hover:bg-cyan-50 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all uppercase tracking-wide shadow-sm hover:shadow-md active:scale-[0.98]"
+                  >
+                    <BookOpen size={14} /> Review Lesson
+                  </button>
+                  <button 
+                    onClick={() => applyFix(activeError)}
+                    className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
+                  >
+                    <Check size={16} /> Apply Fix
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         
         {/* --- LEFT COLUMN: EDITOR (8 Cols) --- */}
         <div className="lg:col-span-8 space-y-5">
@@ -733,31 +776,8 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
             ) : (
                 <div className="space-y-5 animate-fade-in-up">
                     
-                    {/* AI Feedback Card - Optimized for compact display */}
-                    <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border border-cyan-200 shadow-lg shadow-cyan-500/10 p-5 relative overflow-hidden group hover:shadow-xl hover:shadow-cyan-500/15 transition-all duration-300">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-100 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                        
-                        <div className="flex items-center gap-2.5 mb-3 relative z-10">
-                            <div className="p-2 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md shadow-cyan-500/20">
-                                <Quote size={18} />
-                            </div>
-                            <div>
-                              <h3 className="font-black text-base text-slate-800">AI Feedback</h3>
-                              <p className="text-xs text-cyan-600 font-bold">Examiner Insights</p>
-                            </div>
-                        </div>
-                        
-                        <div className="text-slate-700 leading-relaxed text-sm bg-white/50 p-3.5 rounded-xl border border-slate-200/50 relative z-10 max-h-[300px] overflow-y-auto hide-scrollbar">
-                            {result.general_feedback.split('\n').map((line: string, i: number) => (
-                                <p key={i} className={`mb-2 last:mb-0 text-sm ${line.startsWith('**') ? 'font-bold text-slate-900 mt-2' : ''}`}>
-                                    {line.replace(/\*\*/g, '')}
-                                </p>
-                            ))}
-                        </div>
-                    </div>
-                    
                     {/* Score Card - Optimized */}
-                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6 rounded-2xl shadow-2xl shadow-slate-900/20 border-2 border-slate-700 relative overflow-hidden flex flex-col items-center justify-center min-h-[160px] group hover:shadow-slate-900/30 transition-all duration-300">
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-7 rounded-2xl shadow-2xl shadow-slate-900/20 border-2 border-slate-700 relative overflow-hidden flex flex-col items-center justify-center min-h-[180px] group hover:shadow-slate-900/30 transition-all duration-300">
                          {/* Background trang trí */}
                          <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500 rounded-full blur-[80px] opacity-30 pointer-events-none glow-effect"></div>
                          <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20 pointer-events-none glow-effect" style={{animationDelay: '1.5s'}}></div>
@@ -778,65 +798,64 @@ const [isUnlocking, setIsUnlocking] = useState(false); // <--- State mới này
                          </div>
                     </div>
 
-                    {/* Error Interaction Area */}
-                    <div>
-                        {mode === 'vocab' ? (
-                            <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-5 rounded-2xl shadow-2xl shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all duration-300">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity" />
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Sparkles size={16} className="text-yellow-300 animate-pulse"/>
-                                        <span className="text-xs font-black uppercase tracking-widest">Elite Phrasing</span>
-                                    </div>
-                                    <h3 className="text-lg font-black mb-2.5 drop-shadow-sm">Refined by Wrytt AI</h3>
-                                    <p className="text-xs text-cyan-50 leading-relaxed font-medium">
-                                        Your essay has been rewritten to meet strict <b className="text-white">academic standards</b>. Compare the changes to learn.
-                                    </p>
-                                </div>
-                            </div>
-                        ) : activeError ? (
-                            <div className="bg-gradient-to-br from-white to-red-50/30 p-5 rounded-2xl border-2 border-red-100 shadow-xl shadow-red-500/10 relative overflow-hidden group hover:shadow-2xl hover:shadow-red-500/15 transition-all duration-300">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                                <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className="px-2.5 py-1 bg-gradient-to-r from-red-50 to-red-100 text-red-700 text-xs font-black uppercase tracking-wider rounded-lg shadow-sm">
-                                            {activeError.error_type}
-                                        </span>
-                                        <button onClick={() => setActiveError(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"><X size={16}/></button>
-                                    </div>
-                                    <p className="text-xs text-slate-700 mb-4 font-medium leading-relaxed bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                        <span className="text-xs text-slate-500 uppercase font-bold block mb-1.5">AI Suggestion:</span>
-                                        <span className="text-sm italic">"{activeError.explanation}"</span>
-                                    </p>
-                                    <div className="flex flex-col gap-2">
-                                        <button 
-                                            onClick={() => handleOpenLesson(activeError.error_type)}
-                                            className="w-full py-2 bg-white border-2 border-slate-200 text-slate-600 hover:text-cyan-600 hover:border-cyan-300 hover:bg-cyan-50 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all uppercase tracking-wide shadow-sm hover:shadow-md active:scale-[0.98]"
-                                        >
-                                            <BookOpen size={14} /> Review Lesson
-                                        </button>
-                                        <button 
-                                            onClick={() => applyFix(activeError)}
-                                            className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-black rounded-xl text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all active:scale-[0.98]"
-                                        >
-                                            <Check size={16} /> Apply Fix
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-gradient-to-br from-white to-slate-50/50 p-6 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center min-h-[150px] relative overflow-hidden group hover:border-cyan-200 transition-all">
-                                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50/0 via-cyan-50/30 to-blue-50/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <div className="relative z-10">
-                                    <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 mb-2.5 group-hover:scale-110 transition-transform">
-                                        <PencilLine size={20} />
-                                    </div>
-                                    <p className="text-xs text-slate-600 font-medium">Select any highlighted text to view details.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    {/* Info Hint Card - Only in Grammar Mode */}
+                    {mode === 'grammar' && (
+                      <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-4.5 rounded-xl shadow-lg shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full blur-2xl opacity-10 group-hover:opacity-15 transition-opacity" />
+                        <div className="relative z-10 flex items-start gap-3">
+                          <div className="p-2 bg-white/20 rounded-lg shrink-0 mt-0.5">
+                            <PencilLine size={15} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold leading-snug drop-shadow-sm">
+                              Click highlighted text to view suggestions in the floating panel
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
+                    {/* Elite Phrasing Card - Only in Vocab Mode */}
+                    {mode === 'vocab' && (
+                        <div className="bg-gradient-to-br from-cyan-500 via-cyan-600 to-teal-600 text-white p-4.5 rounded-xl shadow-lg shadow-cyan-500/20 relative overflow-hidden group hover:shadow-cyan-500/30 transition-all">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full blur-2xl opacity-10 group-hover:opacity-15 transition-opacity" />
+                            <div className="relative z-10 flex items-start gap-3">
+                              <div className="p-2 bg-white/20 rounded-lg shrink-0 mt-0.5">
+                                <Sparkles size={15} className="text-yellow-300 animate-pulse"/>
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold uppercase tracking-wide drop-shadow-sm mb-1">Elite Rewrite</h3>
+                                <p className="text-sm leading-snug drop-shadow-sm">
+                                  AI has enhanced vocabulary & phrasing to meet academic standards
+                                </p>
+                              </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    
+                    {/* AI Feedback Card - Enhanced readability */}
+                    <div className="bg-gradient-to-br from-white via-white to-cyan-50/20 rounded-2xl border border-cyan-200 shadow-lg shadow-cyan-500/10 p-6 relative overflow-hidden group hover:shadow-xl hover:shadow-cyan-500/15 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-100 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                        
+                        <div className="flex items-center gap-3 mb-4 relative z-10">
+                            <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg shadow-md shadow-cyan-500/20">
+                                <Quote size={20} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-lg text-slate-800">AI Feedback</h3>
+                              <p className="text-xs text-cyan-600 font-bold">Examiner Insights</p>
+                            </div>
+                        </div>
+                        
+                        <div className="text-slate-700 leading-relaxed text-base bg-white/50 p-5 rounded-xl border border-slate-200/50 relative z-10 max-h-[900px] overflow-y-auto hide-scrollbar">
+                            {result.general_feedback.split('\n').map((line: string, i: number) => (
+                                <p key={i} className={`mb-2.5 last:mb-0 text-base ${line.startsWith('**') ? 'font-bold text-slate-900 mt-3' : ''}`}>
+                                    {line.replace(/\*\*/g, '')}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
 
 
                 </div>

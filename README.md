@@ -5,9 +5,9 @@
   
   ### AI-Powered Writing Assistant
   
-  *Refine your writing, word by word*
+  *Catch mistakes, master writing*
 
-  Last updated: 2026-02-21
+  Last updated: 2026-03-04
   
   [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=flat&logo=next.js)](https://nextjs.org/)
   [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)](https://react.dev/)
@@ -40,59 +40,80 @@
 
 ## 🎯 Overview
 
-**Wrytt** is a modern EdTech platform that helps English writers improve their skills through AI-powered essay analysis, real-time error detection, personalized grammar lessons, and progress tracking.
+**Wrytt** is an AI-powered writing improvement platform that helps you catch errors and master grammar through targeted practice. Unlike traditional grammar checkers that only highlight mistakes, Wrytt **teaches you why errors happen** and creates personalized quizzes from YOUR actual mistakes.
+
+**How It Works:**
+1. **Paste** your essay or writing sample
+2. **Analysis** - Get instant error detection with detailed explanations
+3. **Practice** - Take AI-generated quizzes built from your specific errors
+4. **Master** - Track progress as you move from "Learning" to "Mastered"
 
 **Key Differentiators:**
-- ✅ **No login required** to analyze essays — start instantly (guest mode)
-- ✅ Not just finding errors, but **explaining why** they're wrong
-- ✅ Generating **personalized quizzes** based on your actual mistakes
-- ✅ Tracking progress with **visual analytics**
+- ✅ **No login required** to start analyzing — instant guest mode
+- ✅ Not just finding errors, but **explaining the underlying rules**
+- ✅ **Personalized quizzes** generated from YOUR actual mistakes
+- ✅ **Progress tracking** with visual mastery analytics
 - ✅ **Multilingual feedback** in 18+ languages (English, Vietnamese, Spanish, French, Japanese, Korean, etc.)
-- ✅ Providing **actionable learning paths**
+- ✅ **Adaptive learning** — focus on your weakest areas automatically
 
-**Target Audience:** Students, professionals, content creators, anyone looking to improve their English writing skills
+**Target Audience:** Students, professionals, content creators, ESL learners — anyone looking to improve their English writing skills
+
+### **Quick Demo** 
+Try it now without registration: [wrytt.me/analyze](https://wrytt.me/analyze)
+
+### **What Makes Wrytt Different?**
+
+| Traditional Grammar Checkers | Wrytt |
+|------------------------------|-------|
+| ❌ Only highlight errors | ✅ Explains WHY errors happen |
+| ❌ Generic corrections | ✅ Personalized learning path |
+| ❌ No follow-up practice | ✅ AI quizzes from YOUR mistakes |
+| ❌ Static feedback | ✅ Progress tracking & mastery system |
+| ❌ English-only explanations | ✅ 18+ languages for feedback |
 
 ---
 
 ## ✨ Features
 
-### 🔍 **Deep Essay Analysis**
-- **No Login Required**: Start analyzing immediately without creating an account
-- **AI-Powered Scoring**: Writing quality score (0-10)
-- **Visual Error Highlighting**: Errors highlighted directly in your text with tooltips
-- **Multilingual Feedback**: Choose from 18+ languages for AI explanations (English, Vietnamese, Spanish, French, Japanese, Korean, German, Italian, Portuguese, Russian, Chinese, Arabic, Hindi, Thai, Turkish, Dutch, Polish, Swedish)
-- **Corrected Output**: See your essay with all errors fixed
-- **Comprehensive Feedback**: AI-generated detailed feedback on your writing
-- **Elite Rewrite** (Pro): Get a polished, professional version with advanced vocabulary
+### 🔍 **Instant Error Detection**
+- **No Login Required**: Start analyzing immediately — paste and analyze in seconds
+- **AI-Powered Scoring**: Get a 0-10 writing quality score based on grammar, vocabulary, and clarity
+- **Visual Error Highlighting**: Errors highlighted directly in your text with hover tooltips
+- **Detailed Explanations**: Each error comes with why it's wrong and the underlying rule
+- **Corrected Output**: See your text with all errors fixed side-by-side
+- **Multilingual Feedback**: AI explanations in 18+ languages (English, Vietnamese, Spanish, French, Japanese, Korean, German, Italian, Portuguese, Russian, Chinese, Arabic, Hindi, Thai, Turkish, Dutch, Polish, Swedish)
+- **Elite Rewrite** (Pro): Get a professionally polished version with advanced vocabulary
 
-### 📚 **Personalized Learning System**
-- **Grammar Knowledge Base**: Comprehensive grammar rules with examples
-- **Interactive Lessons**: Click any error type to learn the underlying rule
-- **AI-Generated Quizzes**: Practice exercises created from your actual mistakes (single-error focus)
-- **Real-time Practice**: Multiple-choice quizzes to reinforce learning
-- **Mastery Goal**: Automatic focus area selection with progress tracking
+### 📚 **Learn from YOUR Mistakes**
+- **Grammar Knowledge Base**: 50+ grammar rules with clear explanations and examples
+- **Interactive Lessons**: Click any error type to open an in-depth lesson modal
+- **AI-Generated Quizzes**: 10 targeted questions created from each of your specific errors
+- **Progressive Difficulty**: Questions range from basic recall to complex application
+- **Real-time Feedback**: Instant explanations for right and wrong answers
+- **Mastery Tracking**: Errors move through Learning → Practicing → Mastered states
 
-### 📊 **Progress Analytics Dashboard**
-- **Performance Overview**: Total essays, average score, highest score
-- **Error Frequency Analysis**: Bar charts showing your most common mistakes
-- **Priority Error Tracking**: Automatic detection of critical weaknesses
-- **Submission History**: Review all past essays and track improvement
-- **Score Trajectory Chart**: Visualize your progress over time
+### 📊 **Track Your Progress**
+- **Performance Dashboard**: Total essays analyzed, average score, highest score
+- **Error Frequency Charts**: Bar graphs showing your most common mistake types
+- **Priority Focus System**: Automatically identifies which errors to tackle first
+- **Submission History**: Review all past essays with scores and feedback
+- **Score Trajectory**: Line chart visualizing improvement over time
 - **PDF Report Export** (Pro): Download a professional progress report
 
 ### 🎨 **Premium Features (Pro)**
-- **Higher Daily Limit** (Pro: 50/day, Free: 2/day, Guest: 1 total per device)
-- **Elite Polished Rewrites** with advanced vocabulary and professional phrasing
-- **Advanced Analytics**
-- **Full Submission History**
-- **PDF Report Export**
+- **Higher Daily Limits**: 50 essays/day (vs 2/day for Free, 1 lifetime for Guest)
+- **Unlimited Quizzes**: Practice as much as you want (Free: 6/day)
+- **Elite Polished Rewrites**: AI rewrites with professional-level vocabulary and phrasing
+- **Advanced Analytics**: Detailed breakdowns and insights
+- **Full History Access**: Never lose your past submissions
+- **PDF Export**: Download beautifully formatted progress reports
 
-### 🔒 **Security & System Safety**
-- **Daily Quota Limits**: Prevent spam and protect API resources (Guest: 1 total per device, Free users: 2/day, Pro: 50/day)
-- **Input Validation**: Minimum 15 word count enforcement
-- **Supabase Authentication**: Secure login with OAuth
-- **Rate Limiting**: Database-level quota management
-- **Anonymous Usage**: Analyze without account, upgrade later to save history
+### 🔒 **Privacy & Security**
+- **Anonymous Guest Mode**: Analyze without creating an account (1 free essay)
+- **Device-Based Quotas**: Fair usage without requiring login
+- **Secure Authentication**: Supabase OAuth (Google, GitHub, Email)
+- **Row-Level Security**: Your data is protected with database-level access control
+- **No Data Selling**: We never sell or share your writing samples
 
 ---
 
@@ -114,16 +135,14 @@
 ### **Backend**
 | Technology | Purpose |
 |-----------|---------|
-| **FastAPI 0.128.0** | High-performance Python API framework |
-| **Pydantic 2.x** | Data validation and settings management |
-| **Google Gemini 2.5 Flash** | Essay analysis and feedback |
-| **Google Gemini 2.5 Flash Lite** | Quiz generation |
-| **google-genai 1.59** | Google AI SDK integration |
-| **Redis** | Caching prompts & performance optimization |
-|-----------|---------|
-| **Supabase (PostgreSQL)** | User data, submissions, errors, grammar rules |
-| **Supabase Auth** | Authentication & user management |
-| **Row Level Security (RLS)** | Data access control |
+| **FastAPI 0.128.0** | High-performance Python API framework with async support |
+| **Pydantic 2.x** | Data validation and OpenAI-compatible schemas |
+| **Google Gemini 2.5 Flash Lite** | Fast, cost-effective AI for essay analysis & quiz generation |
+| **google-genai 1.59** | Official Google AI SDK with structured output support |
+| **Redis** | Prompt caching & performance optimization |
+| **Supabase (PostgreSQL)** | User data, submissions, error tracking, grammar rules |
+| **Supabase Auth** | OAuth authentication (Google, GitHub, Email) |
+| **Row Level Security (RLS)** | Database-level access control |
 
 ### **Payment & Deployment**
 | Technology | Purpose |
