@@ -108,7 +108,7 @@ export default function LoginPage() {
           
           <h2 className="text-5xl font-bold text-white leading-tight mb-8 tracking-tight">
             Write with <br/>
-            <span className="text-cyan-400">precision.</span>
+            <span className="text-teal-400">precision.</span>
           </h2>
           
           <div className="space-y-5 mb-12">
@@ -118,8 +118,8 @@ export default function LoginPage() {
               "Vertex AI Powered Engine"
             ].map((text, i) => (
               <div key={i} className="flex items-center gap-3 text-slate-300 text-sm font-medium">
-                <div className="p-1 bg-cyan-500/10 rounded-full">
-                    <Check size={14} className="text-cyan-400" />
+                <div className="p-1 bg-teal-500/10 rounded-full">
+                    <Check size={14} className="text-teal-400" />
                 </div>
                 {text}
               </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
           </div>
 
           <div className="inline-flex items-center gap-3 px-5 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-             <Cloud className="text-cyan-400" size={20} />
+             <Cloud className="text-teal-400" size={20} />
              <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Infrastructure</p>
                 <p className="text-xs font-semibold text-slate-200">Powered by Google Vertex AI</p>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all text-sm font-medium"
                 placeholder="you@example.com"
               />
             </div>
@@ -176,7 +176,7 @@ export default function LoginPage() {
                       setForgotEmail(email);
                       setShowForgot(true);
                     }}
-                    className="text-[10px] font-bold text-cyan-600 hover:text-cyan-700"
+                    className="text-[10px] font-bold text-teal-600 hover:text-teal-700"
                   >
                     Forgot?
                   </button>
@@ -186,7 +186,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all text-sm font-medium"
                 placeholder="••••••••"
               />
             </div>
@@ -194,7 +194,7 @@ export default function LoginPage() {
             <button
               onClick={handleAuth}
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-cyan-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 active:scale-[0.98]"
+              className="w-full bg-slate-900 hover:bg-teal-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : (isSignUp ? "Create Account" : "Sign In")}
               {!loading && <ArrowRight size={16} />}
@@ -219,7 +219,7 @@ export default function LoginPage() {
             {isSignUp ? "Have an account?" : "New to Wrytt?"}{" "}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-cyan-600 font-bold hover:underline underline-offset-4"
+              className="text-teal-600 font-bold hover:underline underline-offset-4"
             >
               {isSignUp ? "Sign In" : "Register Now"}
             </button>
@@ -251,7 +251,7 @@ export default function LoginPage() {
                 type="email"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
-                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all text-sm font-medium"
+                className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all text-sm font-medium"
                 placeholder="you@example.com"
               />
             </div>
@@ -267,7 +267,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={forgotLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-600 transition-all"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600 transition-all"
               >
                 {forgotLoading ? <Loader2 className="animate-spin" size={16} /> : "Send reset link"}
               </button>

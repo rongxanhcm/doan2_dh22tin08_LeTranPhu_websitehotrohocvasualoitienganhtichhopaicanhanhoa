@@ -170,17 +170,17 @@ export default function GrammarLessonModal({
         <div className="absolute inset-0" onClick={onClose} />
 
         <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-xl overflow-hidden border border-white/20 relative z-10 animate-bounce-in flex flex-col max-h-[90vh]">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-rose-500/10 rounded-full blur-[60px] pointer-events-none translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none translate-y-1/2 -translate-x-1/2" />
 
           {/* --- HEADER --- */}
           <div className="relative p-6 sm:p-8 pb-4 flex justify-between items-start shrink-0">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-inner border border-indigo-100/50">
+              <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center shrink-0 shadow-inner border border-teal-100/50">
                 <BookOpen size={24} />
               </div>
               <div>
-                <div className="flex items-center gap-1.5 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1.5">
+                <div className="flex items-center gap-1.5 text-teal-600 text-[10px] font-black uppercase tracking-[0.2em] mb-1.5">
                   <Sparkles size={12} /> Master Rule
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
@@ -204,9 +204,9 @@ export default function GrammarLessonModal({
               <p className="text-slate-600 font-medium leading-relaxed text-[15px]">
                 {rule.definition}
               </p>
-              <div className="bg-gradient-to-br from-indigo-50 to-violet-50 p-5 rounded-2xl border border-indigo-100/50 relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-500 rounded-l-2xl" />
-                <p className="text-indigo-900 font-bold leading-relaxed pl-2">
+              <div className="bg-gradient-to-br from-teal-50 to-emerald-50 p-5 rounded-2xl border border-teal-100/50 relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-teal-500 to-emerald-500 rounded-l-2xl" />
+                <p className="text-teal-900 font-bold leading-relaxed pl-2">
                   {rule.rule}
                 </p>
               </div>
@@ -262,9 +262,9 @@ export default function GrammarLessonModal({
             {errorType && quote && (
               <button 
                 onClick={handleStartQuiz}
-                className="w-full py-4 bg-cyan-600 text-white font-black rounded-2xl hover:bg-cyan-700 transition-all shadow-xl hover:shadow-cyan-200 hover:-translate-y-1 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-black rounded-2xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-xl shadow-teal-500/20 hover:shadow-teal-500/30 hover:-translate-y-1 flex items-center justify-center gap-2"
               >
-                <Zap size={20} fill="currentColor" />
+                <Zap size={20} fill="currentColor" className="text-teal-200" />
                 Practice Now (10 Questions)
               </button>
             )}
@@ -286,9 +286,9 @@ export default function GrammarLessonModal({
       <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
         <div className="bg-white rounded-[32px] p-8 shadow-2xl w-full max-w-md text-center space-y-4">
           <div className="relative w-16 h-16 mx-auto">
-            <div className="w-16 h-16 border-4 border-slate-100 border-t-cyan-500 rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-slate-100 border-t-teal-500 rounded-full animate-spin"></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Zap size={20} className="text-cyan-500 fill-cyan-500" />
+              <Zap size={20} className="text-teal-500 fill-teal-500" />
             </div>
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Generating Practice Questions...</p>
@@ -338,8 +338,8 @@ export default function GrammarLessonModal({
             </div>
 
             {!passed && (
-              <div className="bg-blue-100/60 border border-blue-200 p-4 rounded-xl">
-                <p className="text-sm text-blue-900">
+              <div className="bg-teal-100/60 border border-teal-200 p-4 rounded-xl">
+                <p className="text-sm text-teal-900">
                   <span className="font-bold">Need {passScore - correctCount} more correct</span> to pass (60% = 6/10)
                 </p>
               </div>
@@ -351,8 +351,8 @@ export default function GrammarLessonModal({
                 disabled={saving}
                 className={`w-full py-4 font-black rounded-2xl transition-all text-white ${
                   passed
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-xl shadow-emerald-500/20"
+                    : "bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 shadow-xl shadow-teal-500/20"
                 } disabled:opacity-50`}
               >
                 {saving ? "Saving..." : passed ? "Mark as Resolved ✓" : "Try Again"}
@@ -385,7 +385,7 @@ export default function GrammarLessonModal({
         {/* Progress Bar */}
         <div className="h-2 bg-slate-100">
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / quizQuestions.length) * 100}%` }}
           />
         </div>
@@ -457,7 +457,7 @@ export default function GrammarLessonModal({
           <div className="p-6 border-t border-slate-100 bg-slate-50">
             <button
               onClick={handleNextQuestion}
-              className="w-full py-4 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 transition-all"
+              className="w-full py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-black rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg shadow-teal-500/20"
             >
               {currentIndex < quizQuestions.length - 1 ? "Next Question" : "See Results"}
             </button>

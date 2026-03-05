@@ -428,7 +428,7 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <main className="min-h-screen bg-white font-sans text-slate-900 selection:bg-cyan-100">
+    <main className="min-h-screen bg-white font-sans text-slate-900 selection:bg-teal-100">
       
       {/* Background Dot Grid Pattern */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
@@ -463,7 +463,7 @@ export default function Dashboard() {
                
             </div>
             <div>
-              <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-[0.2em]">Student Portal</p>
+              <p className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em]">Student Portal</p>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {userEmail.split('@')[0]}
               </h1>
@@ -476,7 +476,7 @@ export default function Dashboard() {
              {/* Nút Viết bài mới (Luôn hiện) */}
              <button 
                 onClick={() => router.push("/analyze")}
-                className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:border-cyan-500 hover:text-cyan-600 transition-all shadow-sm active:scale-95 text-sm"
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:border-teal-500 hover:text-teal-600 transition-all shadow-sm active:scale-95 text-sm"
              >
                 <FileText size={18} />
                 New Essay
@@ -486,9 +486,9 @@ export default function Dashboard() {
              {!isPro && (
                  <button 
                     onClick={() => setShowPricingModal(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
-                 >
-                     <Sparkles size={14} className="text-cyan-400" />
+                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-teal-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                >
+                     <Sparkles size={14} className="text-teal-400" />
                      <span className="hidden sm:inline">Upgrade Pro</span>
                      <span className="sm:hidden">Pro</span>
                  </button>
@@ -505,9 +505,9 @@ export default function Dashboard() {
         {/* --- QUOTA BANNER --- */}
         {!isPro && (
             <div className="bg-slate-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 border border-slate-800 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl"></div>
                 <div className="flex items-center gap-5 relative z-10">
-                    <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 text-cyan-400">
+                    <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 text-teal-400">
                         <Lock size={20} />
                     </div>
                     <div>
@@ -517,7 +517,7 @@ export default function Dashboard() {
                 </div>
                 <button 
                     onClick={() => setShowPricingModal(true)} 
-                    className="px-6 py-2.5 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-500 transition-all text-sm whitespace-nowrap shadow-lg shadow-cyan-600/20"
+                    className="px-6 py-2.5 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-500 transition-all text-sm whitespace-nowrap shadow-lg shadow-teal-600/20"
                 >
                     Unlock Pro Features 💎
                 </button>
@@ -527,7 +527,7 @@ export default function Dashboard() {
         {/* --- STATS OVERVIEW --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard icon={<FileText size={20} />} label="Total Essays" value={stats.totalEssays} subValue="Submissions" color="slate" />
-          <StatCard icon={<Award size={20} />} label="Avg. Score" value={stats.avgScore} subValue="Score Accuracy" color="cyan" isScore />
+          <StatCard icon={<Award size={20} />} label="Avg. Score" value={stats.avgScore} subValue="Score Accuracy" color="teal" isScore />
           <StatCard icon={<Target size={20} />} label="Highest" value={stats.highestScore} subValue="Personal Record" color="slate" isScore />
           <StatCard icon={<AlertTriangle size={20} />} label="Top Issue" value={stats.topErrors.length > 0 ? stats.topErrors[0].count : 0} subValue={stats.topErrors.length > 0 ? stats.topErrors[0].name : 'No issues'} color="rose" />
         </div>
@@ -539,7 +539,7 @@ export default function Dashboard() {
           <div className="lg:col-span-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center mb-10">
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <TrendingUp className="text-cyan-600" size={20}/> 
+                  <TrendingUp className="text-teal-600" size={20}/> 
                   Skill Diagnostics
                 </h3>
             </div>
@@ -550,11 +550,11 @@ export default function Dashboard() {
                     <div key={idx} className="group">
                         <div className="flex justify-between items-end mb-3">
                             <div className="space-y-1">
-                                <span className="font-bold text-slate-800 group-hover:text-cyan-600 transition-colors">{item.name}</span>
+                                <span className="font-bold text-slate-800 group-hover:text-teal-600 transition-colors">{item.name}</span>
                                 <div className="flex items-center gap-2">
                                     <button 
                                         onClick={() => handleOpenLesson(item.originalName)}
-                                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-cyan-600 flex items-center gap-1 transition-all"
+                                        className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-teal-600 flex items-center gap-1 transition-all"
                                     >
                                         <BookOpen size={12}/> Review Rule
                                     </button>
@@ -567,7 +567,7 @@ export default function Dashboard() {
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-2">
                             <div 
-                                className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-cyan-600' : 'bg-slate-300'}`} 
+                                className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-teal-600' : 'bg-slate-300'}`} 
                                 style={{ width: `${Math.min((item.count / (stats.totalEssays * 3)) * 100, 100)}%` }} 
                             />
                         </div>
@@ -584,7 +584,7 @@ export default function Dashboard() {
           {/* AI PATH FOCUS - MASTERY GOAL WITH INLINE QUIZ */}
           <div className="lg:col-span-4 bg-slate-50 p-8 rounded-2xl border border-slate-200 relative overflow-visible">
              <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-white rounded-lg border border-slate-200 text-cyan-600 shadow-sm">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200 text-teal-600 shadow-sm">
                       <Target size={20}/> 
                   </div>
                   <div>
@@ -694,7 +694,7 @@ export default function Dashboard() {
                         <button 
                             onClick={() => handleStartQuiz(stats.priorityError.type, stats.priorityError.quote, stats.priorityError.id)}
                             disabled={quizLoading || (!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT)}
-                            className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-cyan-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-teal-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             {quizLoading ? (
                               <>
@@ -715,7 +715,7 @@ export default function Dashboard() {
                         {!isPro && (
                           <div className="p-3 bg-slate-100 rounded-lg">
                             <p className="text-[10px] text-slate-600 font-bold text-center">
-                              Daily Quizzes: <span className={quizCount >= FREE_DAILY_QUIZ_LIMIT ? "text-red-600" : "text-cyan-600"}>{quizCount}/{FREE_DAILY_QUIZ_LIMIT}</span>
+                              Daily Quizzes: <span className={quizCount >= FREE_DAILY_QUIZ_LIMIT ? "text-red-600" : "text-teal-600"}>{quizCount}/{FREE_DAILY_QUIZ_LIMIT}</span>
                             </p>
                           </div>
                         )}
@@ -723,7 +723,7 @@ export default function Dashboard() {
                   ) : quizLoading ? (
                     // Loading State
                     <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                        <div className="w-12 h-12 border-4 border-slate-200 border-t-cyan-500 rounded-full animate-spin" />
+                        <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-500 rounded-full animate-spin" />
                         <p className="text-sm font-bold text-slate-500 text-center">Generating Practice Questions...</p>
                     </div>
                   ) : quizError ? (
@@ -791,7 +791,7 @@ export default function Dashboard() {
                                     <span>{Math.round(progressPercent)}%</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full transition-all" style={{ width: `${progressPercent}%` }} />
+                                    <div className="bg-gradient-to-r from-teal-500 to-blue-500 h-full transition-all" style={{ width: `${progressPercent}%` }} />
                                 </div>
                             </div>
 
@@ -863,7 +863,7 @@ export default function Dashboard() {
                 </>
               ) : (
                 <div className="text-center py-10">
-                    <CheckCircle size={40} className="text-cyan-500 mx-auto mb-4 opacity-50"/>
+                    <CheckCircle size={40} className="text-teal-500 mx-auto mb-4 opacity-50"/>
                     <p className="font-bold text-slate-900">All clear!</p>
                 </div>
               )}
@@ -897,7 +897,7 @@ export default function Dashboard() {
                   disabled={isExporting}
                   className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-900 hover:text-white transition-all"
                 >
-                  {isExporting ? <div className="animate-spin w-3 h-3 border-2 border-cyan-500 border-t-transparent rounded-full"/> : isPro ? <Download size={14} /> : <Lock size={14} className="text-amber-500" />}
+                  {isExporting ? <div className="animate-spin w-3 h-3 border-2 border-teal-500 border-t-transparent rounded-full"/> : isPro ? <Download size={14} /> : <Lock size={14} className="text-amber-500" />}
                   Download PDF Report
                 </button>
             </div>
@@ -919,19 +919,19 @@ export default function Dashboard() {
                                 {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </td>
                             <td className="px-6 py-5">
-                                <span className={`px-3 py-1 rounded text-xs font-bold ${item.score >= 7.0 ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-700'}`}>
+                                <span className={`px-3 py-1 rounded text-xs font-bold ${item.score >= 7.0 ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-700'}`}>
                                     Score {item.score.toFixed(1)}
                                 </span>
                             </td>
                             <td className="px-6 py-5">
                                 {item.polished_text ? (
-                                    <span className="text-[10px] font-bold text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded flex items-center gap-1 w-fit"><Sparkles size={10}/> Ultimate</span>
+                                    <span className="text-[10px] font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded flex items-center gap-1 w-fit"><Sparkles size={10}/> Ultimate</span>
                                 ) : (
                                     <span className="text-[10px] font-bold text-slate-400 border border-slate-200 px-2 py-0.5 rounded w-fit">Standard</span>
                                 )}
                             </td>
                             <td className="px-6 py-5 text-right">
-                                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover:text-cyan-600 transition-colors translate-x-0 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover:text-teal-600 transition-colors translate-x-0 group-hover:translate-x-1 transition-transform" />
                             </td>
                         </tr>
                         ))}
@@ -948,12 +948,12 @@ export default function Dashboard() {
 function StatCard({ icon, label, value, subValue, color, isScore }: any) {
     const colors: any = {
         slate: "text-slate-600 bg-slate-50 border-slate-100",
-        cyan: "text-cyan-600 bg-cyan-50 border-cyan-100",
+        teal: "text-teal-600 bg-teal-50 border-teal-100",
         rose: "text-rose-600 bg-rose-50 border-red-100"
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-cyan-200 transition-all">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-teal-200 transition-all">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 border ${colors[color]}`}>
                 {icon}
             </div>
