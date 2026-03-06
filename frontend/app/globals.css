@@ -33,3 +33,157 @@ body {
 /* --- THÊM ĐOẠN NÀY --- */
 
 /* Chỉ áp dụng cho màn hình Laptop (dưới 1600px) */
+
+.journal-content {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #1f2937;
+  line-height: 1.9;
+  font-size: 1.14rem;
+  max-width: 78ch;
+  margin: 0 auto;
+}
+
+.journal-content > *:first-child {
+  margin-top: 0;
+}
+
+.journal-content h1,
+.journal-content h2,
+.journal-content h3,
+.journal-content h4 {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+  line-height: 1.25;
+  margin-top: 2.1em;
+  margin-bottom: 0.65em;
+}
+
+.journal-content h1 {
+  font-size: 2.2rem;
+}
+
+.journal-content h2 {
+  font-size: 1.8rem;
+  border-top: 1px solid #dbe2ea;
+  padding-top: 0.9rem;
+}
+
+.journal-content h3 {
+  font-size: 1.35rem;
+}
+
+.journal-content p {
+  margin: 1.1em 0;
+  text-align: left;
+}
+
+.journal-content ul,
+.journal-content ol {
+  margin: 1.1em 0 1.2em;
+  padding-left: 1.35em;
+}
+
+.journal-content li {
+  margin: 0.45em 0;
+}
+
+.journal-content a {
+  color: #0f766e;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.journal-content blockquote {
+  margin: 1.6em 0;
+  border-left: 4px solid #0f766e;
+  background: #f1f5f9;
+  padding: 0.9rem 1rem;
+  color: #334155;
+  font-style: italic;
+}
+
+.journal-content code {
+  font-family: "Courier New", Courier, monospace;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.92em;
+}
+
+.journal-content pre {
+  margin: 1.4em 0;
+  padding: 1rem 1.1rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.journal-content pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+.journal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.6em 0;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.journal-content thead th {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  padding: 0.65rem 0.75rem;
+}
+
+.journal-content tbody td {
+  border: 1px solid #dbe2ea;
+  padding: 0.62rem 0.75rem;
+  vertical-align: top;
+}
+
+.journal-content tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.journal-content hr {
+  border: none;
+  border-top: 1px solid #dbe2ea;
+  margin: 2em 0;
+}
+
+@media (max-width: 768px) {
+  .journal-content {
+    font-size: 1.02rem;
+    line-height: 1.78;
+  }
+
+  .journal-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .journal-content h2 {
+    font-size: 1.45rem;
+  }
+
+  .journal-content h3 {
+    font-size: 1.2rem;
+  }
+
+  .journal-content table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

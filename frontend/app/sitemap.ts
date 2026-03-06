@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getAllGrammarRules } from '@/lib/supabase/grammarRules';
+import { getAllBlogPosts, BLOG_CATEGORIES } from '@/lib/supabase/blogPosts';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://wrytt.me';
@@ -25,16 +26,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
     },
     {
-      url: `${baseUrl}/pricing`,
+      url: `${baseUrl}/blog`,
       lastModified: new Date(),
-      priority: 0.8,
+      priority: 0.9,
+      changeFrequency: 'weekly',
+    },
+    {
+      url: `${baseUrl}/login`,
+      lastModified: new Date(),
+      priority: 0.4,
       changeFrequency: 'monthly',
     },
     {
-      url: `${baseUrl}/changelog`,
+      url: `${baseUrl}/update-password`,
       lastModified: new Date(),
-      priority: 0.7,
-      changeFrequency: 'weekly',
+      priority: 0.3,
+      changeFrequency: 'monthly',
     },
     {
       url: `${baseUrl}/privacy`,
@@ -50,10 +57,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic grammar rule pages
   try {
+    // Dynamic grammar rule pages
     const rules = await getAllGrammarRules();
-
     const rulePages: MetadataRoute.Sitemap = rules.map((rule) => ({
       url: `${baseUrl}/rules/${rule.error_key}`,
       lastModified: new Date(),
@@ -61,7 +67,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
     }));
 
-    return [...staticPages, ...rulePages];
+    // Blog category pages
+    const categoryPages: MetadataRoute.Sitemap = Object.keys(BLOG_CATEGORIES).map((category) => ({
+      url: `${baseUrl}/blog/${category}`,
+      lastModified: new Date(),
+      priority: 0.8,
+      changeFrequency: 'weekly' as const,
+    }));
+
+    // Blog post pages
+    const blogPosts = await getAllBlogPosts();
+    const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.category}/${post.slug}`,
+      lastModified: new Date(post.updated_at),
+      priority: 0.7,
+      changeFrequency: 'monthly' as const,
+    }));
+
+    return [...staticPages, ...rulePages, ...categoryPages, ...blogPages];
   } catch (error) {
     console.error('Error generating sitemap:', error);
     // Return static pages if database fetch fails

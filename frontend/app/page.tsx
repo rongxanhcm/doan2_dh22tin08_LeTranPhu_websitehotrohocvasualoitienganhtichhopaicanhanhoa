@@ -364,7 +364,7 @@ import UserDropdown from "@/components/UserDropdown";
         </section>
 
         {/* --- PRICING COMPARISON PREVIEW --- */}
-        <section className="py-24 bg-slate-50 border-t border-slate-200 px-6">
+        <section id="pricing" className="py-24 bg-slate-50 border-t border-slate-200 px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12 max-w-2xl mx-auto">
               <h2 className="text-3xl font-bold text-slate-900 mb-4">Simple, transparent pricing</h2>
@@ -529,7 +529,8 @@ import UserDropdown from "@/components/UserDropdown";
                     <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
                     <ul role="list" className="mt-4 space-y-4">
                       <li><a href="/rules" className="text-base text-gray-500 hover:text-gray-900">Grammar Rules</a></li>
-                      <li><a href="/changelog" className="text-base text-gray-500 hover:text-gray-900">Changelog</a></li>
+                      <li><a href="/blog" className="text-base text-gray-500 hover:text-gray-900">Learning Blog</a></li>
+                      <li><a href="/#pricing" className="text-base text-gray-500 hover:text-gray-900">Pricing</a></li>
                     </ul>
                   </div>
                   <div className="mt-12 md:mt-0">

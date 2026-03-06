@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabaseClient";
 import { useRouter, usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Terminal, Book, Users, 
-  LogOut, ShieldAlert, ChevronLeft, Menu, X 
+  LogOut, ShieldAlert, ChevronLeft, Menu, X, FileText 
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
@@ -68,6 +68,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Overview", icon: <LayoutDashboard size={20}/>, path: "/admin" },
     { name: "System Prompts", icon: <Terminal size={20}/>, path: "/admin/prompts" },
     { name: "Grammar Rules", icon: <Book size={20}/>, path: "/admin/rules" },
+    { name: "Blog Posts", icon: <FileText size={20}/>, path: "/admin/blog" },
     { name: "Users Management", icon: <Users size={20}/>, path: "/admin/users" },
   ];
 
