@@ -137,6 +137,43 @@ class ForgotPasswordRequest(BaseModel):
 
 class UpdatePasswordRequest(BaseModel):
     new_password: str
+
+
+def rebuild_corrected_text_from_errors(original_text: str, errors: List[ErrorDetail]) -> str:
+    """Best-effort fallback to reconstruct corrected text from quote->suggestion pairs."""
+    if not original_text or not errors:
+        return original_text
+
+    indexed_errors = []
+    for err in errors:
+        quote = (err.quote or "").strip()
+        suggestion = (err.suggestion or "").strip()
+        if not quote or not suggestion:
+            continue
+
+        idx = original_text.find(quote)
+        if idx == -1:
+            continue
+
+        indexed_errors.append((idx, quote, suggestion))
+
+    if not indexed_errors:
+        return original_text
+
+    indexed_errors.sort(key=lambda item: item[0])
+    rebuilt_parts = []
+    cursor = 0
+
+    for idx, quote, suggestion in indexed_errors:
+        if idx < cursor:
+            continue
+        rebuilt_parts.append(original_text[cursor:idx])
+        rebuilt_parts.append(suggestion)
+        cursor = idx + len(quote)
+
+    rebuilt_parts.append(original_text[cursor:])
+    rebuilt = "".join(rebuilt_parts)
+    return rebuilt if rebuilt else original_text
 # ==========================================
 # ENDPOINT 1: ANALYZE ESSAY (ĐÃ TỐI ƯU)
 # ==========================================
@@ -223,6 +260,12 @@ def analyze_essay(input: EssayInput, request: Request):
             config=types.GenerateContentConfig(response_mime_type='application/json', response_schema=target_schema)
         )
         result = response.parsed
+
+        if result.corrected_text.strip() == input.text.strip() and result.core_errors:
+            rebuilt_corrected = rebuild_corrected_text_from_errors(input.text, result.core_errors)
+            if rebuilt_corrected.strip() != input.text.strip():
+                result.corrected_text = rebuilt_corrected
+
         response_data = result.model_dump()
 
         # 5. LƯU QUOTA (Tách biệt)

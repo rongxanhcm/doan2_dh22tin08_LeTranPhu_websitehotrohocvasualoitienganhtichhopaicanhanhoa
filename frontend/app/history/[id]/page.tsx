@@ -39,8 +39,8 @@ const enhancedStyles = `
   .animate-scan-line {
     position: absolute;
     top: 0; bottom: 0; width: 2px;
-    background: linear-gradient(to bottom, transparent, #06b6d4, transparent);
-    box-shadow: 0 0 15px 2px rgba(6, 182, 212, 0.5);
+        background: linear-gradient(to bottom, transparent, #14b8a6, transparent);
+        box-shadow: 0 0 15px 2px rgba(20, 184, 166, 0.45);
     z-index: 30;
     animation: scan-line 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
   }
@@ -71,6 +71,49 @@ export default function HistoryDetail() {
   const unresolvedErrors = useMemo(() => {
     return data?.analysis_results.filter((e: any) => !e.is_resolved) || [];
   }, [data?.analysis_results]);
+
+    const displayCorrectedText = useMemo(() => {
+        const originalText = data?.original_text || "";
+        const correctedText = data?.corrected_text || "";
+        const errors = data?.analysis_results || [];
+
+        const hasValidCorrected =
+            correctedText.trim().length > 0 &&
+            correctedText.trim() !== originalText.trim();
+
+        if (hasValidCorrected || errors.length === 0) {
+            return correctedText || originalText;
+        }
+
+        // Fallback for legacy/bad records: rebuild a corrected draft from stored suggestions.
+        const sortedErrors = errors
+            .map((err: any) => {
+                const quote = typeof err?.quote === "string" ? err.quote : "";
+                const suggestion = typeof err?.suggestion === "string" ? err.suggestion : "";
+                const index = quote ? originalText.indexOf(quote) : -1;
+                return { quote, suggestion, index };
+            })
+            .filter((err: any) => err.index !== -1 && err.suggestion)
+            .sort((a: any, b: any) => a.index - b.index);
+
+        if (sortedErrors.length === 0) {
+            return correctedText || originalText;
+        }
+
+        let rebuilt = "";
+        let cursor = 0;
+
+        sortedErrors.forEach((err: any) => {
+            if (err.index < cursor) return;
+
+            rebuilt += originalText.slice(cursor, err.index);
+            rebuilt += err.suggestion;
+            cursor = err.index + err.quote.length;
+        });
+
+        rebuilt += originalText.slice(cursor);
+        return rebuilt || correctedText || originalText;
+    }, [data?.original_text, data?.corrected_text, data?.analysis_results]);
 
   const handleOpenLesson = async (errorType: string) => {
     const rule = await fetchRuleByKey(errorType);
@@ -182,13 +225,15 @@ export default function HistoryDetail() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
   });
 
-  return (
-    <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-cyan-100">
+    return (
+        <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100/70 font-sans text-slate-900 selection:bg-teal-100">
       <style>{enhancedStyles}</style>
       
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
            style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
+            <div className="fixed top-[-240px] left-[-220px] w-[500px] h-[500px] rounded-full bg-teal-300/15 blur-3xl pointer-events-none" />
+            <div className="fixed bottom-[-260px] right-[-200px] w-[540px] h-[540px] rounded-full bg-sky-200/15 blur-3xl pointer-events-none" />
 
       <GrammarLessonModal 
         isOpen={isModalOpen} 
@@ -196,12 +241,12 @@ export default function HistoryDetail() {
         rule={selectedRule}
       />
 
-      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
+    <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
         {/* --- HEADER --- */}
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-fade-in-up">
             <div className="space-y-4">
-                <button onClick={() => router.push("/dashboard")} className="group flex items-center text-slate-400 hover:text-cyan-600 transition-colors font-bold text-xs uppercase tracking-widest">
+                <button onClick={() => router.push("/dashboard")} className="group flex items-center text-slate-400 hover:text-teal-600 transition-colors font-bold text-xs uppercase tracking-widest">
                     <ArrowLeft size={14} className="mr-2 group-hover:-translate-x-1 transition-transform" /> 
                     Back to Dashboard
                 </button>
@@ -215,7 +260,7 @@ export default function HistoryDetail() {
             </div>
 
             <div className="bg-slate-900 px-8 py-6 rounded-xl shadow-xl shadow-slate-900/10 flex flex-col items-center min-w-[180px] border border-slate-800">
-                 <span className="text-5xl font-black text-cyan-400 tracking-tighter">{data.score.toFixed(1)}</span>
+                  <span className="text-5xl font-black text-teal-400 tracking-tighter">{data.score.toFixed(1)}</span>
                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Overall Band Score</span>
             </div>
         </div>
@@ -245,7 +290,7 @@ export default function HistoryDetail() {
                         {viewMode === 'corrected' ? (
                              <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100"><Check size={16}/></div>
                         ) : (
-                             <div className="p-1.5 bg-cyan-50 text-cyan-600 rounded-md border border-cyan-100"><Sparkles size={16}/></div>
+                                <div className="p-1.5 bg-teal-50 text-teal-600 rounded-md border border-teal-100"><Sparkles size={16}/></div>
                         )}
                         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">
                             {viewMode === 'corrected' ? "Grammar Fix" : "Band 9.0 Ultimate"}
@@ -261,18 +306,18 @@ export default function HistoryDetail() {
                         </button>
                         <button 
                             onClick={() => handleSwitchMode('polished')}
-                            className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1.5 ${viewMode === 'polished' ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all flex items-center gap-1.5 ${viewMode === 'polished' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <Sparkles size={12}/> ELITE
                         </button>
                     </div>
                 </div>
 
-                <div className={`relative p-8 rounded-2xl shadow-xl flex-1 min-h-[500px] overflow-hidden border transition-all duration-500 ${viewMode === 'corrected' ? 'bg-slate-900 border-slate-800' : 'bg-white border-cyan-100'}`}>
+                <div className={`relative p-8 rounded-2xl shadow-xl flex-1 min-h-[500px] overflow-hidden border transition-all duration-500 ${viewMode === 'corrected' ? 'bg-slate-900 border-slate-800' : 'bg-white border-teal-100'}`}>
                     {viewMode === 'corrected' ? (
                         <div className="h-full overflow-y-auto pr-2 custom-scrollbar">
                             <p className="whitespace-pre-wrap text-slate-300 leading-loose font-serif text-lg">
-                                {data.corrected_text}
+                                {displayCorrectedText}
                             </p>
                         </div>
                     ) : (
@@ -282,7 +327,7 @@ export default function HistoryDetail() {
                                 <div className="relative">
                                     {isAnimating && (
                                         <div className="absolute inset-0 text-lg text-slate-200 font-serif whitespace-pre-wrap leading-loose select-none z-0">
-                                            {data.corrected_text}
+                                            {displayCorrectedText}
                                         </div>
                                     )}
                                     <div className={`text-lg text-slate-900 font-serif whitespace-pre-wrap leading-loose relative z-10 bg-white ${isAnimating ? 'animate-reveal-text' : ''}`}>
@@ -290,8 +335,8 @@ export default function HistoryDetail() {
                                     </div>
                                     {isAnimating && <div className="animate-scan-line pointer-events-none" />}
                                     
-                                    <div className="mt-8 p-4 bg-cyan-50 rounded-xl border border-cyan-100 text-xs text-cyan-800 flex items-start gap-3">
-                                        <Lightbulb size={18} className="text-cyan-600 shrink-0"/>
+                                    <div className="mt-8 p-4 bg-teal-50 rounded-xl border border-teal-100 text-xs text-teal-800 flex items-start gap-3">
+                                        <Lightbulb size={18} className="text-teal-600 shrink-0"/>
                                         <p className="font-medium leading-relaxed">This elite version employs complex rhetorical devices and academic collocations.</p>
                                     </div>
                                 </div>
@@ -303,7 +348,7 @@ export default function HistoryDetail() {
                                     </div>
                                     
                                     <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-2xl max-w-sm relative z-10">
-                                        <div className="mx-auto w-12 h-12 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center mb-6 border border-cyan-100">
+                                        <div className="mx-auto w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center mb-6 border border-teal-100">
                                             {isPro ? <Zap size={24} /> : <Lock size={24} />}
                                         </div>
                                         
@@ -321,7 +366,7 @@ export default function HistoryDetail() {
                                         {isPro ? (
                                             <button 
                                                 onClick={handleUpgradeSuccess} // User Pro -> Gọi hàm Generate luôn
-                                                className="w-full py-3 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-700 transition-all flex justify-center items-center gap-2 shadow-lg shadow-cyan-200"
+                                                className="w-full py-3 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-700 transition-all flex justify-center items-center gap-2 shadow-lg shadow-teal-200"
                                             >
                                                 <Zap size={16} fill="currentColor" className="text-yellow-300"/> 
                                                 Generate Band 9.0 (Free)
@@ -329,7 +374,7 @@ export default function HistoryDetail() {
                                         ) : (
                                             <button 
                                                 onClick={() => setShowPricingModal(true)} // User Free -> Hiện bảng giá
-                                                className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-cyan-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
+                                                className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-teal-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/20"
                                             >
                                                 <Sparkles size={16} /> Upgrade & Unlock
                                             </button>

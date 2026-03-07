@@ -7,7 +7,7 @@ import Image from "next/image";
 import { 
   TrendingUp, AlertTriangle, FileText, 
   ArrowRight, CheckCircle, Target, BookOpen, Download,
-  Sparkles, Zap, Award, History, LayoutGrid, Calendar, Lock, Check, 
+  Sparkles, Zap, Award, History, Lock, Check,
 } from "lucide-react";
 import { DashboardSkeleton } from "@/components/Skeleton";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
@@ -428,11 +428,11 @@ export default function Dashboard() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <main className="min-h-screen bg-white font-sans text-slate-900 selection:bg-teal-100">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100/70 font-sans text-slate-900 selection:bg-teal-100">
       
-      {/* Background Dot Grid Pattern */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.4]" 
-           style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+       {/* Background Dot Grid Pattern */}
+       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.3]"
+         style={{ backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
       </div>
 
       <PricingModal isOpen={showPricingModal} onClose={() => setShowPricingModal(false) } onSuccess={handleUpgradeSuccess}/>
@@ -454,7 +454,8 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 relative z-10">
         
  {/* --- HEADER (Updated with Smart UserDropdown) --- */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-sm relative z-20">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/90 backdrop-blur-xl p-6 rounded-2xl border border-slate-200 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] relative z-20 overflow-visible">
+          <div className="absolute -top-16 right-0 w-56 h-56 rounded-full bg-teal-200/20 blur-3xl pointer-events-none" />
           
           {/* LEFT: Branding & Welcome */}
           <div className="flex items-center gap-4">
@@ -463,7 +464,7 @@ export default function Dashboard() {
                
             </div>
             <div>
-              <p className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em]">Student Portal</p>
+              <p className="text-[10px] font-bold text-teal-700 uppercase tracking-[0.22em]">Student Portal</p>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 Welcome back, {userEmail.split('@')[0]}
               </h1>
@@ -504,7 +505,7 @@ export default function Dashboard() {
 
         {/* --- QUOTA BANNER --- */}
         {!isPro && (
-            <div className="bg-slate-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 border border-slate-800 shadow-2xl relative overflow-hidden">
+            <div className="bg-slate-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6 border border-slate-800 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.8)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl"></div>
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 text-teal-400">
@@ -519,7 +520,7 @@ export default function Dashboard() {
                     onClick={() => setShowPricingModal(true)} 
                     className="px-6 py-2.5 bg-teal-600 text-white font-bold rounded-lg hover:bg-teal-500 transition-all text-sm whitespace-nowrap shadow-lg shadow-teal-600/20"
                 >
-                    Unlock Pro Features 💎
+                  Unlock Pro Features
                 </button>
             </div>
         )}
@@ -536,7 +537,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Areas of Improvement */}
-          <div className="lg:col-span-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="lg:col-span-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)]">
             <div className="flex justify-between items-center mb-10">
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
                   <TrendingUp className="text-teal-600" size={20}/> 
@@ -581,294 +582,270 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* AI PATH FOCUS - MASTERY GOAL WITH INLINE QUIZ */}
-          <div className="lg:col-span-4 bg-slate-50 p-8 rounded-2xl border border-slate-200 relative overflow-visible">
-             <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-white rounded-lg border border-slate-200 text-teal-600 shadow-sm">
-                      <Target size={20}/> 
+          {/* AI PATH FOCUS - MASTERY GOAL */}
+          <div className="lg:col-span-4 bg-gradient-to-b from-slate-50 to-white p-8 rounded-2xl border border-slate-200 relative overflow-hidden shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)]">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-teal-300/15 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-12 w-40 h-40 rounded-full bg-sky-200/20 blur-2xl pointer-events-none" />
+
+            <div className="flex items-center gap-3 mb-6 relative z-10">
+              <div className="p-2 bg-white rounded-lg border border-slate-200 text-teal-600 shadow-sm">
+                <Target size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 uppercase text-sm tracking-widest">Mastery Goal</h3>
+                <p className="text-[10px] text-slate-500 mt-0.5">One focus rule. Better results each week.</p>
+              </div>
+            </div>
+
+            {stats.priorityError ? (
+              <div className="space-y-5 relative z-10">
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.45)]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-1">Current Focus</p>
+                      <h4 className="text-lg font-black text-slate-900 leading-tight">{stats.priorityError.displayType}</h4>
+                      <p className="text-xs text-slate-500 mt-2">Appears in {stats.priorityError.total} essays.</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      Lock {FOCUS_LOCK_ESSAYS} essays
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 uppercase text-sm tracking-widest">Mastery Goal</h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Master grammar one rule at a time</p>
+
+                  <div className="mt-4 p-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-sky-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-indigo-700">Mastery Stage</p>
+                      <p className="text-xs font-bold text-indigo-900">{stats.priorityError.masteryLevel}</p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Learning" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                      <div className={`flex-1 h-1.5 rounded-full ${["Practicing", "Mastered"].includes(stats.priorityError.masteryLevel) ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                      <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Mastered" ? "bg-indigo-600" : "bg-indigo-200"}`} />
+                    </div>
+                    <p className="text-[11px] text-indigo-800/80 mt-2">Mastered requires an 80%+ average and at least 2 passes in the last 3 quizzes.</p>
                   </div>
-             </div>
-
-              {stats.priorityError ? (
-                <>
-                  {!quizActive ? (
-                    // Regular View
-                    <div className="space-y-5">
-                        {/* Focus Area with explanation */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">📍 Focus Area</div>
-                              <div className="group relative">
-                                <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
-                                <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
-                                  This is your most common error. Master this first, then we'll focus on the next one!
-                                </div>
-                              </div>
-                            </div>
-                            <div className="p-4 bg-white rounded-xl border border-slate-200">
-                                <h4 className="font-bold text-lg text-slate-900">{stats.priorityError.displayType}</h4>
-                                <p className="text-[10px] text-slate-400 mt-1">Appears in {stats.priorityError.total} essays</p>
-                                <p className="text-[10px] text-slate-400 mt-1">Focus locks for {FOCUS_LOCK_ESSAYS} essays unless mastered.</p>
-                            </div>
-                        </div>
-
-                        {/* Mastery Level with progression visual */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">📊 Progression</div>
-                              <div className="group relative">
-                                <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
-                                <div className="absolute bottom-full right-0 mb-2 w-56 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
-                                  <strong>🌱 Learning:</strong> Just starting<br/>
-                                  <strong>📚 Practicing:</strong> Making progress<br/>
-                                  <strong>🏆 Mastered:</strong> Consistent excellence
-                                </div>
-                              </div>
-                            </div>
-                            <div className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="font-bold text-lg text-indigo-900">
-                                      {stats.priorityError.masteryLevel === "Mastered" && "🏆 Mastered"}
-                                      {stats.priorityError.masteryLevel === "Practicing" && "📚 Practicing"}
-                                      {stats.priorityError.masteryLevel === "Learning" && "🌱 Learning"}
-                                    </div>
-                                </div>
-                                {/* Visual progression bar */}
-                                <div className="flex gap-1.5">
-                                    <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Learning" ? "bg-indigo-600" : "bg-indigo-200"}`} />
-                                    <div className={`flex-1 h-1.5 rounded-full ${["Practicing", "Mastered"].includes(stats.priorityError.masteryLevel) ? "bg-indigo-600" : "bg-indigo-200"}`} />
-                                    <div className={`flex-1 h-1.5 rounded-full ${stats.priorityError.masteryLevel === "Mastered" ? "bg-indigo-600" : "bg-indigo-200"}`} />
-                                </div>
-                                <p className="text-[10px] text-indigo-700 mt-2 leading-relaxed">
-                                  Last 3 quizzes. Mastered: avg 80%+ and 2+ passes.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Recent Quiz Attempts */}
-                        {stats.priorityError.recentAttempts && stats.priorityError.recentAttempts.length > 0 && (
-                          <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <div className="text-[10px] font-bold uppercase text-slate-500">📈 Your Performance</div>
-                                <div className="group relative">
-                                  <span className="cursor-help text-slate-400 hover:text-slate-600 text-xs font-bold">?</span>
-                                  <div className="absolute bottom-full right-0 mb-2 w-44 bg-slate-900 text-white text-[10px] p-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 leading-relaxed">
-                                    Last 3 attempts. 60%+ to progress.
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                  {stats.priorityError.recentAttempts.map((attempt: any, idx: number) => (
-                                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-                                          <div className="flex items-center gap-3">
-                                              <span className={`text-lg ${attempt.passed ? "✅" : "❌"}`}></span>
-                                              <div>
-                                                <span className="text-xs text-slate-600 font-bold block">
-                                                    {Math.round((attempt.score / 10) * 100)}% 
-                                                    <span className="text-[10px] text-slate-400 ml-1">({attempt.score}/10 correct)</span>
-                                                </span>
-                                              </div>
-                                          </div>
-                                          <span className="text-[10px] text-slate-400">
-                                              {new Date(attempt.quiz_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                          </span>
-                                      </div>
-                                  ))}
-                              </div>
-                              <p className="text-[10px] text-slate-400 mt-2 px-1">60%+ moves to Practicing. Mastered needs consistency.</p>
-                          </div>
-                        )}
-
-                        {stats.priorityError.recentAttempts.length === 0 && (
-                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p className="text-[10px] text-blue-900 font-medium">
-                              📝 <strong>First time?</strong> Take a quiz to start tracking your progress!
-                            </p>
-                          </div>
-                        )}
-                        
-                        <button 
-                            onClick={() => handleStartQuiz(stats.priorityError.type, stats.priorityError.quote, stats.priorityError.id)}
-                            disabled={quizLoading || (!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT)}
-                            className="w-full py-3 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-teal-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {quizLoading ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Generating Quiz...
-                              </>
-                            ) : !isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT ? (
-                              <>
-                                <Lock size={16} /> Quiz Limit Reached
-                              </>
-                            ) : (
-                              <>
-                                <Zap size={16} /> Practice Now
-                              </>
-                            )}
-                        </button>
-
-                        {!isPro && (
-                          <div className="p-3 bg-slate-100 rounded-lg">
-                            <p className="text-[10px] text-slate-600 font-bold text-center">
-                              Daily Quizzes: <span className={quizCount >= FREE_DAILY_QUIZ_LIMIT ? "text-red-600" : "text-teal-600"}>{quizCount}/{FREE_DAILY_QUIZ_LIMIT}</span>
-                            </p>
-                          </div>
-                        )}
-                    </div>
-                  ) : quizLoading ? (
-                    // Loading State
-                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                        <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-500 rounded-full animate-spin" />
-                        <p className="text-sm font-bold text-slate-500 text-center">Generating Practice Questions...</p>
-                    </div>
-                  ) : quizError ? (
-                    // Error State
-                    <div className="space-y-4 text-center">
-                        <AlertTriangle size={40} className="text-red-500 mx-auto" />
-                        <p className="text-sm font-bold text-slate-900">Quiz Generation Failed</p>
-                        <button 
-                            onClick={() => setQuizActive(false)}
-                            className="w-full py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all text-sm"
-                        >
-                            Back
-                        </button>
-                    </div>
-                  ) : showQuizResult ? (
-                    // Results Screen
-                    (() => {
-                      const correctCount = Object.values(quizResults).filter(v => v === true).length;
-                      const passed = correctCount >= 6;
-                      const percentage = Math.round((correctCount / quizQuestions.length) * 100);
-                      return (
-                        <div className={`p-6 rounded-xl text-center space-y-4 ${passed ? "bg-emerald-50" : "bg-blue-50"}`}>
-                            <div className={`text-4xl font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>
-                              {percentage}%
-                            </div>
-                            <h3 className={`text-lg font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>
-                              {passed ? "Excellent! 🎉" : "Good effort!"}
-                            </h3>
-                            <p className="text-sm text-slate-600">
-                              {correctCount} out of {quizQuestions.length} correct
-                            </p>
-                            {!passed && (
-                              <p className="text-xs text-slate-500">
-                                Need {6 - correctCount} more to pass (60% = 6/10)
-                              </p>
-                            )}
-                            <div className="pt-4">
-                              <button
-                                onClick={handleCompleteQuiz}
-                                disabled={quizSaving}
-                                className={`w-full py-3 font-black rounded-lg text-white transition-all ${
-                                  passed
-                                    ? "bg-emerald-600 hover:bg-emerald-700"
-                                    : "bg-slate-900 hover:bg-slate-800"
-                                } disabled:opacity-50`}
-                              >
-                                {quizSaving ? "Saving..." : "Save & Close"}
-                              </button>
-                            </div>
-                        </div>
-                      );
-                    })()
-                  ) : quizQuestions.length > 0 ? (
-                    // Quiz Question Display
-                    (() => {
-                      const currentQuestion = quizQuestions[currentQuizIndex];
-                      const isCorrect = selectedAnswer === currentQuestion.correct_answer_index;
-                      const progressPercent = ((currentQuizIndex + 1) / quizQuestions.length) * 100;
-                      return (
-                        <div className="space-y-6">
-                            {/* Progress */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                                    <span>Q{currentQuizIndex + 1} of {quizQuestions.length}</span>
-                                    <span>{Math.round(progressPercent)}%</span>
-                                </div>
-                                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                    <div className="bg-gradient-to-r from-teal-500 to-blue-500 h-full transition-all" style={{ width: `${progressPercent}%` }} />
-                                </div>
-                            </div>
-
-                            {/* Question */}
-                            <div className="space-y-3">
-                                <h4 className="font-bold text-slate-900 text-sm leading-snug">{currentQuestion.question}</h4>
-                                
-                                {/* Options */}
-                                <div className="space-y-2">
-                                  {currentQuestion.options.map((option: string, idx: number) => {
-                                    const isSelected = selectedAnswer === idx;
-                                    const isCorrectAnswer = idx === currentQuestion.correct_answer_index;
-                                    let bgColor = "bg-white border-slate-200 hover:border-slate-300";
-                                    
-                                    if (isAnswered) {
-                                      if (isCorrectAnswer) {
-                                        bgColor = "bg-emerald-50 border-emerald-500 border-2";
-                                      } else if (isSelected && !isCorrect) {
-                                        bgColor = "bg-red-50 border-red-500 border-2";
-                                      }
-                                    }
-
-                                    return (
-                                      <button
-                                        key={idx}
-                                        onClick={() => handleAnswerSelect(idx)}
-                                        disabled={isAnswered}
-                                        className={`w-full p-3 text-left rounded-lg border text-sm transition-all font-medium text-slate-900 ${bgColor} ${
-                                          isAnswered ? "cursor-default" : "cursor-pointer hover:bg-slate-50"
-                                        }`}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                                            isSelected ? (isCorrect ? "border-emerald-500 bg-emerald-500" : "border-red-500 bg-red-500") : "border-slate-300"
-                                          }`}>
-                                            {isSelected && <Check size={10} className="text-white" />}
-                                          </div>
-                                          <span className="text-xs">{option}</span>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                
-                                {/* Explanation */}
-                                {isAnswered && (
-                                  <div className={`p-3 rounded-lg text-xs ${isCorrect ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
-                                    <p className={`font-medium ${isCorrect ? "text-emerald-900" : "text-red-900"}`}>
-                                      <span className="font-bold">{isCorrect ? "✓ " : ""}</span>
-                                      {currentQuestion.explanation}
-                                    </p>
-                                  </div>
-                                )}
-                            </div>
-
-                            {/* Next Button */}
-                            {isAnswered && (
-                              <button
-                                onClick={handleNextQuizQuestion}
-                                className="w-full py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all text-sm"
-                              >
-                                {currentQuizIndex < quizQuestions.length - 1 ? "Next" : "Results"}
-                              </button>
-                            )}
-                        </div>
-                      );
-                    })()
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-center py-10">
-                    <CheckCircle size={40} className="text-teal-500 mx-auto mb-4 opacity-50"/>
-                    <p className="font-bold text-slate-900">All clear!</p>
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleStartQuiz(stats.priorityError.type, stats.priorityError.quote, stats.priorityError.id)}
+                    disabled={quizLoading || (!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT)}
+                    className="col-span-2 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-teal-600 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {quizLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Generating Quiz...
+                      </>
+                    ) : !isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT ? (
+                      <>
+                        <Lock size={16} /> Quiz Limit Reached
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={16} /> Start Practice Quiz
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenLesson(stats.priorityError.type, stats.priorityError)}
+                    className="py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:border-teal-300 hover:text-teal-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    <BookOpen size={14} /> Rule
+                  </button>
+
+                  <div className="py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-100 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Daily Quiz</p>
+                    <p className={`text-sm font-black ${!isPro && quizCount >= FREE_DAILY_QUIZ_LIMIT ? "text-red-600" : "text-slate-800"}`}>
+                      {isPro ? "Unlimited" : `${quizCount}/${FREE_DAILY_QUIZ_LIMIT}`}
+                    </p>
+                  </div>
+                </div>
+
+                {stats.priorityError.recentAttempts && stats.priorityError.recentAttempts.length > 0 ? (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Latest Attempts</p>
+                    <div className="space-y-2">
+                      {stats.priorityError.recentAttempts.slice(0, 3).map((attempt: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm ${attempt.passed ? "text-emerald-600" : "text-rose-500"}`}>{attempt.passed ? "Passed" : "Retry"}</span>
+                            <span className="text-xs text-slate-500">{Math.round((attempt.score / 10) * 100)}%</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(attempt.quiz_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 border border-dashed border-slate-300 rounded-xl bg-white/70">
+                    <p className="text-xs text-slate-600">No quiz history yet. Start one short quiz to activate your mastery tracking.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-10 relative z-10">
+                <CheckCircle size={40} className="text-teal-500 mx-auto mb-4 opacity-50" />
+                <p className="font-bold text-slate-900">All clear!</p>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Quiz Modal */}
+        {quizActive && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+            <button
+              aria-label="Close quiz"
+              onClick={() => setQuizActive(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            <div className="relative w-full sm:max-w-3xl max-h-[94vh] overflow-y-auto bg-white rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-[0_24px_50px_-25px_rgba(15,23,42,0.7)] p-6 sm:p-8 mx-0 sm:mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-teal-600">Practice Quiz</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">Master Your Focus Rule</h3>
+                </div>
+                <button
+                  onClick={() => setQuizActive(false)}
+                  className="px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Close
+                </button>
+              </div>
+
+              {quizLoading ? (
+                <div className="flex flex-col items-center justify-center py-14 space-y-4">
+                  <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-500 rounded-full animate-spin" />
+                  <p className="text-base font-bold text-slate-600 text-center">Generating your personalized questions...</p>
+                </div>
+              ) : quizError ? (
+                <div className="space-y-4 text-center py-8">
+                  <AlertTriangle size={40} className="text-red-500 mx-auto" />
+                  <p className="text-base font-bold text-slate-900">Quiz generation failed</p>
+                  <button
+                    onClick={() => setQuizActive(false)}
+                    className="w-full py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-all text-base"
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+              ) : showQuizResult ? (
+                (() => {
+                  const correctCount = Object.values(quizResults).filter(v => v === true).length;
+                  const passed = correctCount >= 6;
+                  const percentage = Math.round((correctCount / quizQuestions.length) * 100);
+                  return (
+                    <div className={`p-7 rounded-2xl text-center space-y-4 ${passed ? "bg-emerald-50 border border-emerald-200" : "bg-blue-50 border border-blue-200"}`}>
+                      <div className={`text-4xl font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>{percentage}%</div>
+                      <h3 className={`text-xl font-black ${passed ? "text-emerald-700" : "text-blue-700"}`}>
+                        {passed ? "Excellent work" : "Solid attempt"}
+                      </h3>
+                      <p className="text-base text-slate-600">{correctCount} out of {quizQuestions.length} correct</p>
+                      {!passed && <p className="text-sm text-slate-500">Need {6 - correctCount} more to pass (60% = 6/10)</p>}
+                      <div className="pt-3">
+                        <button
+                          onClick={handleCompleteQuiz}
+                          disabled={quizSaving}
+                          className={`w-full py-3 font-black rounded-lg text-white transition-all ${
+                            passed ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"
+                          } disabled:opacity-50 text-base`}
+                        >
+                          {quizSaving ? "Saving..." : "Save & Close"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : quizQuestions.length > 0 ? (
+                (() => {
+                  const currentQuestion = quizQuestions[currentQuizIndex];
+                  const isCorrect = selectedAnswer === currentQuestion.correct_answer_index;
+                  const progressPercent = ((currentQuizIndex + 1) / quizQuestions.length) * 100;
+                  return (
+                    <div className="space-y-7">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs font-bold text-slate-500">
+                          <span>Question {currentQuizIndex + 1} of {quizQuestions.length}</span>
+                          <span>{Math.round(progressPercent)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-teal-500 to-sky-500 h-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-slate-900 text-lg sm:text-xl leading-snug">{currentQuestion.question}</h4>
+                        <div className="space-y-3">
+                          {currentQuestion.options.map((option: string, idx: number) => {
+                            const isSelected = selectedAnswer === idx;
+                            const isCorrectAnswer = idx === currentQuestion.correct_answer_index;
+                            let bgColor = "bg-white border-slate-200 hover:border-slate-300";
+
+                            if (isAnswered) {
+                              if (isCorrectAnswer) {
+                                bgColor = "bg-emerald-50 border-emerald-500 border-2";
+                              } else if (isSelected && !isCorrect) {
+                                bgColor = "bg-red-50 border-red-500 border-2";
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => handleAnswerSelect(idx)}
+                                disabled={isAnswered}
+                                className={`w-full p-4 text-left rounded-xl border text-base transition-all font-medium text-slate-900 ${bgColor} ${
+                                  isAnswered ? "cursor-default" : "cursor-pointer hover:bg-slate-50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <div
+                                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                      isSelected
+                                        ? isCorrect
+                                          ? "border-emerald-500 bg-emerald-500"
+                                          : "border-red-500 bg-red-500"
+                                        : "border-slate-300"
+                                    }`}
+                                  >
+                                    {isSelected && <Check size={10} className="text-white" />}
+                                  </div>
+                                  <span className="leading-relaxed">{option}</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {isAnswered && (
+                          <div className={`p-4 rounded-xl text-base ${isCorrect ? "bg-emerald-50 border border-emerald-200" : "bg-red-50 border border-red-200"}`}>
+                            <p className={`font-medium ${isCorrect ? "text-emerald-900" : "text-red-900"}`}>
+                              <span className="font-bold">{isCorrect ? "Correct: " : "Hint: "}</span>
+                              {currentQuestion.explanation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {isAnswered && (
+                        <button
+                          onClick={handleNextQuizQuestion}
+                          className="w-full py-3.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all text-base"
+                        >
+                          {currentQuizIndex < quizQuestions.length - 1 ? "Next Question" : "View Results"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Hidden Report for PDF Export */}
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
@@ -886,8 +863,8 @@ export default function Dashboard() {
         </div>
 
         {/* --- RECENT ACTIVITY --- */}
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] overflow-hidden">
+          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-white to-slate-50">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2 text-lg">
                     <History className="text-slate-400" size={20}/>
                     Recent Submissions
@@ -895,7 +872,7 @@ export default function Dashboard() {
                 <button 
                   onClick={handleExportPDF}
                   disabled={isExporting}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-900 hover:text-white transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-900 hover:text-white transition-all"
                 >
                   {isExporting ? <div className="animate-spin w-3 h-3 border-2 border-teal-500 border-t-transparent rounded-full"/> : isPro ? <Download size={14} /> : <Lock size={14} className="text-amber-500" />}
                   Download PDF Report
@@ -904,7 +881,7 @@ export default function Dashboard() {
             
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
+                    <thead className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
                         <tr>
                             <th className="px-6 py-4">Date</th>
                             <th className="px-6 py-4">Score</th>
@@ -914,12 +891,12 @@ export default function Dashboard() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {stats.recentActivity.map((item: any) => (
-                        <tr key={item.id} className="group hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => router.push(`/history/${item.id}`)}>
+                        <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => router.push(`/history/${item.id}`)}>
                             <td className="px-6 py-5 text-sm font-medium text-slate-600">
                                 {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </td>
                             <td className="px-6 py-5">
-                                <span className={`px-3 py-1 rounded text-xs font-bold ${item.score >= 7.0 ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-700'}`}>
+                                <span className={`px-3 py-1 rounded text-xs font-bold border ${item.score >= 7.0 ? 'bg-teal-50 border-teal-100 text-teal-700' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
                                     Score {item.score.toFixed(1)}
                                 </span>
                             </td>
@@ -931,7 +908,7 @@ export default function Dashboard() {
                                 )}
                             </td>
                             <td className="px-6 py-5 text-right">
-                                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover:text-teal-600 transition-colors translate-x-0 group-hover:translate-x-1 transition-transform" />
+                                <ArrowRight size={16} className="ml-auto text-slate-300 group-hover:text-teal-600 translate-x-0 group-hover:translate-x-1 transition-all" />
                             </td>
                         </tr>
                         ))}
@@ -947,13 +924,13 @@ export default function Dashboard() {
 
 function StatCard({ icon, label, value, subValue, color, isScore }: any) {
     const colors: any = {
-        slate: "text-slate-600 bg-slate-50 border-slate-100",
-        teal: "text-teal-600 bg-teal-50 border-teal-100",
-        rose: "text-rose-600 bg-rose-50 border-red-100"
+    slate: "text-slate-600 bg-slate-50 border-slate-100",
+    teal: "text-teal-700 bg-teal-50 border-teal-100",
+    rose: "text-rose-600 bg-rose-50 border-red-100"
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-teal-200 transition-all">
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-[0_12px_24px_-24px_rgba(15,23,42,0.8)] hover:border-teal-200 hover:-translate-y-0.5 transition-all duration-300">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 border ${colors[color]}`}>
                 {icon}
             </div>
