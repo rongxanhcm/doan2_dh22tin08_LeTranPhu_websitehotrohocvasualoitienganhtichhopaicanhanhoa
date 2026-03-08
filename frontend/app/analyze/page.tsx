@@ -575,7 +575,7 @@ export default function AnalyzePage() {
           </div>
 
           {/* 2. Main Editor Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/60 flex flex-col min-h-[680px] overflow-hidden relative hover:shadow-slate-200/80 transition-shadow duration-300">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-slate-200/60 flex flex-col min-h-[800px] overflow-hidden relative hover:shadow-slate-200/80 transition-shadow duration-300">
             
             {/* Toolbar */}
             <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-b from-slate-50/50 to-white backdrop-blur-sm">
@@ -637,11 +637,11 @@ export default function AnalyzePage() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Start writing your essay here..."
-                  className="w-full h-full min-h-[400px] bg-transparent border-0 focus:ring-0 focus:outline-none outline-none resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
+                  className="w-full h-full min-h-[550px] bg-transparent border-0 focus:ring-0 focus:outline-none outline-none resize-none text-lg md:text-xl text-slate-800 placeholder:text-slate-300 font-serif leading-loose"
                   spellCheck={false}
                 />
               ) : (
-                <div className="relative min-h-[400px]">
+                <div className="relative min-h-[550px]">
                   {mode === 'grammar' ? (
                     /* --- GRAMMAR MODE --- */
                     <div className="text-lg md:text-xl text-slate-800 font-serif whitespace-pre-wrap leading-loose animate-fade-in-up">
@@ -671,7 +671,7 @@ export default function AnalyzePage() {
                     </div>
                   ) : (
                     /* --- VOCAB MODE (BAND 9.0) --- */
-                    <div className="relative h-full bg-white min-h-[400px]">
+                    <div className="relative h-full bg-white min-h-[550px]">
                         
                         {/* CASE 1: Unlocking state with scanning effect */}
                         {isUnlocking ? (
@@ -729,7 +729,7 @@ export default function AnalyzePage() {
 
                         /* CASE 3: Locked state */
                         ) : (
-                            <div className="relative w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden group">
+                            <div className="relative w-full h-full min-h-[550px] flex flex-col items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-300 p-8 text-center overflow-hidden group">
                                 <div className="absolute inset-0 opacity-10 blur-[2px] pointer-events-none select-none p-12 text-left font-serif text-xl leading-relaxed text-slate-900 group-hover:blur-[1px] transition-all duration-500">
                                     {inputText}
                                 </div>
@@ -951,7 +951,7 @@ export default function AnalyzePage() {
                 <div className="h-full min-h-[400px] bg-gradient-to-br from-white via-slate-50/30 to-teal-50/20 p-10 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:border-teal-300 transition-all duration-300">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity" />
                     <div className="relative z-10 space-y-4">
-                      <div className="w-20 h-20 bg-gradient-to-br from-teal-50 to-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-2 shadow-lg shadow-slate-200/50 group-hover:scale-110 transition-transform">
+                        <div className="w-20 h-20 bg-gradient-to-br from-teal-50 to-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mb-2 mx-auto shadow-lg shadow-slate-200/50 group-hover:scale-110 transition-transform">
                           <BarChart3 size={36} />
                       </div>
                       <h3 className="font-black text-xl text-slate-700 mb-2">Metrics Awaiting...</h3>

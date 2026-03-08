@@ -11,6 +11,7 @@ import { Loader2, Check, ArrowRight, Cloud, Mail } from "lucide-react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
@@ -39,6 +40,17 @@ export default function LoginPage() {
       toast.error("Please fill in all fields");
       return;
     }
+
+    if (isSignUp && !confirmPassword) {
+      toast.error("Please confirm your password");
+      return;
+    }
+
+    if (isSignUp && password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     try {
       if (isSignUp) {
@@ -191,6 +203,19 @@ export default function LoginPage() {
               />
             </div>
 
+            {isSignUp && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Confirm Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all text-sm font-medium"
+                  placeholder="••••••••"
+                />
+              </div>
+            )}
+
             <button
               onClick={handleAuth}
               disabled={loading}
@@ -218,7 +243,10 @@ export default function LoginPage() {
           <p className="text-center mt-10 text-sm text-slate-500">
             {isSignUp ? "Have an account?" : "New to Wrytt?"}{" "}
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setConfirmPassword("");
+              }}
               className="text-teal-600 font-bold hover:underline underline-offset-4"
             >
               {isSignUp ? "Sign In" : "Register Now"}
