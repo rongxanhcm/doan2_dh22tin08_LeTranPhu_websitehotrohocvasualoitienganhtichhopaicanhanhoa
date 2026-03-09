@@ -7,7 +7,7 @@
   
   *AI-generated quizzes from YOUR writing errors*
 
-  Last updated: 2026-03-05
+  Last updated: 2026-03-09
   
   [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=flat&logo=next.js)](https://nextjs.org/)
   [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)](https://react.dev/)
@@ -317,7 +317,9 @@ wrytt/
 ├── migrations/          # Supabase SQL migrations
 │   ├── add_default_language.sql
 │   ├── add_quiz_attempts_table.sql
-│   └── add_quiz_limit_tracking.sql
+│   ├── add_quiz_limit_tracking.sql
+│   ├── create_blog_posts.sql
+│   └── BLOG_MIGRATION_README.md
 │
 └── README.md            # This file
 ```
@@ -553,6 +555,24 @@ updated_at        TIMESTAMP DEFAULT now()
 ```
 **Purpose**: Store and manage prompts for Gemini AI (analyze essay, generate quiz, etc.).
 
+#### **`blog_posts`** (Content Marketing / SEO)
+```sql
+id                UUID PRIMARY KEY DEFAULT gen_random_uuid()
+slug              TEXT UNIQUE NOT NULL
+title             TEXT NOT NULL
+excerpt           TEXT NOT NULL
+content           TEXT NOT NULL
+category          TEXT NOT NULL CHECK (category IN ('grammar', 'writing', 'mistakes', 'vocabulary', 'guides'))
+author            TEXT DEFAULT 'Wrytt Team'
+reading_time      INT DEFAULT 5
+is_published      BOOLEAN DEFAULT false
+created_at        TIMESTAMPTZ DEFAULT NOW()
+updated_at        TIMESTAMPTZ DEFAULT NOW()
+```
+**Purpose**: Store blog posts for `/blog`, category pages, and individual SEO article pages.
+
+**Migration**: Use `migrations/create_blog_posts.sql` (details in `migrations/BLOG_MIGRATION_README.md`).
+
 ### **Key Design Patterns**
 
 | Pattern | Usage |
@@ -573,6 +593,11 @@ CREATE INDEX idx_analysis_results_submission_id ON analysis_results(submission_i
 -- For quiz progress tracking
 CREATE INDEX idx_quiz_attempts_user_error ON quiz_attempts(user_id, error_type, quiz_date DESC);
 CREATE INDEX idx_quiz_attempts_recent ON quiz_attempts(user_id, quiz_date DESC);
+
+-- For blog content queries
+CREATE INDEX idx_blog_posts_category ON blog_posts(category);
+CREATE INDEX idx_blog_posts_slug ON blog_posts(slug);
+CREATE INDEX idx_blog_posts_published ON blog_posts(is_published);
 ```
 
 ---

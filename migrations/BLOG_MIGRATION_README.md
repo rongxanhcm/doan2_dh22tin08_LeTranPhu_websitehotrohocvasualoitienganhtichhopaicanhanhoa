@@ -1,5 +1,31 @@
 # Blog System Migration Guide
 
+## Latest `blog_posts` Schema (Current)
+
+Use this SQL as the latest reference for the `blog_posts` table:
+
+```sql
+-- Create blog_posts table for content marketing
+CREATE TABLE IF NOT EXISTS blog_posts (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	slug TEXT UNIQUE NOT NULL,
+	title TEXT NOT NULL,
+	excerpt TEXT NOT NULL,
+	content TEXT NOT NULL,
+	category TEXT NOT NULL CHECK (category IN ('grammar', 'writing', 'mistakes', 'vocabulary', 'guides')),
+	author TEXT DEFAULT 'Wrytt Team',
+	reading_time INT DEFAULT 5,
+	is_published BOOLEAN DEFAULT false,
+	created_at TIMESTAMPTZ DEFAULT NOW(),
+	updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for faster queries
+CREATE INDEX idx_blog_posts_category ON blog_posts(category);
+CREATE INDEX idx_blog_posts_slug ON blog_posts(slug);
+CREATE INDEX idx_blog_posts_published ON blog_posts(is_published);
+```
+
 ## How to Apply the Migration
 
 ### Option 1: Via Supabase Dashboard (Recommended)
@@ -23,12 +49,13 @@ supabase db push
 After running the migration, check:
 
 1. **Table exists**: `blog_posts` should appear in your database
-2. **Sample posts loaded**: 5 sample blog posts should be visible in the table
-3. **Categories working**: Visit `/blog` to see the blog listing page
+2. **Indexes created**: `idx_blog_posts_category`, `idx_blog_posts_slug`, `idx_blog_posts_published`
+3. **Posts status**: if using sample seed data, posts are typically inserted with `is_published = true`
+4. **Categories working**: Visit `/blog` to see the blog listing page
 
-## Sample Blog Posts Included
+## Sample Blog Posts (Optional Seed Data)
 
-The migration creates 5 SEO-optimized blog posts:
+The current `migrations/create_blog_posts.sql` includes seed inserts for 5 SEO-optimized posts:
 
 1. **Grammar**: Master Subject-Verb Agreement: A Complete Guide
 2. **Mistakes**: 10 Common Grammar Mistakes ESL Learners Make  
@@ -89,7 +116,7 @@ Recommended categories:
 ## Next Steps
 
 1. Run the migration
-2. Visit `/blog` to see the sample posts
+2. Visit `/blog` to verify published posts are listed
 3. Customize sample posts in admin panel
 4. Start writing new posts for SEO
 5. Internal link from blog posts to `/analyze` and `/rules`
@@ -106,6 +133,7 @@ Recommended categories:
 **Sample posts not showing**
 - Check if `is_published` is `true` for the posts
 - Verify posts exist: `SELECT * FROM blog_posts;`
+- If needed, run only schema first, then manually insert posts from `migrations/create_blog_posts.sql`
 
 ## Future Enhancements
 
