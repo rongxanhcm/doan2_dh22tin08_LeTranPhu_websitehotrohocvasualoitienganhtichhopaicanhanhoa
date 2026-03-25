@@ -733,7 +733,45 @@ def delete_grammar_rule(req: DeleteRuleRequest, authorization: str = Header(None
     except Exception as e:
         print(f"Error deleting rule: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+# ==========================================
+# ENDPOINT: CLEAR CACHE (ADMIN ONLY)
+# Dùng để cập nhật System Prompt ngay lập tức
+# ==========================================
+@app.post("/admin/clear-cache")
+def clear_system_cache(authorization: str = Header(None)):
+    try:
+        # 1. Xác thực Admin (Optional nhưng nên có để lấy điểm đồ án)
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Missing Access Token")
 
+        token = authorization.split(" ")[1] if " " in authorization else authorization
+        auth_url = f"{SUPABASE_URL}/auth/v1/user"
+        auth_headers = {
+            "Authorization": f"Bearer {token}",
+            "apikey": SUPABASE_KEY,
+        }
+        
+        user_response = requests.get(auth_url, headers=auth_headers)
+        if user_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid token")
+            
+        user_id = user_response.json().get("id")
+        user_profile = supabase.table("profiles").select("role").eq("id", user_id).single().execute()
+        
+        if not user_profile.data or user_profile.data.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can clear cache")
+
+        # 2. LỆNH MA THUẬT: Xóa sạch bộ nhớ đệm của hàm get_system_prompt_cached
+        get_system_prompt_cached.cache_clear()
+        
+        print(f"🧹 System Prompt Cache cleared by Admin: {user_id}")
+        return {"message": "Cache cleared successfully. New prompts will apply immediately!"}
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(f"Error clearing cache: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))

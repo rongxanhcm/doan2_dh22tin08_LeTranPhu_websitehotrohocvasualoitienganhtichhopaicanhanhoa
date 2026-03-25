@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { Save, RefreshCw, AlertCircle, Check } from "lucide-react";
 import toast from "react-hot-toast";
+
 export default function PromptsManager() {
   const [prompts, setPrompts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,6 @@ export default function PromptsManager() {
     if (error) alert("Error fetching prompts");
     else {
       setPrompts(data || []);
-      // Mặc định chọn cái đầu tiên nếu chưa chọn
       if (!selectedKey && data && data.length > 0) {
         selectPrompt(data[0]);
       }
@@ -40,11 +40,12 @@ export default function PromptsManager() {
     setEditContent(prompt.content);
   };
 
-  // 3. Lưu Prompt lên DB
+  // 3. Lưu Prompt lên DB & CLEAR CACHE SERVER (Luồng Demo Đồ Án)
   const handleSave = async () => {
     if (!selectedKey) return;
     setSaving(true);
 
+    // Bước 3.1: Lưu vào Database Supabase
     const { error } = await supabase
       .from("system_prompts")
       .update({ 
@@ -54,12 +55,36 @@ export default function PromptsManager() {
       .eq("key", selectedKey);
 
     if (error) {
-      alert("Failed to save: " + error.message);
-    } else {
-      // Cập nhật lại list local
-      setPrompts(prompts.map(p => p.key === selectedKey ? { ...p, content: editContent } : p));
-      toast.success("Prompt updated successfully!");
+      toast.error("Failed to save: " + error.message);
+      setSaving(false);
+      return;
     }
+
+    // Bước 3.2: Lấy Token và gọi API Clear Cache của FastAPI
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        
+        const res = await fetch(`${API_URL}/admin/clear-cache`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${session?.access_token}`
+            }
+        });
+
+        if (res.ok) {
+            // Cập nhật lại list local
+            setPrompts(prompts.map(p => p.key === selectedKey ? { ...p, content: editContent } : p));
+            toast.success("Saved & Cache Cleared! Magic is ready. ✨");
+        } else {
+            const errData = await res.json();
+            toast.error("Saved to DB, but Cache failed: " + errData.detail);
+        }
+    } catch (err) {
+        console.error(err);
+        toast.error("Saved to DB, but couldn't reach API Server to clear cache.");
+    }
+    
     setSaving(false);
   };
 
@@ -119,7 +144,7 @@ export default function PromptsManager() {
                          <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="flex-1 w-full resize-none outline-none font-mono text-sm leading-relaxed text-slate-700 mb-16"
+                            className="flex-1 w-full resize-none outline-none font-mono text-sm leading-relaxed text-slate-700 mb-16 custom-scrollbar"
                             spellCheck={false}
                          />
                          
@@ -131,7 +156,7 @@ export default function PromptsManager() {
                                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 hover:-translate-y-1 transition-all disabled:opacity-50"
                             >
                                 {saving ? <RefreshCw className="animate-spin" size={20}/> : <Save size={20}/>}
-                                {saving ? "Saving..." : "Save Changes"}
+                                {saving ? "Saving & Syncing..." : "Save & Clear Cache"}
                             </button>
                          </div>
                     </div>
@@ -154,4 +179,4 @@ export default function PromptsManager() {
       </div>
     </div>
   );
-}   
+}
