@@ -233,10 +233,16 @@ def analyze_essay(input: EssayInput, request: Request):
             
             is_pro = False # Guest mặc định không bao giờ có Pro
 
-        # 3. CHUẨN BỊ PROMPT & SCHEMA (Phần này chung)
+
+        # 3. CHUẨN BỊ PROMPT & SCHEMA
         target_lang = input.native_language.strip()
-        lang_instruction = "Output JSON in English." if target_lang.lower() in ["english", "en", "us", "uk"] else \
-            f"CRITICAL RULE: Write 'general_feedback' AND 'explanation' COMPLETELY in {target_lang}. Keep 'error_type' in English."
+        
+        # Chuẩn hóa tên tiếng Anh
+        if target_lang.lower() in ["english", "en", "us", "uk"]:
+            target_lang = "English"
+            
+        # Dùng chung 1 lệnh "thép" cho mọi ngôn ngữ
+        lang_instruction = f"CRITICAL RULE: You MUST write the 'general_feedback' and 'explanation' fields COMPLETELY in {target_lang.upper()}. The 'error_type' must remain in English."
         
         # Vì Guest không bao giờ là Pro nên polish_instruction sẽ luôn trống cho Guest
         polish_instruction = (
