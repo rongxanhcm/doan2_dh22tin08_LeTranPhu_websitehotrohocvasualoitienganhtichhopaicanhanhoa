@@ -56,7 +56,7 @@ MIN_WORD_COUNT = 15
 
 # --- [NEW] HELPER FUNCTION WITH CACHE ---
 # Dùng cache để không tốn thời gian gọi DB mỗi lần request
-@lru_cache(maxsize=5) 
+#@lru_cache(maxsize=5) 
 def get_system_prompt_cached(key: str):
     try:
         response = supabase.table("system_prompts").select("content").eq("key", key).single().execute()

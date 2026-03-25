@@ -75,7 +75,7 @@ export default function PromptsManager() {
         if (res.ok) {
             // Cập nhật lại list local
             setPrompts(prompts.map(p => p.key === selectedKey ? { ...p, content: editContent } : p));
-            toast.success("Saved & Cache Cleared! Magic is ready. ✨");
+            toast.success("Saved & Cache Cleared");
         } else {
             const errData = await res.json();
             toast.error("Saved to DB, but Cache failed: " + errData.detail);
