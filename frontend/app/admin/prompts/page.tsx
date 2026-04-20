@@ -107,8 +107,7 @@ export default function PromptsManager() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
-        
-        {/* LIST CỘT TRÁI */}
+                            {/* LIST CỘT TRÁI */}
         <div className="lg:w-1/3 bg-white rounded-2xl border border-slate-200 overflow-y-auto shadow-lg shadow-slate-200/50 max-h-[300px] lg:max-h-none">
             {loading ? (
                 <div className="p-4 text-center text-slate-500 font-medium">Loading prompts...</div>
@@ -129,7 +128,6 @@ export default function PromptsManager() {
                 </div>
             )}
         </div>
-
         {/* EDITOR CỘT PHẢI */}
         <div className="lg:w-2/3 flex flex-col gap-4 flex-1">
             {selectedPrompt ? (
@@ -175,7 +173,6 @@ export default function PromptsManager() {
                 </div>
             )}
         </div>
-
       </div>
     </div>
   );
