@@ -131,7 +131,6 @@ export default function PricingModal({ isOpen, onClose, onSuccess }: PricingModa
       // 1. SỰ KIỆN THANH TOÁN THÀNH CÔNG (TỪ JS LEMON)
       if (eventName === "LemonSqueezy.Payment.Success") {
         console.log("⚡ Payment Success Event! Triggering immediate unlock...");
-        
         // Dừng mọi thứ, đóng modal ngay lập tức
         stopPolling();
         setIsLoading(false);
