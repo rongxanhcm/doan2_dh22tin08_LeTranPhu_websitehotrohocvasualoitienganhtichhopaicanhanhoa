@@ -328,7 +328,7 @@ export default function LandingPage() {
 
               <ul className="space-y-3 mt-8 mb-8">
                 {[
-                  { text: "2 essays per day", ok: true },
+                  { text: "4 essays per day", ok: true },
                   { text: "6 practice quizzes per day", ok: true },
                   { text: "Core feedback + rule lessons", ok: true },
                   { text: "Mastery tracking", ok: true },

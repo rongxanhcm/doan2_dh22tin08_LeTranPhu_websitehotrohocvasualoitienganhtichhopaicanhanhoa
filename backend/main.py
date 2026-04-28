@@ -49,7 +49,7 @@ app.add_middleware(
 )
 
 # --- CONSTANTS ---
-FREE_DAILY_LIMIT = 2   
+FREE_DAILY_LIMIT = 4   
 PRO_DAILY_LIMIT = 50   
 FREE_DAILY_QUIZ_LIMIT = 6
 MIN_WORD_COUNT = 15

@@ -20,7 +20,7 @@ import jsPDF from "jspdf";
 import toast from "react-hot-toast";
 import DashboardReport from "@/components/DashboardReport";
 
-const FREE_DAILY_LIMIT = 2;
+const FREE_DAILY_LIMIT = 4;
 const FREE_DAILY_QUIZ_LIMIT = 6;
 const FOCUS_LOCK_ESSAYS = 4;
 
