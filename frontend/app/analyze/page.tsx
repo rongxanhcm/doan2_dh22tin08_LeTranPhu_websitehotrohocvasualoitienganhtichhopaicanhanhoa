@@ -201,37 +201,29 @@ export default function AnalyzePage() {
   const MIN_LOADING_MS = 850;
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
+  const charCount = inputText.length;
 
   // Handle language auto-detection from LanguageDetector (memoized to prevent re-triggers)
   const handleLanguageDetected = useCallback((detectedLanguage: string, countryCode: string) => {
     setDetectedCountryCode(countryCode);
     setNativeLang(detectedLanguage);
     setIsLanguageDetected(true);
-    console.log(`✅ Language auto-detected: ${detectedLanguage} (${countryCode})`);
   }, []);
 
   useEffect(() => {
-    console.log("📊 Analyze page mounted - initializing language");
-    
-    // 🌍 Priority: Geolocation Detection > Fallback English
-    // Note: LanguageDetector runs first and sets detected_language in localStorage
+    // Load detected language from localStorage if available
     const detectedLang = typeof window !== "undefined" ? localStorage.getItem("detected_language") : null;
     
     if (detectedLang) {
-      console.log(`✅ Using detected language: ${detectedLang}`);
       setNativeLang(detectedLang);
       setIsLanguageDetected(true);
       const countryCode = localStorage.getItem("country_code");
       if (countryCode) {
         setDetectedCountryCode(countryCode);
       }
-    } else {
-      console.log("⏳ No detected language yet, waiting for geolocation...");
-      // Language will be set by LanguageDetector's onLanguageDetected callback
-      // OR user can manually select if detection fails
     }
 
-    // ✅ Load user profile (but NOT language from DB - only detection matters)
+    // Load user profile
     const checkUser = async () => { 
         const { data: { user } } = await supabase.auth.getUser(); 
         if(user) {
@@ -239,7 +231,6 @@ export default function AnalyzePage() {
             const { data } = await supabase.from('user_usage').select('is_pro').eq('user_id', user.id).single();
             if(data) {
                 setIsPro(data.is_pro);
-                console.log(`📊 User is Pro: ${data.is_pro}`);
             }
         }
     };
@@ -358,8 +349,6 @@ export default function AnalyzePage() {
     setResult(null);
     setActiveError(null);
     setMode("grammar");
-
-    console.log(`🚀 Analyzing with language: ${nativeLang}, isDetected: ${isLanguageDetected}`);
 
     let analysisResult: any | null = null;
 
@@ -603,39 +592,20 @@ export default function AnalyzePage() {
             
             {/* Toolbar */}
             <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-b from-slate-50/50 to-white backdrop-blur-sm">
-              <div className="flex flex-wrap items-end gap-2 md:gap-3">
-                 <div className="relative group">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-black uppercase text-slate-600 tracking-wide flex items-center gap-2">
-                            <Globe size={14} className="text-teal-500" />
-                            <span className="hidden sm:inline">AI Feedback Language</span>
-                            <span className="sm:hidden">Language</span>
-                            {isLanguageDetected && (
-                              <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-300 shadow-sm animate-pulse">
-                                ✨ Auto-detected
-                              </span>
-                            )}
-                        </label>
-                        <p className="text-xs text-slate-500 font-medium -mt-1 hidden md:block">Choose the language for AI analysis feedback</p>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white hover:bg-teal-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-teal-300 shadow-sm hover:shadow-md mt-2">
-                        <select 
-                            value={nativeLang} 
-                            onChange={(e) => setNativeLang(e.target.value)}
-                            className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer appearance-none pr-4 flex-1"
-                        >
-                            {SUPPORTED_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-                        </select>
-                        <ChevronDown size={14} className="text-slate-400 pointer-events-none group-hover:text-teal-500 transition-colors"/>
-                    </div>
-                 </div>
-                 
-                 <div className={`text-xs font-black px-3 md:px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${wordCount >= MIN_WORDS ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
-                    <span className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${wordCount >= MIN_WORDS ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                      {wordCount}/20 Words
-                    </span>
-                 </div>
+              {/* Character & Word Count - Center */}
+              <div className="flex-1 flex items-center justify-center gap-2 md:gap-3">
+                <div className={`text-xs font-black px-3 md:px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${charCount > 100 ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${charCount > 100 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                    {charCount} Characters
+                  </span>
+                </div>
+                <div className={`text-xs font-black px-3 md:px-4 py-2 rounded-xl border-2 uppercase tracking-wider transition-all duration-300 shadow-sm ${wordCount >= MIN_WORDS ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 text-emerald-700 border-emerald-200 shadow-emerald-100' : 'bg-white text-slate-500 border-slate-200'}`}>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${wordCount >= MIN_WORDS ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                    {wordCount}/20 Words
+                  </span>
+                </div>
               </div>
 
               {/* Mode Switcher */}
@@ -830,6 +800,31 @@ export default function AnalyzePage() {
 
         {/* --- RIGHT COLUMN: SIDEBAR (4 Cols) --- */}
         <div className="lg:col-span-4 space-y-5" ref={resultRef}>
+            {/* Language Selector - Always Visible */}
+            <div className="relative group">
+                <div className="flex flex-col gap-1.5 mb-3">
+                    <label className="text-xs font-black uppercase text-slate-600 tracking-wide flex items-center gap-2">
+                        <Globe size={14} className="text-teal-500" />
+                        <span>Explain my mistakes in:</span>
+                        {isLanguageDetected && (
+                          <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-300 shadow-sm animate-pulse">
+                            ✨ Auto-detected
+                          </span>
+                        )}
+                    </label>
+                </div>
+                <div className="flex items-center gap-2 px-3 md:px-4 py-2 bg-white hover:bg-teal-50 rounded-xl cursor-pointer transition-all duration-200 border border-slate-200 hover:border-teal-300 shadow-sm hover:shadow-md">
+                    <select 
+                        value={nativeLang} 
+                        onChange={(e) => setNativeLang(e.target.value)}
+                        className="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer appearance-none pr-4 flex-1"
+                    >
+                        {SUPPORTED_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="text-slate-400 pointer-events-none group-hover:text-teal-500 transition-colors"/>
+                </div>
+            </div>
+
             {loading ? (
                 // Premium loading state
                 <div className="space-y-5 animate-fade-in-up">

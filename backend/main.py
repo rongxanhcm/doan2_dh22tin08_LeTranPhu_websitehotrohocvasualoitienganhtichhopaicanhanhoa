@@ -238,7 +238,6 @@ async def get_user_location(request: Request, test_ip: str = None):
     try:
         # 1️⃣ Test override (for development/testing)
         if test_ip:
-            print(f"🧪 Test mode: Using test_ip={test_ip}")
             client_ip = test_ip
         else:
             # 2️⃣ Check X-Forwarded-For header (for reverse proxy scenarios)
@@ -246,17 +245,12 @@ async def get_user_location(request: Request, test_ip: str = None):
             if forwarded_for:
                 # X-Forwarded-For can contain multiple IPs, take the first (client IP)
                 client_ip = forwarded_for.split(",")[0].strip()
-                print(f"📍 Got IP from X-Forwarded-For: {client_ip}")
             else:
                 # 3️⃣ Fall back to direct request IP
                 client_ip = request.client.host if request.client else "127.0.0.1"
         
-        print(f"🌍 Geolocation request from IP: {client_ip}")
-        
         # For localhost/development, return US/English ONLY if not test_ip override
         if not test_ip and client_ip in ["127.0.0.1", "::1", "localhost"]:
-            print(f"ℹ️  Development IP detected: {client_ip} → returning US/English")
-            print(f"💡 For testing: use ?test_ip=1.1.1.1 or ?test_country=VN")
             return {
                 "country_code": "US",
                 "language": "English",
@@ -274,18 +268,14 @@ async def get_user_location(request: Request, test_ip: str = None):
             if response.status_code == 200:
                 data = response.json()
                 country_code = data.get("countryCode", "US")
-                print(f"✅ IP-API response: {client_ip} → {country_code}")
             else:
                 # Fallback if ip-api fails
-                print(f"⚠️  IP-API returned {response.status_code}, using fallback")
                 country_code = "US"
         except Exception as api_error:
-            print(f"❌ IP-API failed: {api_error}, using fallback")
             country_code = "US"
         
         # Map country to language
         language = COUNTRY_TO_LANGUAGE.get(country_code, "English")
-        print(f"🗺️  Country {country_code} → Language {language}")
         
         return {
             "country_code": country_code,
@@ -295,7 +285,6 @@ async def get_user_location(request: Request, test_ip: str = None):
         }
     
     except Exception as e:
-        print(f"❌ Geolocation error: {str(e)}")
         # Always fallback gracefully
         return {
             "country_code": "US",
