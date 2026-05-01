@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import PricingModal from "@/components/PricingModal";
 import UserDropdown from "@/components/UserDropdown";
 import GrammarLessonModal from "@/components/GrammarLessonModal";
+import { LanguageDetector } from "@/components/LanguageDetector";
 import { fetchRuleByKey, GrammarRule } from "@/lib/grammarRules";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';// --- REFINED ANIMATIONS (CYAN THEME) ---
 const enhancedStyles = `
@@ -172,6 +173,8 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<any | null>(null);
   const [currentTopic, setCurrentTopic] = useState("");
   const [nativeLang, setNativeLang] = useState("English");
+  const [detectedCountryCode, setDetectedCountryCode] = useState<string | null>(null);
+  const [isLanguageDetected, setIsLanguageDetected] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [mode, setMode] = useState<"grammar" | "vocab">("grammar"); 
   const [activeError, setActiveError] = useState<any | null>(null);
@@ -199,28 +202,43 @@ export default function AnalyzePage() {
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
 
+  // Handle language auto-detection from LanguageDetector
+  const handleLanguageDetected = (detectedLanguage: string, countryCode: string) => {
+    setDetectedCountryCode(countryCode);
+    setNativeLang(detectedLanguage);
+    setIsLanguageDetected(true);
+  };
+
   useEffect(() => {
-    const storedLanguage = typeof window !== "undefined" ? localStorage.getItem("default_language") : null;
-    if (storedLanguage) {
-        setNativeLang(storedLanguage);
+    console.log("📊 Analyze page mounted - initializing language");
+    
+    // 🌍 Priority: Geolocation Detection > Fallback English
+    // Note: LanguageDetector runs first and sets detected_language in localStorage
+    const detectedLang = typeof window !== "undefined" ? localStorage.getItem("detected_language") : null;
+    
+    if (detectedLang) {
+      console.log(`✅ Using detected language: ${detectedLang}`);
+      setNativeLang(detectedLang);
+      setIsLanguageDetected(true);
+      const countryCode = localStorage.getItem("country_code");
+      if (countryCode) {
+        setDetectedCountryCode(countryCode);
+      }
+    } else {
+      console.log("⏳ No detected language yet, waiting for geolocation...");
+      // Language will be set by LanguageDetector's onLanguageDetected callback
+      // OR user can manually select if detection fails
     }
 
+    // ✅ Load user profile (but NOT language from DB - only detection matters)
     const checkUser = async () => { 
         const { data: { user } } = await supabase.auth.getUser(); 
         if(user) {
             setUser(user);
-            const { data } = await supabase.from('user_usage').select('is_pro, default_language').eq('user_id', user.id).single();
+            const { data } = await supabase.from('user_usage').select('is_pro').eq('user_id', user.id).single();
             if(data) {
                 setIsPro(data.is_pro);
-                // Load default language preference
-                if(data.default_language) {
-                    setNativeLang(data.default_language);
-                    try {
-                        localStorage.setItem("default_language", data.default_language);
-                    } catch (error) {
-                        // Ignore localStorage failures (private mode, blocked storage, etc.)
-                    }
-                }
+                console.log(`📊 User is Pro: ${data.is_pro}`);
             }
         }
     };
@@ -340,6 +358,8 @@ export default function AnalyzePage() {
     setActiveError(null);
     setMode("grammar");
 
+    console.log(`🚀 Analyzing with language: ${nativeLang}, isDetected: ${isLanguageDetected}`);
+
     let analysisResult: any | null = null;
 
     try {
@@ -425,6 +445,9 @@ export default function AnalyzePage() {
   return (
     <main className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-teal-100 selection:text-teal-900 relative">
       <style>{enhancedStyles}</style>
+      
+      {/* 🌍 Magic Language Detector (Invisible) */}
+      <LanguageDetector onLanguageDetected={handleLanguageDetected} />
       
       {/* Background Pattern */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -586,7 +609,11 @@ export default function AnalyzePage() {
                             <Globe size={14} className="text-teal-500" />
                             <span className="hidden sm:inline">AI Feedback Language</span>
                             <span className="sm:hidden">Language</span>
-                            <span className="text-teal-600 font-bold" title="This language is used for AI feedback, not for the app interface"></span>
+                            {isLanguageDetected && (
+                              <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-300 shadow-sm animate-pulse">
+                                ✨ Auto-detected
+                              </span>
+                            )}
                         </label>
                         <p className="text-xs text-slate-500 font-medium -mt-1 hidden md:block">Choose the language for AI analysis feedback</p>
                     </div>

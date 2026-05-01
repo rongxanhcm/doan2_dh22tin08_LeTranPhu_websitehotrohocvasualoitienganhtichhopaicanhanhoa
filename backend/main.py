@@ -54,6 +54,53 @@ PRO_DAILY_LIMIT = 50
 FREE_DAILY_QUIZ_LIMIT = 6
 MIN_WORD_COUNT = 15
 
+# --- GEOLOCATION: COUNTRY CODE → LANGUAGE MAPPING ---
+COUNTRY_TO_LANGUAGE = {
+    "VN": "Vietnamese",
+    "TH": "Thai",
+    "JP": "Japanese",
+    "CN": "Chinese",
+    "HK": "Chinese",  # Hong Kong
+    "KR": "Korean",
+    "ES": "Spanish",
+    "FR": "French",
+    "DE": "German",
+    "BR": "Portuguese",
+    "PT": "Portuguese",
+    "IT": "Italian",
+    "RU": "Russian",
+    "ID": "Indonesian",
+    "PH": "English",
+    "MY": "English",
+    "SG": "French",
+    "IN": "Hindi",
+    "PK": "English",
+    "TR": "Turkish",
+    "NL": "Dutch",
+    "BE": "Dutch",
+    "PL": "Polish",
+    "SE": "Swedish",
+    "DK": "Swedish",
+    "NO": "Swedish",
+    "FI": "Swedish",
+    "CZ": "German",
+    "HU": "German",
+    "RO": "German",
+    "GR": "German",
+    "AR": "Arabic",
+    "SA": "Arabic",
+    "EG": "Arabic",
+    "IL": "English",
+    "UA": "Russian",
+    "US": "English",
+    "GB": "English",
+    "CA": "English",
+    "AU": "English",
+    "NZ": "English",
+    "IE": "English",
+    "ZA": "English",
+}
+
 # --- [NEW] HELPER FUNCTION WITH CACHE ---
 # Dùng cache để không tốn thời gian gọi DB mỗi lần request
 #@lru_cache(maxsize=5) 
@@ -174,6 +221,88 @@ def rebuild_corrected_text_from_errors(original_text: str, errors: List[ErrorDet
     rebuilt_parts.append(original_text[cursor:])
     rebuilt = "".join(rebuilt_parts)
     return rebuilt if rebuilt else original_text
+
+# ==========================================
+# ENDPOINT 0: GET USER LOCATION (MAGIC 🌍)
+# ==========================================
+@app.get("/get-user-location")
+async def get_user_location(request: Request, test_ip: str = None):
+    """
+    Detect user's location from IP and return suggested language.
+    This creates the "Magic" experience for users!
+    
+    Query params for testing:
+    - ?test_ip=1.1.1.1 (simulate Cloudflare/specific IP)
+    - ?test_country=VN (simulate country code directly)
+    """
+    try:
+        # 1️⃣ Test override (for development/testing)
+        if test_ip:
+            print(f"🧪 Test mode: Using test_ip={test_ip}")
+            client_ip = test_ip
+        else:
+            # 2️⃣ Check X-Forwarded-For header (for reverse proxy scenarios)
+            forwarded_for = request.headers.get("X-Forwarded-For")
+            if forwarded_for:
+                # X-Forwarded-For can contain multiple IPs, take the first (client IP)
+                client_ip = forwarded_for.split(",")[0].strip()
+                print(f"📍 Got IP from X-Forwarded-For: {client_ip}")
+            else:
+                # 3️⃣ Fall back to direct request IP
+                client_ip = request.client.host if request.client else "127.0.0.1"
+        
+        print(f"🌍 Geolocation request from IP: {client_ip}")
+        
+        # For localhost/development, return US/English ONLY if not test_ip override
+        if not test_ip and client_ip in ["127.0.0.1", "::1", "localhost"]:
+            print(f"ℹ️  Development IP detected: {client_ip} → returning US/English")
+            print(f"💡 For testing: use ?test_ip=1.1.1.1 or ?test_country=VN")
+            return {
+                "country_code": "US",
+                "language": "English",
+                "is_development": True,
+                "note": "Localhost detected. Use ?test_ip=XX for testing other countries"
+            }
+        
+        try:
+            # Use free ip-api.com (45 requests/min for free)
+            response = requests.get(
+                f"http://ip-api.com/json/{client_ip}?fields=countryCode",
+                timeout=2
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                country_code = data.get("countryCode", "US")
+                print(f"✅ IP-API response: {client_ip} → {country_code}")
+            else:
+                # Fallback if ip-api fails
+                print(f"⚠️  IP-API returned {response.status_code}, using fallback")
+                country_code = "US"
+        except Exception as api_error:
+            print(f"❌ IP-API failed: {api_error}, using fallback")
+            country_code = "US"
+        
+        # Map country to language
+        language = COUNTRY_TO_LANGUAGE.get(country_code, "English")
+        print(f"🗺️  Country {country_code} → Language {language}")
+        
+        return {
+            "country_code": country_code,
+            "language": language,
+            "ip": client_ip,
+            "is_development": False
+        }
+    
+    except Exception as e:
+        print(f"❌ Geolocation error: {str(e)}")
+        # Always fallback gracefully
+        return {
+            "country_code": "US",
+            "language": "English",
+            "error": str(e)
+        }
+
 # ==========================================
 # ENDPOINT 1: ANALYZE ESSAY (ĐÃ TỐI ƯU)
 # ==========================================
@@ -276,7 +405,10 @@ def analyze_essay(input: EssayInput, request: Request):
 
         # 5. LƯU QUOTA (Tách biệt)
         if input.user_id:
-            supabase.table("user_usage").update({"usage_count": usage_count + 1}).eq("user_id", input.user_id).execute()
+            supabase.table("user_usage").update({
+                "usage_count": usage_count + 1,
+                "default_language": input.native_language  # 🌍 Persist detected language to DB
+            }).eq("user_id", input.user_id).execute()
         else:
             # Lưu vào bảng guest_usage
             supabase.table("guest_usage").insert({"visitor_id": visitor_id, "usage_count": 1}).execute()
