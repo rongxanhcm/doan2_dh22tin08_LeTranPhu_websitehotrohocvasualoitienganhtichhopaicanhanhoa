@@ -60,9 +60,9 @@ export function LanguageDetector({ onLanguageDetected }: LanguageDetectorProps) 
       }
     };
 
-    // Always run detection on mount
+    // Always run detection on mount (only once per page load)
     detectLanguage();
-  }, [onLanguageDetected]);
+  }, []); // Empty dependency - detection happens only on mount
 
   return null; // Invisible component
 }

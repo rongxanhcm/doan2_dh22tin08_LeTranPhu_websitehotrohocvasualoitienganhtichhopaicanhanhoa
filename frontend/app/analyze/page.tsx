@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -202,12 +202,13 @@ export default function AnalyzePage() {
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
   const wordCount = inputText.trim() ? inputText.trim().split(/\s+/).length : 0;
 
-  // Handle language auto-detection from LanguageDetector
-  const handleLanguageDetected = (detectedLanguage: string, countryCode: string) => {
+  // Handle language auto-detection from LanguageDetector (memoized to prevent re-triggers)
+  const handleLanguageDetected = useCallback((detectedLanguage: string, countryCode: string) => {
     setDetectedCountryCode(countryCode);
     setNativeLang(detectedLanguage);
     setIsLanguageDetected(true);
-  };
+    console.log(`✅ Language auto-detected: ${detectedLanguage} (${countryCode})`);
+  }, []);
 
   useEffect(() => {
     console.log("📊 Analyze page mounted - initializing language");
